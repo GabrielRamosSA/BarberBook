@@ -1,0 +1,263 @@
+<div class="clientes-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1><i class="fa-solid fa-users"></i> Clientes</h1>
+      <p>Visualize e gerencie seus clientes e histórico de atendimentos</p>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon total">
+        <i class="fa-solid fa-users"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ clientes.length }}</span>
+        <span class="stat-label">Total de clientes</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon cadastrados">
+        <i class="fa-solid fa-user-check"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ clientesCadastrados }}</span>
+        <span class="stat-label">Cadastrados</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon atendimentos">
+        <i class="fa-solid fa-scissors"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalAtendimentos }}</span>
+        <span class="stat-label">Atendimentos</span>
+      </div>
+    </div>
+    @if (receitaPermitida) {
+      <div class="stat-card">
+        <div class="stat-icon receita">
+          <i class="fa-solid fa-dollar-sign"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">R$ {{ receitaTotal.toFixed(2) }}</span>
+          <span class="stat-label">Receita total</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Busca -->
+  <div class="search-bar">
+    <div class="search-box">
+      <i class="fa-solid fa-search"></i>
+      <input
+        type="text"
+        [(ngModel)]="termoBusca"
+        placeholder="Buscar por nome ou telefone..."
+        (input)="filtrar()"
+      />
+      @if (termoBusca) {
+        <button class="btn-limpar" (click)="termoBusca = ''; filtrar()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-row">
+    <div class="filter-chips">
+      <button
+        class="chip"
+        [class.active]="filtroAtivo === 'todos'"
+        (click)="setFiltro('todos')"
+      >
+        Todos
+      </button>
+      <button
+        class="chip"
+        [class.active]="filtroAtivo === 'cadastrados'"
+        (click)="setFiltro('cadastrados')"
+      >
+        <i class="fa-solid fa-user-check"></i> Cadastrados
+      </button>
+      <button
+        class="chip"
+        [class.active]="filtroAtivo === 'avulsos'"
+        (click)="setFiltro('avulsos')"
+      >
+        <i class="fa-solid fa-user"></i> Avulsos
+      </button>
+      <button
+        class="chip"
+        [class.active]="filtroAtivo === 'frequentes'"
+        (click)="setFiltro('frequentes')"
+      >
+        <i class="fa-solid fa-star"></i> Frequentes
+      </button>
+    </div>
+    <div class="sort-select">
+      <select [(ngModel)]="ordenacao" (change)="filtrar()">
+        <option value="recente">Mais recente</option>
+        <option value="nome">Nome A-Z</option>
+        <option value="agendamentos">Mais agendamentos</option>
+        <option value="gasto">Maior gasto</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  @if (carregando) {
+    <div class="loading-state">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+      <p>Carregando clientes...</p>
+    </div>
+  }
+
+  <!-- Sem clientes -->
+  @if (!carregando && clientesFiltrados.length === 0 && clientes.length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">
+        <i class="fa-solid fa-user-slash"></i>
+      </div>
+      <h3>Nenhum cliente ainda</h3>
+      <p>Quando clientes agendarem serviços, eles aparecerão aqui.</p>
+    </div>
+  }
+
+  <!-- Sem resultados do filtro -->
+  @if (!carregando && clientesFiltrados.length === 0 && clientes.length > 0) {
+    <div class="empty-state">
+      <div class="empty-icon">
+        <i class="fa-solid fa-search"></i>
+      </div>
+      <h3>Nenhum resultado</h3>
+      <p>Tente buscar com outros termos ou altere os filtros.</p>
+    </div>
+  }
+
+  <!-- Lista de clientes -->
+  @if (!carregando && clientesFiltrados.length > 0) {
+    <div class="clientes-grid">
+      @for (cliente of clientesFiltrados; track cliente.id) {
+        <div class="cliente-card" [class.expandido]="clienteExpandido === cliente.id" (click)="toggleCliente(cliente.id)">
+          <div class="card-main">
+            <!-- Avatar -->
+            <div class="cliente-avatar-area">
+              @if (cliente.avatar) {
+                <img [src]="getAvatarUrl(cliente.avatar)" alt="" class="cliente-avatar" />
+              } @else {
+                <div class="cliente-avatar-placeholder">
+                  {{ getInicial(cliente.nome) }}
+                </div>
+              }
+              @if (cliente.cadastrado) {
+                <span class="badge-cadastrado" title="Cadastrado na plataforma">
+                  <i class="fa-solid fa-check"></i>
+                </span>
+              }
+            </div>
+
+            <!-- Info -->
+            <div class="cliente-info">
+              <div class="info-top">
+                <strong class="cliente-nome">{{ cliente.nome }}</strong>
+                @if (cliente.totalConcluidos >= 5) {
+                  <span class="badge-frequente">
+                    <i class="fa-solid fa-star"></i> Frequente
+                  </span>
+                }
+              </div>
+              <div class="info-contato">
+                <span class="telefone">
+                  <i class="fa-solid fa-phone"></i> {{ cliente.telefone }}
+                </span>
+                @if (cliente.email) {
+                  <span class="email">
+                    <i class="fa-solid fa-envelope"></i> {{ cliente.email }}
+                  </span>
+                }
+              </div>
+              <div class="info-stats">
+                <span class="mini-stat">
+                  <i class="fa-solid fa-calendar-check"></i>
+                  {{ cliente.totalAgendamentos }} agendamento{{ cliente.totalAgendamentos !== 1 ? 's' : '' }}
+                </span>
+                <span class="mini-stat concluido">
+                  <i class="fa-solid fa-circle-check"></i>
+                  {{ cliente.totalConcluidos }} concluído{{ cliente.totalConcluidos !== 1 ? 's' : '' }}
+                </span>
+                <span class="mini-stat receita">
+                  <i class="fa-solid fa-dollar-sign"></i>
+                  R$ {{ cliente.totalGasto.toFixed(2) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Quick actions -->
+            <div class="card-actions">
+              <button class="btn-action btn-whatsapp" (click)="abrirWhatsApp(cliente.telefone); $event.stopPropagation()" title="WhatsApp">
+                <i class="fa-brands fa-whatsapp"></i>
+              </button>
+              <button class="btn-action btn-expand" [class.rotated]="clienteExpandido === cliente.id">
+                <i class="fa-solid fa-chevron-down"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Histórico expandido -->
+          @if (clienteExpandido === cliente.id) {
+            <div class="card-historico" (click)="$event.stopPropagation()">
+              <div class="historico-header">
+                <h4><i class="fa-solid fa-clock-rotate-left"></i> Histórico de atendimentos</h4>
+                <div class="historico-resumo">
+                  <span>Serviços: {{ cliente.servicos.join(', ') }}</span>
+                </div>
+              </div>
+
+              @if (cliente.agendamentos.length === 0) {
+                <p class="historico-vazio">Nenhum atendimento registrado.</p>
+              }
+
+              <div class="historico-lista">
+                @for (ag of cliente.agendamentos.slice(0, mostrarTodos[cliente.id] ? 999 : 5); track ag.id) {
+                  <div class="historico-item">
+                    <div class="hist-data">
+                      <span class="hist-dia">{{ formatarData(ag.data) }}</span>
+                      <span class="hist-hora">{{ ag.horario }}</span>
+                    </div>
+                    <div class="hist-info">
+                      <span class="hist-servico">{{ ag.servico.nome }}</span>
+                      <span class="hist-barbeiro">
+                        <i class="fa-solid fa-user"></i> {{ ag.barbeiro.nome }}
+                      </span>
+                    </div>
+                    <div class="hist-meta">
+                      <span class="hist-preco">R$ {{ ag.servico.preco.toFixed(2) }}</span>
+                      <span class="hist-status" [ngClass]="'status-' + ag.status.toLowerCase()">
+                        {{ getStatusLabel(ag.status) }}
+                      </span>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              @if (cliente.agendamentos.length > 5) {
+                <button class="btn-ver-mais" (click)="toggleMostrarTodos(cliente.id); $event.stopPropagation()">
+                  @if (mostrarTodos[cliente.id]) {
+                    <i class="fa-solid fa-chevron-up"></i> Mostrar menos
+                  } @else {
+                    <i class="fa-solid fa-chevron-down"></i> Ver todos ({{ cliente.agendamentos.length }})
+                  }
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

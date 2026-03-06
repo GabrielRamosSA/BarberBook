@@ -1,0 +1,89 @@
+<div class="reset-container">
+  <div class="reset-card">
+    <div class="reset-header">
+      <i class="fa-solid fa-scissors reset-icon"></i>
+      <h1>CortaAí</h1>
+      <p>Redefinir senha</p>
+    </div>
+
+    @if (!sucesso) {
+      <form (ngSubmit)="onSubmit()" class="reset-form">
+        @if (erro) {
+          <div class="erro-msg">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            {{ erro }}
+          </div>
+        }
+
+        <div class="campo">
+          <label for="novaSenha">Nova senha</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-lock"></i>
+            <input
+              [type]="mostrarSenha ? 'text' : 'password'"
+              id="novaSenha"
+              [(ngModel)]="novaSenha"
+              name="novaSenha"
+              placeholder="Mínimo 6 caracteres"
+              required
+              minlength="6"
+            />
+            <button type="button" class="toggle-senha" (click)="mostrarSenha = !mostrarSenha">
+              <i [class]="mostrarSenha ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+            </button>
+          </div>
+          @if (novaSenha && !senhaValida) {
+            <span class="campo-erro">Mínimo 6 caracteres</span>
+          }
+        </div>
+
+        <div class="campo">
+          <label for="confirmarSenha">Confirmar nova senha</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-lock"></i>
+            <input
+              [type]="mostrarConfirmar ? 'text' : 'password'"
+              id="confirmarSenha"
+              [(ngModel)]="confirmarSenha"
+              name="confirmarSenha"
+              placeholder="Repita a nova senha"
+              required
+            />
+            <button type="button" class="toggle-senha" (click)="mostrarConfirmar = !mostrarConfirmar">
+              <i [class]="mostrarConfirmar ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+            </button>
+          </div>
+          @if (confirmarSenha && !senhasConferem) {
+            <span class="campo-erro">As senhas não conferem</span>
+          }
+        </div>
+
+        <button
+          type="submit"
+          class="btn-redefinir"
+          [disabled]="carregando || !token || !senhaValida || !senhasConferem"
+        >
+          @if (carregando) {
+            <i class="fa-solid fa-spinner fa-spin"></i> Redefinindo...
+          } @else {
+            <i class="fa-solid fa-key"></i> Redefinir senha
+          }
+        </button>
+      </form>
+    } @else {
+      <div class="sucesso-container">
+        <div class="sucesso-icon">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <p class="sucesso-msg">{{ mensagem }}</p>
+        <button class="btn-login" (click)="irParaLogin()">
+          <i class="fa-solid fa-right-to-bracket"></i> Ir para o login
+        </button>
+      </div>
+    }
+
+    <p class="link-voltar">
+      <a routerLink="/login"><i class="fa-solid fa-arrow-left"></i> Voltar para o login</a>
+    </p>
+  </div>
+</div>

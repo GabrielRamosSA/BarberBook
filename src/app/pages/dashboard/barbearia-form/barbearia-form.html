@@ -1,0 +1,475 @@
+<div class="form-page">
+  @if (alertaPlano) {
+    <div class="alerta-plano-toast">
+      <i class="fa-solid fa-lock"></i>
+      <span>{{ alertaPlano }}</span>
+      <a routerLink="/dashboard/planos">Ver planos</a>
+    </div>
+  }
+
+  <div class="page-header">
+    <a routerLink="/dashboard/barbearias" class="btn-voltar">
+      <i class="fa-solid fa-arrow-left"></i> Voltar
+    </a>
+    <h1><i class="fa-solid fa-store"></i> {{ editando ? 'Editar Barbearia' : 'Nova Barbearia' }}</h1>
+    <p>{{ editando ? 'Atualize os dados da sua barbearia' : 'Preencha os dados da sua barbearia' }}</p>
+  </div>
+
+  <div class="form-card">
+    <form (ngSubmit)="onSubmit()">
+      @if (erro) {
+        <div class="erro-msg">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          {{ erro }}
+        </div>
+      }
+
+      <!-- ======================== -->
+      <!-- INFORMAÇÕES BÁSICAS      -->
+      <!-- ======================== -->
+      <div class="form-section">
+        <h3><i class="fa-solid fa-store"></i> Informações básicas</h3>
+
+        <div class="campo">
+          <label for="nome">Nome da barbearia <span class="required">*</span></label>
+          <input type="text" id="nome" [(ngModel)]="nome" name="nome" placeholder="Ex: Barbearia do João" required />
+        </div>
+
+        <div class="campo">
+          <label for="descricao">Descrição</label>
+          <textarea id="descricao" [(ngModel)]="descricao" name="descricao" placeholder="Uma breve descrição da sua barbearia..." rows="3"></textarea>
+        </div>
+      </div>
+
+      <!-- ======================== -->
+      <!-- FOTOS DA BARBEARIA       -->
+      <!-- ======================== -->
+      <div class="form-section">
+        <h3><i class="fa-solid fa-images"></i> Fotos da barbearia</h3>
+        <p class="section-hint">Adicione até 10 fotos da sua barbearia (JPG, PNG, WebP — máx. 5MB cada)</p>
+
+        <div class="fotos-dropzone" [class.dragging]="dragging" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)" (click)="fileInput.click()">
+          <input #fileInput type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple hidden (change)="onFileSelect($event)" />
+          <div class="dropzone-content">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <p>Arraste fotos aqui ou <span class="link">clique para selecionar</span></p>
+            <span class="dropzone-hint">{{ fotos.length }}/10 fotos</span>
+          </div>
+        </div>
+
+        @if (fotosExistentes.length > 0) {
+          <div class="fotos-preview">
+            @for (fotoUrl of fotosExistentes; track fotoUrl; let i = $index) {
+              <div class="foto-thumb">
+                <img [src]="fotoUrl" alt="Foto {{ i + 1 }}" />
+                @if (i === 0) {
+                  <span class="foto-badge">Principal</span>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        @if (fotos.length > 0) {
+          <div class="fotos-preview">
+            @for (foto of fotos; track foto.url; let i = $index) {
+              <div class="foto-thumb">
+                <img [src]="foto.url" alt="Foto {{ i + 1 }}" />
+                <button type="button" class="foto-remove" (click)="removeFoto(i)" title="Remover foto">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+                @if (i === 0) {
+                  <span class="foto-badge">Principal</span>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- ======================== -->
+      <!-- BARBEIROS + SERVIÇOS     -->
+      <!-- ======================== -->
+      <div class="form-section">
+        <div class="section-header-row">
+          <h3><i class="fa-solid fa-user-tie"></i> Equipe e Serviços</h3>
+          @if (limiteBarbieroAtingido) {
+            <span class="limite-badge">
+              <i class="fa-solid fa-lock"></i> Limite: {{ maxBarbeiros }} barbeiro{{ maxBarbeiros > 1 ? 's' : '' }}
+            </span>
+          } @else {
+            <button type="button" class="btn-add-inline" (click)="adicionarBarbeiro()">
+              <i class="fa-solid fa-plus"></i> Adicionar barbeiro
+            </button>
+          }
+        </div>
+
+        @if (limiteBarbieroAtingido) {
+          <div class="plano-limite-inline">
+            <i class="fa-solid fa-circle-info"></i>
+            Seu plano permite no máximo <strong>{{ maxBarbeiros }}</strong> barbeiro{{ maxBarbeiros > 1 ? 's' : '' }}.
+            <a routerLink="/dashboard/planos">Fazer upgrade</a>
+          </div>
+        }
+
+        @if (barbeiros.length === 0) {
+          <div class="empty-hint">
+            <i class="fa-solid fa-scissors"></i>
+            <p>Nenhum barbeiro adicionado ainda.<br>Clique em "Adicionar barbeiro" para começar.</p>
+          </div>
+        }
+
+        @for (barbeiro of barbeiros; track $index; let i = $index) {
+          <div class="barbeiro-card" [class.collapsed]="barbeiro.salvo">
+
+            <!-- ===== CARD COLAPSADO ===== -->
+            @if (barbeiro.salvo) {
+              <div class="barbeiro-collapsed" (click)="editarBarbeiro(i)">
+                <div class="collapsed-left">
+                  @if (barbeiro.fotoPreview) {
+                    <img class="collapsed-avatar" [src]="barbeiro.fotoPreview" alt="Foto" />
+                  } @else {
+                    <div class="collapsed-avatar-placeholder">
+                      <i class="fa-solid fa-user"></i>
+                    </div>
+                  }
+                  <div class="collapsed-info">
+                    <span class="collapsed-nome">{{ barbeiro.nome }}</span>
+                    <span class="collapsed-detalhes">
+                      {{ resumoDias(barbeiro) }}
+                      @if (barbeiro.servicos.length > 0) {
+                        · {{ barbeiro.servicos.length }} serviço{{ barbeiro.servicos.length > 1 ? 's' : '' }}
+                      }
+                    </span>
+                  </div>
+                </div>
+                <div class="collapsed-actions">
+                  <button type="button" class="btn-edit-mini" (click)="editarBarbeiro(i); $event.stopPropagation()" title="Editar">
+                    <i class="fa-solid fa-pen"></i>
+                  </button>
+                  <button type="button" class="btn-remove-mini" (click)="removerBarbeiro(i); $event.stopPropagation()" title="Remover">
+                    <i class="fa-solid fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <!-- ===== CARD EXPANDIDO ===== -->
+              <div class="barbeiro-header">
+                <span class="barbeiro-num">Barbeiro {{ i + 1 }}</span>
+                <button type="button" class="btn-remove-item" (click)="removerBarbeiro(i)" title="Remover barbeiro">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+
+              <div class="barbeiro-body">
+                <!-- ETAPA 1: Nome + Foto -->
+                <div class="barbeiro-step">
+                  <div class="step-label">
+                    <span class="step-num">1</span> Identificação
+                  </div>
+                  <div class="barbeiro-info-row">
+                    <div class="barbeiro-foto-area">
+                      @if (!fotosBarbeirosPermitido) {
+                        <div class="barbeiro-foto-bloqueada" (click)="mostrarAlertaPlano('Fotos de barbeiros estão disponíveis nos planos Profissional e Premium.')" title="Disponível nos planos Profissional e Premium">
+                          <i class="fa-solid fa-lock"></i>
+                          <span>Foto</span>
+                        </div>
+                      } @else if (barbeiro.fotoPreview) {
+                        <div class="barbeiro-foto-preview">
+                          <img [src]="barbeiro.fotoPreview" alt="Foto do barbeiro" />
+                          <button type="button" class="foto-remove-mini" (click)="removerBarbeiroFoto(i)">
+                            <i class="fa-solid fa-xmark"></i>
+                          </button>
+                        </div>
+                      } @else {
+                        <label class="barbeiro-foto-upload" [for]="'barbeiroFoto' + i">
+                          <i class="fa-solid fa-camera"></i>
+                          <span>Foto</span>
+                        </label>
+                      }
+                      @if (fotosBarbeirosPermitido) {
+                        <input [id]="'barbeiroFoto' + i" type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="onBarbeiroFoto($event, i)" />
+                      }
+                    </div>
+
+                    <div class="campo barbeiro-nome-campo">
+                      <label [for]="'barbeiroNome' + i">Nome do barbeiro</label>
+                      <input type="text" [id]="'barbeiroNome' + i" [(ngModel)]="barbeiro.nome" [name]="'barbeiroNome' + i" placeholder="Nome completo" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ETAPA 2: Horários + Almoço -->
+                <div class="barbeiro-step">
+                  <div class="step-label">
+                    <span class="step-num">2</span> Horários de atendimento
+                  </div>
+                  <div class="horarios-grid">
+                    @for (h of barbeiro.horarios; track h.diaSemana) {
+                      <div class="horario-row" [class.inativo]="!h.ativo">
+                        <div class="horario-main">
+                          <label class="switch">
+                            <input type="checkbox" [(ngModel)]="h.ativo" [name]="'horAtivo' + i + '_' + h.diaSemana" />
+                            <span class="slider"></span>
+                          </label>
+                          <span class="dia-label">{{ h.label }}</span>
+                          <div class="horario-inputs">
+                            <input type="time" [(ngModel)]="h.horaInicio" [name]="'horInicio' + i + '_' + h.diaSemana" [disabled]="!h.ativo" />
+                            <span class="separator">às</span>
+                            <input type="time" [(ngModel)]="h.horaFim" [name]="'horFim' + i + '_' + h.diaSemana" [disabled]="!h.ativo" />
+                          </div>
+                        </div>
+
+                        @if (h.ativo) {
+                          <div class="horario-almoco">
+                            <label class="almoco-toggle">
+                              <input type="checkbox" [(ngModel)]="h.temAlmoco" [name]="'horAlmoco' + i + '_' + h.diaSemana" />
+                              <i class="fa-solid fa-utensils"></i>
+                              <span>Almoço</span>
+                            </label>
+                            @if (h.temAlmoco) {
+                              <div class="almoco-inputs">
+                                <input type="time" [(ngModel)]="h.almocoInicio" [name]="'almInicio' + i + '_' + h.diaSemana" />
+                                <span class="separator">às</span>
+                                <input type="time" [(ngModel)]="h.almocoFim" [name]="'almFim' + i + '_' + h.diaSemana" />
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- ETAPA 3: Serviços -->
+                <div class="barbeiro-step">
+                  <div class="step-label-row">
+                    <div class="step-label">
+                      <span class="step-num">3</span> Serviços oferecidos
+                    </div>
+                    @if (limiteServicoAtingido(i)) {
+                      <span class="limite-badge-small">
+                        <i class="fa-solid fa-lock"></i> Limite: {{ maxServicosPorBarbeiro() }}
+                      </span>
+                    } @else {
+                      <button type="button" class="btn-add-small" (click)="adicionarServico(i)">
+                        <i class="fa-solid fa-plus"></i> Serviço
+                      </button>
+                    }
+                  </div>
+
+                  @if (limiteServicoAtingido(i)) {
+                    <div class="plano-limite-inline">
+                      <i class="fa-solid fa-circle-info"></i>
+                      Seu plano permite no máximo <strong>{{ maxServicosPorBarbeiro() }}</strong> serviços por barbeiro.
+                      <a routerLink="/dashboard/planos">Fazer upgrade</a>
+                    </div>
+                  }
+
+                  @if (barbeiro.servicos.length === 0) {
+                    <div class="empty-hint-mini">
+                      <p>Nenhum serviço adicionado. <button type="button" class="link-btn" (click)="adicionarServico(i)">Adicionar serviço</button></p>
+                    </div>
+                  }
+
+                  @for (servico of barbeiro.servicos; track $index; let j = $index) {
+                    <div class="servico-row">
+                      <div class="campo servico-nome">
+                        <input type="text" [(ngModel)]="servico.nome" [name]="'sNome' + i + '_' + j" placeholder="Ex: Corte masculino" />
+                      </div>
+                      <div class="campo servico-preco">
+                        <div class="input-prefix">
+                          <span>R$</span>
+                          <input type="text" inputmode="numeric" [ngModel]="servico.precoDisplay" (ngModelChange)="onPrecoInput($event, i, j)" [name]="'sPreco' + i + '_' + j" placeholder="0,00" />
+                        </div>
+                      </div>
+                      <div class="campo servico-duracao">
+                        <div class="input-suffix">
+                          <input type="number" [(ngModel)]="servico.duracao" [name]="'sDur' + i + '_' + j" placeholder="30" min="5" step="5" />
+                          <span>min</span>
+                        </div>
+                      </div>
+                      <button type="button" class="btn-remove-item" (click)="removerServico(i, j)" title="Remover">
+                        <i class="fa-solid fa-xmark"></i>
+                      </button>
+                    </div>
+                  }
+                </div>
+
+                <!-- AÇÕES DO BARBEIRO -->
+                <div class="barbeiro-actions">
+                  <button type="button" class="btn-salvar-barbeiro" (click)="salvarBarbeiro(i)" [disabled]="!barbeiro.nome.trim()">
+                    <i class="fa-solid fa-check"></i> Salvar barbeiro
+                  </button>
+                  <button type="button" class="btn-cancelar-barbeiro" (click)="cancelarBarbeiro(i)">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- ======================== -->
+      <!-- LOCALIZAÇÃO              -->
+      <!-- ======================== -->
+      <div class="form-section">
+        <h3><i class="fa-solid fa-location-dot"></i> Localização</h3>
+
+        <div class="campo">
+          <label for="endereco">Endereço <span class="required">*</span></label>
+          <input type="text" id="endereco" [(ngModel)]="endereco" name="endereco" placeholder="Rua, número, bairro" required />
+        </div>
+
+        <div class="campo">
+          <label for="pontoReferencia">Ponto de referência</label>
+          <input type="text" id="pontoReferencia" [(ngModel)]="pontoReferencia" name="pontoReferencia" placeholder="Ex: Em frente ao supermercado, ao lado da farmácia..." />
+        </div>
+
+        <div class="campos-row">
+          <div class="campo">
+            <label for="cidade">Cidade <span class="required">*</span></label>
+            <input type="text" id="cidade" [(ngModel)]="cidade" name="cidade" placeholder="Sua cidade" required />
+          </div>
+          <div class="campo campo-small">
+            <label for="estado">Estado <span class="required">*</span></label>
+            <input type="text" id="estado" [(ngModel)]="estado" name="estado" placeholder="UF" maxlength="2" required />
+          </div>
+          <div class="campo">
+            <label for="cep">CEP</label>
+            <input type="text" id="cep" [(ngModel)]="cep" name="cep" placeholder="00000-000" />
+          </div>
+        </div>
+
+        <!-- MAPA -->
+        <div class="mapa-section">
+          <label class="mapa-label">
+            <i class="fa-solid fa-map-location-dot"></i>
+            Marque a localização no mapa
+          </label>
+          <p class="mapa-hint">Clique no mapa para marcar onde fica a barbearia, ou use o botão para buscar pelo endereço.</p>
+
+          <div class="mapa-actions">
+            <button type="button" class="btn-buscar-endereco" (click)="buscarEndereco()" [disabled]="buscandoEndereco || !endereco.trim()">
+              @if (buscandoEndereco) {
+                <i class="fa-solid fa-spinner fa-spin"></i> Buscando...
+              } @else {
+                <i class="fa-solid fa-magnifying-glass-location"></i> Buscar endereço no mapa
+              }
+            </button>
+            @if (latitude && longitude) {
+              <span class="mapa-coords">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                {{ latitude.toFixed(5) }}, {{ longitude.toFixed(5) }}
+              </span>
+            }
+          </div>
+
+          <div class="mapa-container" id="mapa-barbearia"></div>
+        </div>
+      </div>
+
+      <!-- ======================== -->
+      <!-- CONTATO                  -->
+      <!-- ======================== -->
+      <div class="form-section">
+        <h3><i class="fa-solid fa-phone"></i> Contato</h3>
+
+        <div class="campos-row">
+          <div class="campo">
+            <label for="telefone">Telefone</label>
+            <input type="tel" id="telefone" [(ngModel)]="telefone" name="telefone" placeholder="(11) 3333-4444" />
+          </div>
+          <div class="campo">
+            <label for="whatsapp">WhatsApp</label>
+            <input type="tel" id="whatsapp" [(ngModel)]="whatsapp" name="whatsapp" placeholder="(11) 99999-9999" />
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================== -->
+      <!-- LEMBRETE WHATSAPP        -->
+      <!-- ======================== -->
+      <div class="form-section" [class.section-bloqueada]="!lembretePermitido">
+        <h3><i class="fa-brands fa-whatsapp"></i> Lembrete automático via WhatsApp</h3>
+        <p class="section-hint">Configure uma mensagem personalizada que será enviada 30 minutos antes do horário agendado.</p>
+
+        @if (!lembretePermitido) {
+          <div class="plano-upgrade-msg">
+            <i class="fa-solid fa-lock"></i>
+            <div>
+              <strong>Recurso disponível nos planos Profissional e Premium</strong>
+              <p>Faça upgrade do seu plano para ativar lembretes automáticos via WhatsApp.</p>
+              <a routerLink="/dashboard/planos" class="btn-upgrade">
+                <i class="fa-solid fa-arrow-up"></i> Ver planos
+              </a>
+            </div>
+          </div>
+        } @else {
+          <div class="lembrete-toggle-row">
+            <label class="switch">
+              <input type="checkbox" [(ngModel)]="lembreteAtivo" name="lembreteAtivo" />
+              <span class="slider"></span>
+            </label>
+            <span class="toggle-label">{{ lembreteAtivo ? 'Lembrete ativado' : 'Lembrete desativado' }}</span>
+          </div>
+
+          @if (lembreteAtivo) {
+            <div class="campo">
+              <label for="mensagemLembrete">Mensagem personalizada</label>
+              <textarea
+                id="mensagemLembrete"
+                [(ngModel)]="mensagemLembrete"
+                name="mensagemLembrete"
+                [placeholder]="placeholderLembrete"
+                rows="4"
+              ></textarea>
+            </div>
+
+            <div class="lembrete-variaveis">
+              <span class="variaveis-label"><i class="fa-solid fa-code"></i> Variáveis disponíveis:</span>
+              <div class="variaveis-list">
+                @for (v of variaveisDisponiveis; track v.tag) {
+                  <span class="variavel-tag" (click)="inserirVariavel(v.tag)">{{ v.label }}</span>
+                }
+              </div>
+            </div>
+
+            @if (mensagemLembrete) {
+              <div class="lembrete-preview">
+                <span class="preview-label"><i class="fa-solid fa-eye"></i> Pré-visualização:</span>
+                <div class="preview-bubble">
+                  {{ previewMensagem() }}
+                </div>
+              </div>
+            }
+          }
+        }
+      </div>
+
+      <!-- ======================== -->
+      <!-- ACTIONS                  -->
+      <!-- ======================== -->
+      @if (carregandoDados) {
+        <div class="loading-overlay">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <p>Carregando dados...</p>
+        </div>
+      }
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" [disabled]="!formValido || carregando || carregandoDados">
+          @if (carregando) {
+            <i class="fa-solid fa-spinner fa-spin"></i> {{ etapaTexto }}
+          } @else if (editando) {
+            <i class="fa-solid fa-floppy-disk"></i> Salvar Alterações
+          } @else {
+            <i class="fa-solid fa-plus"></i> Criar Barbearia
+          }
+        </button>
+        <a routerLink="/dashboard/barbearias" class="btn-cancelar">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>

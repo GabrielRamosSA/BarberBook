@@ -1,0 +1,102 @@
+<div class="overview-page">
+  <div class="page-header">
+    <h1>Painel do Barbeiro</h1>
+    <p>Bem-vindo, {{ user?.nome }}!</p>
+  </div>
+
+  <!-- Cards de resumo -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon" style="background: rgba(0, 0, 0, 0.08);">
+        <i class="fa-solid fa-store" style="color: #000;"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ barbearias.length }}</span>
+        <span class="stat-label">Barbearias</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background: rgba(46, 125, 50, 0.12);">
+        <i class="fa-solid fa-circle-check" style="color: #2e7d32;"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ barbeariaAtivas }}</span>
+        <span class="stat-label">Ativas</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background: rgba(25, 118, 210, 0.12);">
+        <i class="fa-solid fa-calendar-check" style="color: #1976d2;"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ agendamentosHoje }}</span>
+        <span class="stat-label">Agendamentos hoje</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background: rgba(156, 39, 176, 0.12);">
+        <i class="fa-solid fa-users" style="color: #9c27b0;"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalClientes }}</span>
+        <span class="stat-label">Clientes</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick actions -->
+  <div class="section">
+    <h2>Ações rápidas</h2>
+    <div class="actions-grid">
+      <a routerLink="/dashboard/barbearias/nova" class="action-card">
+        <i class="fa-solid fa-plus"></i>
+        <span>Adicionar Barbearia</span>
+      </a>
+      <a routerLink="/dashboard/agenda" class="action-card">
+        <i class="fa-solid fa-calendar-days"></i>
+        <span>Ver Agenda</span>
+      </a>
+      <a routerLink="/perfil" class="action-card">
+        <i class="fa-solid fa-user-gear"></i>
+        <span>Editar Perfil</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Barbearias recentes -->
+  @if (!carregando) {
+    <div class="section">
+      <div class="section-header">
+        <h2>Minhas Barbearias</h2>
+        <a routerLink="/dashboard/barbearias" class="section-link">Ver todas <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+
+      @if (barbearias.length === 0) {
+        <div class="empty-state">
+          <i class="fa-solid fa-store"></i>
+          <p>Você ainda não tem nenhuma barbearia cadastrada.</p>
+          <a routerLink="/dashboard/barbearias/nova" class="btn-primary">
+            Adicionar Barbearia
+          </a>
+        </div>
+      } @else {
+        <div class="barbearias-list">
+          @for (b of barbearias; track b.id) {
+            <div class="barbearia-card-mini">
+              <div class="barbearia-info">
+                <span class="barbearia-nome">{{ b.nome }}</span>
+                <span class="barbearia-local">{{ b.cidade }}, {{ b.estado }}</span>
+              </div>
+              <span class="status-badge" [class.ativa]="b.ativa" [class.inativa]="!b.ativa">
+                {{ b.ativa ? 'Ativa' : 'Inativa' }}
+              </span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

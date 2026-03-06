@@ -1,8 +1,9 @@
+import { provideZoneChangeDetection } from "@angular/core";
 import { BootstrapContext, bootstrapApplication } from '@angular/platform-browser';
-import { PagInicial } from './app/pag-inicial/pag-inicial';
+import { AppComponent } from './app/app';
 import { config } from './app/app.config.server';
 
 const bootstrap = (context: BootstrapContext) =>
-    bootstrapApplication(PagInicial, config, context);
+    bootstrapApplication(AppComponent, {...config, providers: [provideZoneChangeDetection(), ...config.providers]}, context);
 
 export default bootstrap;

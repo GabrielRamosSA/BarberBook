@@ -1,0 +1,73 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <i class="fa-solid fa-scissors login-icon"></i>
+      <h1>CortaAí</h1>
+      <p>Entre na sua conta</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" class="login-form">
+      @if (erro) {
+        <div class="erro-msg">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          {{ erro }}
+        </div>
+      }
+
+      <div class="campo">
+        <label for="email">E-mail</label>
+        <div class="input-wrapper">
+          <i class="fa-solid fa-envelope"></i>
+          <input
+            type="email"
+            id="email"
+            [(ngModel)]="email"
+            name="email"
+            placeholder="seu@email.com"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="senha">Senha</label>
+        <div class="input-wrapper">
+          <i class="fa-solid fa-lock"></i>
+          <input
+            type="password"
+            id="senha"
+            [(ngModel)]="senha"
+            name="senha"
+            placeholder="Sua senha"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="esqueceu-senha">
+        <a routerLink="/esqueceu-senha">Esqueceu sua senha?</a>
+      </div>
+
+      <button type="submit" class="btn-login" [disabled]="carregando">
+        @if (carregando) {
+          <i class="fa-solid fa-spinner fa-spin"></i> Entrando...
+        } @else {
+          Entrar
+        }
+      </button>
+    </form>
+
+    <div class="divider">
+      <span>ou</span>
+    </div>
+
+    <button class="btn-google" (click)="loginComGoogle()">
+      <i class="fa-brands fa-google"></i>
+      Entrar com Google
+    </button>
+
+    <p class="link-registro">
+      Não tem conta? <a routerLink="/registro">Criar conta</a>
+    </p>
+  </div>
+</div>

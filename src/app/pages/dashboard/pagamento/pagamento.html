@@ -1,0 +1,201 @@
+<div class="pagamento-page">
+  <!-- Toast -->
+  @if (toast) {
+    <div class="toast-notificacao" [class.toast-sucesso]="toast.tipo === 'sucesso'" [class.toast-erro]="toast.tipo === 'erro'">
+      <i [class]="toast.tipo === 'sucesso' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'"></i>
+      <span>{{ toast.mensagem }}</span>
+    </div>
+  }
+
+  <!-- Header -->
+  <div class="pagamento-header">
+    <button class="btn-voltar" (click)="voltar()">
+      <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    <div>
+      <h1>Assinar Plano</h1>
+      <p>Preencha os dados do cartão para finalizar</p>
+    </div>
+  </div>
+
+  <div class="pagamento-content">
+    <!-- Formulário do cartão -->
+    <div class="card-form-section">
+      <!-- Preview do cartão -->
+      <div class="card-preview" [class.flipped]="false">
+        <div class="card-preview-front">
+          <div class="card-preview-top">
+            <i class="fa-solid fa-sim-card chip-icon"></i>
+            @if (bandeira) {
+              <i [class]="bandeira.icone + ' brand-icon'" [style.color]="bandeira.cor"></i>
+            } @else {
+              <i class="fa-solid fa-credit-card brand-icon"></i>
+            }
+          </div>
+          <div class="card-preview-number">
+            {{ numeroCartaoDisplay || '•••• •••• •••• ••••' }}
+          </div>
+          <div class="card-preview-bottom">
+            <div class="card-preview-field">
+              <span class="card-label">TITULAR</span>
+              <span class="card-value">{{ nomeCartao || 'NOME NO CARTÃO' }}</span>
+            </div>
+            <div class="card-preview-field">
+              <span class="card-label">VALIDADE</span>
+              <span class="card-value">{{ validadeCartao || 'MM/AA' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Campos do formulário -->
+      <div class="card-form">
+                <div class="campo">
+                  <label>Tipo de pagamento</label>
+                  <div class="input-wrapper">
+                    <i class="fa-solid fa-money-check"></i>
+                    <select [(ngModel)]="tipoPagamento">
+                      <option value="credit_card">Crédito</option>
+                      <option value="debit_card">Débito</option>
+                    </select>
+                  </div>
+                </div>
+        <div class="campo">
+          <label>Número do cartão</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-credit-card"></i>
+            <input
+              type="text"
+              placeholder="0000 0000 0000 0000"
+              [value]="numeroCartaoDisplay"
+              (input)="onNumeroInput($event)"
+              maxlength="19"
+              inputmode="numeric"
+            />
+            @if (bandeira) {
+              <i [class]="bandeira.icone + ' input-brand'" [style.color]="bandeira.cor"></i>
+            }
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>Nome no cartão</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-user"></i>
+            <input
+              type="text"
+              placeholder="Como está no cartão"
+              [(ngModel)]="nomeCartao"
+              maxlength="50"
+              style="text-transform: uppercase"
+            />
+          </div>
+        </div>
+
+        <div class="campo-row">
+          <div class="campo">
+            <label>Validade</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-calendar"></i>
+              <input
+                type="text"
+                placeholder="MM/AA"
+                [value]="validadeCartao"
+                (input)="onValidadeInput($event)"
+                maxlength="5"
+                inputmode="numeric"
+              />
+            </div>
+          </div>
+
+          <div class="campo">
+            <label>CVC</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-lock"></i>
+              <input
+                type="text"
+                placeholder="000"
+                [value]="cvcCartao"
+                (input)="onCvcInput($event)"
+                maxlength="4"
+                inputmode="numeric"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>CPF do titular</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-id-card"></i>
+            <input
+              type="text"
+              placeholder="000.000.000-00"
+              [value]="cpfDisplay"
+              (input)="onCpfInput($event)"
+              maxlength="14"
+              inputmode="numeric"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumo da compra -->
+    <div class="resumo-compra">
+      <h3>Resumo da assinatura</h3>
+
+      <div class="resumo-plano">
+        <div class="resumo-plano-icon">
+          @if (planoSelecionado === 'PROFISSIONAL') {
+            <i class="fa-solid fa-star"></i>
+          } @else {
+            <i class="fa-solid fa-crown"></i>
+          }
+        </div>
+        <div class="resumo-plano-info">
+          <strong>Plano {{ planoSelecionado === 'PROFISSIONAL' ? 'Profissional' : 'Premium' }}</strong>
+          <span>{{ planoDescricao }}</span>
+        </div>
+      </div>
+
+      <div class="resumo-items">
+        <div class="resumo-item">
+          <span>Assinatura mensal</span>
+          <span>{{ planoPreco }}</span>
+        </div>
+      </div>
+
+      <div class="resumo-total">
+        <span>Total mensal</span>
+        <span class="total-valor">{{ planoPreco }}<small>/mês</small></span>
+      </div>
+
+      <button
+        class="btn-pagar"
+        [disabled]="processando || !formularioValido"
+        (click)="processarPagamento()">
+        @if (processando) {
+          <i class="fa-solid fa-spinner fa-spin"></i> Processando...
+        } @else {
+          <i class="fa-solid fa-lock"></i> Assinar {{ planoPreco }}/mês
+        }
+      </button>
+
+      <div class="seguranca-info">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>Pagamento seguro processado pelo Mercado Pago</span>
+      </div>
+
+      <div class="metodos-aceitos">
+        <span>Aceitamos:</span>
+        <div class="metodos-icons">
+          <i class="fa-brands fa-cc-visa"></i>
+          <i class="fa-brands fa-cc-mastercard"></i>
+          <i class="fa-brands fa-cc-amex"></i>
+          <i class="fa-solid fa-credit-card"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

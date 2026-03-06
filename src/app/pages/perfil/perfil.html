@@ -1,0 +1,174 @@
+<div class="perfil-container">
+  <!-- Header -->
+  <header class="perfil-header">
+    <div class="header-content">
+      <a routerLink="/" class="logo">
+        <i class="fa-solid fa-scissors"></i>
+        CortaAí
+      </a>
+      <button class="btn-logout" (click)="logout()">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        Sair
+      </button>
+    </div>
+  </header>
+
+  <!-- Conteúdo do perfil -->
+  <main class="perfil-main">
+    @if (user) {
+      <div class="perfil-card">
+        <!-- Avatar e info principal -->
+        <div class="perfil-top">
+          <div class="avatar-wrapper">
+            @if (user.avatar) {
+              <img [src]="user.avatar" alt="Avatar" class="avatar" referrerpolicy="no-referrer" />
+            } @else {
+              <div class="avatar-placeholder">
+                <i class="fa-solid fa-user"></i>
+              </div>
+            }
+
+            <!-- Avatar action icons -->
+            <div class="avatar-actions">
+              <button
+                class="avatar-btn avatar-btn-edit"
+                (click)="triggerAvatarUpload()"
+                title="Alterar foto"
+                [disabled]="uploadingAvatar"
+              >
+                @if (uploadingAvatar) {
+                  <i class="fa-solid fa-spinner fa-spin"></i>
+                } @else {
+                  <i class="fa-solid fa-camera"></i>
+                }
+              </button>
+              @if (user.avatar) {
+                <button
+                  class="avatar-btn avatar-btn-delete"
+                  (click)="excluirAvatar()"
+                  title="Remover foto"
+                >
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              }
+            </div>
+
+            <!-- Hidden file input -->
+            <input
+              type="file"
+              #avatarInput
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              (change)="onAvatarSelected($event)"
+              style="display: none"
+            />
+          </div>
+          <h2>{{ user.nome }}</h2>
+          <span class="tipo-badge">{{ user.tipo }}</span>
+        </div>
+
+        <!-- Mensagens -->
+        @if (mensagem) {
+          <div class="sucesso-msg">
+            <i class="fa-solid fa-circle-check"></i>
+            {{ mensagem }}
+          </div>
+        }
+        @if (erro) {
+          <div class="erro-msg">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            {{ erro }}
+          </div>
+        }
+
+        <!-- Dados do perfil -->
+        <div class="perfil-info">
+          @if (!editando) {
+            <div class="info-item">
+              <i class="fa-solid fa-envelope"></i>
+              <div>
+                <span class="info-label">E-mail</span>
+                <span class="info-value">{{ user.email }}</span>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <i class="fa-solid fa-phone"></i>
+              <div>
+                <span class="info-label">Telefone</span>
+                <span class="info-value">{{ user.telefone || 'Não informado' }}</span>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <i class="fa-solid fa-calendar"></i>
+              <div>
+                <span class="info-label">Tipo de conta</span>
+                <span class="info-value">{{ user.tipo }}</span>
+              </div>
+            </div>
+
+            <div class="perfil-actions">
+              <button class="btn-editar" (click)="toggleEditar()">
+                <i class="fa-solid fa-pen"></i>
+                Editar perfil
+              </button>
+              <button class="btn-excluir" (click)="excluirConta()">
+                <i class="fa-solid fa-trash"></i>
+                Excluir conta
+              </button>
+            </div>
+          } @else {
+            <!-- Formulário de edição -->
+            <form (ngSubmit)="salvar()" class="edit-form">
+              <div class="campo">
+                <label for="nome">Nome</label>
+                <input
+                  type="text"
+                  id="nome"
+                  [(ngModel)]="nome"
+                  name="nome"
+                  required
+                />
+              </div>
+
+              <div class="campo">
+                <label for="telefone">Telefone</label>
+                <input
+                  type="tel"
+                  id="telefone"
+                  [(ngModel)]="telefone"
+                  name="telefone"
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
+
+              <div class="edit-actions">
+                <button type="submit" class="btn-salvar">
+                  <i class="fa-solid fa-check"></i>
+                  Salvar
+                </button>
+                <button type="button" class="btn-cancelar" (click)="toggleEditar()">
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          }
+        </div>
+      </div>
+    } @else if (erroCarregamento) {
+      <div class="loading">
+        <i class="fa-solid fa-circle-exclamation" style="color: #e74c3c;"></i>
+        <p>Erro ao carregar perfil</p>
+        <button class="btn-retry" (click)="tentarNovamente()">
+          <i class="fa-solid fa-rotate-right"></i>
+          Tentar novamente
+        </button>
+      </div>
+    } @else {
+      <div class="loading">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        <p>Carregando perfil...</p>
+      </div>
+    }
+  </main>
+</div>

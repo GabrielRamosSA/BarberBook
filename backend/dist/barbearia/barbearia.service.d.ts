@@ -1,0 +1,263 @@
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateBarbeariaDto, UpdateBarbeariaDto } from './dto/barbearia.dto';
+export declare class BarbeariaService {
+    private prisma;
+    constructor(prisma: PrismaService);
+    private gerarSlug;
+    private gerarSlugUnico;
+    create(ownerId: string, dto: CreateBarbeariaDto): Promise<{
+        message: string;
+        barbearia: {
+            nome: string;
+            telefone: string | null;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            descricao: string | null;
+            endereco: string;
+            cidade: string;
+            estado: string;
+            cep: string | null;
+            pontoReferencia: string | null;
+            latitude: number | null;
+            longitude: number | null;
+            whatsapp: string | null;
+            mensagemLembrete: string | null;
+            lembreteAtivo: boolean;
+            ativa: boolean;
+            slug: string | null;
+            foto: string | null;
+            fotos: string[];
+            ownerId: string;
+        };
+    }>;
+    findAllByOwner(ownerId: string): Promise<{
+        nome: string;
+        telefone: string | null;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        descricao: string | null;
+        endereco: string;
+        cidade: string;
+        estado: string;
+        cep: string | null;
+        pontoReferencia: string | null;
+        latitude: number | null;
+        longitude: number | null;
+        whatsapp: string | null;
+        mensagemLembrete: string | null;
+        lembreteAtivo: boolean;
+        ativa: boolean;
+        slug: string | null;
+        foto: string | null;
+        fotos: string[];
+        ownerId: string;
+    }[]>;
+    findById(idOrSlug: string): Promise<{
+        owner: {
+            nome: string;
+            id: string;
+            avatar: string | null;
+        };
+        barbeiros: ({
+            servicos: {
+                nome: string;
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                ativo: boolean;
+                barbeariaId: string;
+                preco: number;
+                duracao: number;
+                barbeiroId: string | null;
+            }[];
+            horarios: {
+                id: string;
+                diaSemana: number;
+                barbeiroId: string;
+                horaInicio: string;
+                horaFim: string;
+                almocoInicio: string | null;
+                almocoFim: string | null;
+            }[];
+        } & {
+            nome: string;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            foto: string | null;
+            ativo: boolean;
+            barbeariaId: string;
+        })[];
+        servicos: {
+            nome: string;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            ativo: boolean;
+            barbeariaId: string;
+            preco: number;
+            duracao: number;
+            barbeiroId: string | null;
+        }[];
+    } & {
+        nome: string;
+        telefone: string | null;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        descricao: string | null;
+        endereco: string;
+        cidade: string;
+        estado: string;
+        cep: string | null;
+        pontoReferencia: string | null;
+        latitude: number | null;
+        longitude: number | null;
+        whatsapp: string | null;
+        mensagemLembrete: string | null;
+        lembreteAtivo: boolean;
+        ativa: boolean;
+        slug: string | null;
+        foto: string | null;
+        fotos: string[];
+        ownerId: string;
+    }>;
+    update(id: string, ownerId: string, dto: UpdateBarbeariaDto): Promise<{
+        message: string;
+        barbearia: {
+            nome: string;
+            telefone: string | null;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            descricao: string | null;
+            endereco: string;
+            cidade: string;
+            estado: string;
+            cep: string | null;
+            pontoReferencia: string | null;
+            latitude: number | null;
+            longitude: number | null;
+            whatsapp: string | null;
+            mensagemLembrete: string | null;
+            lembreteAtivo: boolean;
+            ativa: boolean;
+            slug: string | null;
+            foto: string | null;
+            fotos: string[];
+            ownerId: string;
+        };
+    }>;
+    updateFoto(id: string, ownerId: string, fotoUrl: string): Promise<{
+        message: string;
+        barbearia: {
+            nome: string;
+            telefone: string | null;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            descricao: string | null;
+            endereco: string;
+            cidade: string;
+            estado: string;
+            cep: string | null;
+            pontoReferencia: string | null;
+            latitude: number | null;
+            longitude: number | null;
+            whatsapp: string | null;
+            mensagemLembrete: string | null;
+            lembreteAtivo: boolean;
+            ativa: boolean;
+            slug: string | null;
+            foto: string | null;
+            fotos: string[];
+            ownerId: string;
+        };
+    }>;
+    addFotos(id: string, ownerId: string, fotosUrls: string[]): Promise<{
+        message: string;
+        barbearia: {
+            nome: string;
+            telefone: string | null;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            descricao: string | null;
+            endereco: string;
+            cidade: string;
+            estado: string;
+            cep: string | null;
+            pontoReferencia: string | null;
+            latitude: number | null;
+            longitude: number | null;
+            whatsapp: string | null;
+            mensagemLembrete: string | null;
+            lembreteAtivo: boolean;
+            ativa: boolean;
+            slug: string | null;
+            foto: string | null;
+            fotos: string[];
+            ownerId: string;
+        };
+    }>;
+    removeFoto(id: string, ownerId: string, fotoUrl: string): Promise<{
+        message: string;
+        barbearia: {
+            nome: string;
+            telefone: string | null;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            descricao: string | null;
+            endereco: string;
+            cidade: string;
+            estado: string;
+            cep: string | null;
+            pontoReferencia: string | null;
+            latitude: number | null;
+            longitude: number | null;
+            whatsapp: string | null;
+            mensagemLembrete: string | null;
+            lembreteAtivo: boolean;
+            ativa: boolean;
+            slug: string | null;
+            foto: string | null;
+            fotos: string[];
+            ownerId: string;
+        };
+    }>;
+    delete(id: string, ownerId: string): Promise<{
+        message: string;
+    }>;
+    search(estado?: string, cidade?: string): Promise<({
+        owner: {
+            nome: string;
+            id: string;
+            avatar: string | null;
+        };
+    } & {
+        nome: string;
+        telefone: string | null;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        descricao: string | null;
+        endereco: string;
+        cidade: string;
+        estado: string;
+        cep: string | null;
+        pontoReferencia: string | null;
+        latitude: number | null;
+        longitude: number | null;
+        whatsapp: string | null;
+        mensagemLembrete: string | null;
+        lembreteAtivo: boolean;
+        ativa: boolean;
+        slug: string | null;
+        foto: string | null;
+        fotos: string[];
+        ownerId: string;
+    })[]>;
+}

@@ -1,0 +1,70 @@
+<div class="verificar-container">
+  <div class="verificar-card">
+    <div class="verificar-header">
+      <div class="icon-wrapper">
+        <i class="fa-solid fa-envelope-circle-check"></i>
+      </div>
+      <h1>Verifique seu e-mail</h1>
+      <p>Enviamos um código de 6 dígitos para:</p>
+      <span class="email-destino">{{ email }}</span>
+    </div>
+
+    @if (erro) {
+      <div class="erro-msg">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        {{ erro }}
+      </div>
+    }
+
+    @if (mensagem) {
+      <div class="sucesso-msg">
+        <i class="fa-solid fa-circle-check"></i>
+        {{ mensagem }}
+      </div>
+    }
+
+    <div class="code-section">
+      <label>Código de verificação</label>
+      <input
+        type="text"
+        class="code-input"
+        [(ngModel)]="code"
+        (input)="onCodeInput($event)"
+        placeholder="000000"
+        maxlength="6"
+        autofocus
+      />
+    </div>
+
+    <button
+      class="btn-verificar"
+      (click)="verificar()"
+      [disabled]="verificando || code.length !== 6"
+    >
+      @if (verificando) {
+        <i class="fa-solid fa-spinner fa-spin"></i> Verificando...
+      } @else {
+        <i class="fa-solid fa-check"></i> Verificar
+      }
+    </button>
+
+    <div class="reenviar-section">
+      <p>Não recebeu o código?</p>
+      <button
+        class="btn-reenviar"
+        (click)="reenviar()"
+        [disabled]="reenviando"
+      >
+        @if (reenviando) {
+          <i class="fa-solid fa-spinner fa-spin"></i> Reenviando...
+        } @else {
+          <i class="fa-solid fa-rotate-right"></i> Reenviar código
+        }
+      </button>
+    </div>
+
+    <a routerLink="/registro" class="link-voltar">
+      <i class="fa-solid fa-arrow-left"></i> Voltar ao cadastro
+    </a>
+  </div>
+</div>

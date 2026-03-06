@@ -1,0 +1,186 @@
+<div class="planos-page">
+  <!-- Toast -->
+  @if (toast) {
+    <div class="toast-notificacao" [class.toast-sucesso]="toast.tipo === 'sucesso'" [class.toast-erro]="toast.tipo === 'erro'">
+      <i [class]="toast.tipo === 'sucesso' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'"></i>
+      <span>{{ toast.mensagem }}</span>
+    </div>
+  }
+
+  <div class="page-header">
+    <h1>Planos</h1>
+    <p>Escolha o plano ideal para sua barbearia</p>
+  </div>
+
+  <!-- Plano atual -->
+  @if (planoAtual) {
+    <div class="plano-atual-banner">
+      <div class="plano-atual-info">
+        <span class="plano-atual-label">Seu plano atual</span>
+        <span class="plano-atual-nome">{{ planoAtual }}</span>
+        @if (assinaturaAtiva) {
+          <span class="assinatura-badge ativa"><i class="fa-solid fa-rotate"></i> Recorrente</span>
+        }
+        @if (subscriptionStatus === 'cancelled' && planoExpiraEm) {
+          <span class="assinatura-badge cancelada"><i class="fa-solid fa-clock"></i> Ativo até {{ planoExpiraEm }}</span>
+        }
+      </div>
+      <div class="plano-atual-acoes">
+        @if (planoAtual === 'BASICO' && !assinaturaAtiva) {
+          <span class="plano-upgrade-hint">Faça upgrade para desbloquear mais recursos!</span>
+        }
+        @if (assinaturaAtiva) {
+          <button class="btn-cancelar-assinatura" (click)="cancelarAssinatura()" [disabled]="cancelando">
+            @if (cancelando) {
+              <i class="fa-solid fa-spinner fa-spin"></i> Cancelando...
+            } @else {
+              <i class="fa-solid fa-xmark"></i> Cancelar assinatura
+            }
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Cards dos planos -->
+  <div class="planos-grid">
+    <!-- BÁSICO -->
+    <div class="plano-card" [class.plano-ativo]="planoAtual === 'BASICO'">
+      <div class="plano-header">
+        <div class="plano-icon basico">
+          <i class="fa-solid fa-scissors"></i>
+        </div>
+        <h2>Básico</h2>
+        <div class="plano-preco">
+          <span class="preco-valor">Grátis</span>
+        </div>
+        <p class="plano-desc">Perfeito para quem está começando</p>
+      </div>
+
+      <ul class="plano-features">
+        <li class="included"><i class="fa-solid fa-check"></i> 1 barbearia</li>
+        <li class="included"><i class="fa-solid fa-check"></i> 2 barbeiros por barbearia</li>
+        <li class="included"><i class="fa-solid fa-check"></i> 3 serviços por barbeiro</li>
+        <li class="included"><i class="fa-solid fa-check"></i> 30 agendamentos/mês</li>
+        <li class="included"><i class="fa-solid fa-check"></i> Página da barbearia</li>
+        <li class="included"><i class="fa-solid fa-check"></i> Agenda do dia</li>
+        <li class="not-included"><i class="fa-solid fa-xmark"></i> Gestão de clientes</li>
+        <li class="not-included"><i class="fa-solid fa-xmark"></i> Lembrete WhatsApp</li>
+        <li class="not-included"><i class="fa-solid fa-xmark"></i> Fotos dos barbeiros</li>
+        <li class="not-included"><i class="fa-solid fa-xmark"></i> Relatórios de receita</li>
+      </ul>
+
+      <div class="plano-footer">
+        @if (planoAtual === 'BASICO') {
+          <button class="btn-plano atual" disabled>Plano Atual</button>
+        } @else {
+          <button class="btn-plano basico" (click)="selecionarPlano('BASICO')" [disabled]="atualizando">
+            {{ atualizando ? 'Atualizando...' : 'Selecionar' }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- PROFISSIONAL -->
+    <div class="plano-card destaque" [class.plano-ativo]="planoAtual === 'PROFISSIONAL'">
+      <div class="plano-badge-popular">Mais Popular</div>
+      <div class="plano-header">
+        <div class="plano-icon profissional">
+          <i class="fa-solid fa-star"></i>
+        </div>
+        <h2>Profissional</h2>
+        <div class="plano-preco">
+          <span class="preco-moeda">R$</span>
+          <span class="preco-valor">29,90</span>
+          <span class="preco-periodo">/mês</span>
+        </div>
+        <p class="plano-desc">Para barbeiros estabelecidos</p>
+      </div>
+
+      <ul class="plano-features">
+        <li class="included"><i class="fa-solid fa-check"></i> 3 barbearias</li>
+        <li class="included"><i class="fa-solid fa-check"></i> 5 barbeiros por barbearia</li>
+        <li class="included"><i class="fa-solid fa-check"></i> 10 serviços por barbeiro</li>
+        <li class="included highlight"><i class="fa-solid fa-check"></i> Agendamentos ilimitados</li>
+        <li class="included"><i class="fa-solid fa-check"></i> Página da barbearia</li>
+        <li class="included"><i class="fa-solid fa-check"></i> Agenda do dia</li>
+        <li class="included highlight"><i class="fa-solid fa-check"></i> Gestão de clientes</li>
+        <li class="included highlight"><i class="fa-solid fa-check"></i> Lembrete WhatsApp</li>
+        <li class="included"><i class="fa-solid fa-check"></i> Fotos dos barbeiros</li>
+        <li class="not-included"><i class="fa-solid fa-xmark"></i> Relatórios de receita</li>
+      </ul>
+
+      <div class="plano-footer">
+        @if (planoAtual === 'PROFISSIONAL') {
+          <button class="btn-plano atual" disabled>Plano Atual</button>
+        } @else {
+          <button class="btn-plano profissional" (click)="selecionarPlano('PROFISSIONAL')" [disabled]="atualizando">
+            {{ atualizando ? 'Atualizando...' : (isUpgrade('PROFISSIONAL') ? 'Fazer Upgrade' : 'Selecionar') }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- PREMIUM -->
+    <div class="plano-card" [class.plano-ativo]="planoAtual === 'PREMIUM'">
+      <div class="plano-header">
+        <div class="plano-icon premium">
+          <i class="fa-solid fa-crown"></i>
+        </div>
+        <h2>Premium</h2>
+        <div class="plano-preco">
+          <span class="preco-moeda">R$</span>
+          <span class="preco-valor">59,90</span>
+          <span class="preco-periodo">/mês</span>
+        </div>
+        <p class="plano-desc">Tudo ilimitado para seu negócio</p>
+      </div>
+
+      <ul class="plano-features">
+        <li class="included highlight"><i class="fa-solid fa-check"></i> Barbearias ilimitadas</li>
+        <li class="included highlight"><i class="fa-solid fa-check"></i> Barbeiros ilimitados</li>
+        <li class="included highlight"><i class="fa-solid fa-check"></i> Serviços ilimitados</li>
+        <li class="included highlight"><i class="fa-solid fa-check"></i> Agendamentos ilimitados</li>
+        <li class="included"><i class="fa-solid fa-check"></i> Página da barbearia</li>
+        <li class="included"><i class="fa-solid fa-check"></i> Agenda do dia</li>
+        <li class="included"><i class="fa-solid fa-check"></i> Gestão de clientes</li>
+        <li class="included"><i class="fa-solid fa-check"></i> Lembrete WhatsApp</li>
+        <li class="included"><i class="fa-solid fa-check"></i> Fotos dos barbeiros</li>
+        <li class="included highlight"><i class="fa-solid fa-check"></i> Relatórios de receita</li>
+      </ul>
+
+      <div class="plano-footer">
+        @if (planoAtual === 'PREMIUM') {
+          <button class="btn-plano atual" disabled>Plano Atual</button>
+        } @else {
+          <button class="btn-plano premium" (click)="selecionarPlano('PREMIUM')" [disabled]="atualizando">
+            {{ atualizando ? 'Atualizando...' : (isUpgrade('PREMIUM') ? 'Fazer Upgrade' : 'Selecionar') }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq-section">
+    <h2>Perguntas Frequentes</h2>
+    <div class="faq-grid">
+      <div class="faq-item">
+        <h3>Posso trocar de plano a qualquer momento?</h3>
+        <p>Sim! Você pode fazer upgrade ou downgrade quando quiser. As mudanças são aplicadas imediatamente.</p>
+      </div>
+      <div class="faq-item">
+        <h3>O que acontece se eu atingir o limite?</h3>
+        <p>Você receberá um aviso e precisará fazer upgrade para continuar adicionando novos recursos.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Preciso de cartão para o plano Básico?</h3>
+        <p>Não! O plano Básico é totalmente gratuito, sem necessidade de cadastrar cartão.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Como funciona o lembrete por WhatsApp?</h3>
+        <p>Enviamos uma mensagem automática para o cliente antes do horário agendado, reduzindo faltas.</p>
+      </div>
+    </div>
+  </div>
+</div>

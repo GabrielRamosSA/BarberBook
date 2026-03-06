@@ -1,0 +1,387 @@
+<div class="agendar-page">
+
+  <!-- Header -->
+  <header class="agendar-header">
+    <div class="header-inner">
+      <a routerLink="/" class="logo">
+        <i class="fas fa-cut"></i> CortaAí
+      </a>
+      <button class="btn-voltar" (click)="voltarInicio()">
+        <i class="fas fa-arrow-left"></i> Voltar
+      </button>
+    </div>
+  </header>
+
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="carregando">
+    <div class="spinner"></div>
+    <p>Carregando barbearia...</p>
+  </div>
+
+  <!-- Erro -->
+  <div class="erro-container" *ngIf="erro && !carregando">
+    <i class="fas fa-exclamation-triangle"></i>
+    <h2>{{ erro }}</h2>
+    <button class="btn-primario" (click)="voltarInicio()">Voltar ao início</button>
+  </div>
+
+  <!-- Conteúdo principal -->
+  <div class="conteudo" *ngIf="barbearia && !carregando">
+
+    <!-- Info da barbearia -->
+    <section class="barbearia-info">
+      <div class="info-esquerda">
+        <!-- Carousel de fotos -->
+        <div class="barbearia-carousel" *ngIf="getAllFotos().length > 0">
+          <div class="carousel-track" [style.transform]="'translateX(-' + (carouselIndex * 100) + '%)'">
+            <div class="carousel-slide" *ngFor="let foto of getAllFotos()">
+              <img [src]="foto" [alt]="barbearia.nome" />
+            </div>
+          </div>
+          <button class="carousel-btn prev" *ngIf="getAllFotos().length > 1" (click)="carouselPrev($event)">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button class="carousel-btn next" *ngIf="getAllFotos().length > 1" (click)="carouselNext($event)">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+          <div class="carousel-dots" *ngIf="getAllFotos().length > 1">
+            <span
+              *ngFor="let foto of getAllFotos(); let i = index"
+              class="dot"
+              [class.active]="i === carouselIndex"
+              (click)="carouselGoTo(i, $event)"></span>
+          </div>
+        </div>
+        <div class="barbearia-carousel no-foto" *ngIf="getAllFotos().length === 0">
+          <i class="fas fa-store"></i>
+        </div>
+
+        <div class="info-detalhes">
+          <h1>{{ barbearia.nome }}</h1>
+          <p class="descricao" *ngIf="barbearia.descricao">{{ barbearia.descricao }}</p>
+          <div class="info-item">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>{{ barbearia.endereco }}, {{ barbearia.cidade }} - {{ barbearia.estado }}</span>
+          </div>
+          <div class="info-item" *ngIf="barbearia.cep">
+            <i class="fas fa-mailbox"></i>
+            <span>CEP: {{ barbearia.cep }}</span>
+          </div>
+          <div class="info-item" *ngIf="barbearia.telefone">
+            <i class="fas fa-phone"></i>
+            <span>{{ barbearia.telefone }}</span>
+          </div>
+          <div class="info-item" *ngIf="barbearia.whatsapp">
+            <i class="fab fa-whatsapp"></i>
+            <a [href]="'https://wa.me/55' + barbearia.whatsapp" target="_blank">{{ barbearia.whatsapp }}</a>
+          </div>
+          <div class="info-item" *ngIf="barbearia.pontoReferencia">
+            <i class="fas fa-location-crosshairs"></i>
+            <span>{{ barbearia.pontoReferencia }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mapa -->
+      <div class="info-direita" *ngIf="barbearia.latitude && barbearia.longitude">
+        <h3><i class="fas fa-map"></i> Localização</h3>
+        <div id="mapa-agendar" class="mapa-container"></div>
+      </div>
+    </section>
+
+    <!-- Etapas de agendamento -->
+    <section class="agendamento-section">
+      <div class="etapas-indicador">
+        <div class="etapa-dot" [class.ativo]="etapa >= 1" [class.completo]="etapa > 1">
+          <span>1</span>
+          <small>Barbeiro</small>
+        </div>
+        <div class="etapa-linha" [class.ativo]="etapa > 1"></div>
+        <div class="etapa-dot" [class.ativo]="etapa >= 2" [class.completo]="etapa > 2">
+          <span>2</span>
+          <small>Serviço</small>
+        </div>
+        <div class="etapa-linha" [class.ativo]="etapa > 2"></div>
+        <div class="etapa-dot" [class.ativo]="etapa >= 3" [class.completo]="etapa > 3">
+          <span>3</span>
+          <small>Horário</small>
+        </div>
+        <div class="etapa-linha" [class.ativo]="etapa > 3"></div>
+        <div class="etapa-dot" [class.ativo]="etapa >= 4" [class.completo]="etapa > 4">
+          <span>4</span>
+          <small>Resumo</small>
+        </div>
+        <div class="etapa-linha" [class.ativo]="etapa > 4"></div>
+        <div class="etapa-dot" [class.ativo]="etapa >= 5">
+          <span>5</span>
+          <small>Confirmar</small>
+        </div>
+      </div>
+
+      <!-- Etapa 1: Escolher Barbeiro -->
+      <div class="etapa-conteudo" *ngIf="etapa === 1">
+        <h2><i class="fas fa-user-tie"></i> Escolha seu barbeiro</h2>
+        <p class="etapa-subtitulo">Selecione um dos barbeiros disponíveis</p>
+
+        <div class="barbeiros-grid" *ngIf="barbearia.barbeiros.length > 0">
+          <div
+            class="barbeiro-card"
+            *ngFor="let b of barbearia.barbeiros"
+            (click)="selecionarBarbeiro(b)"
+            [class.selecionado]="barbeiroSelecionado?.id === b.id">
+            <div class="barbeiro-foto">
+              <img *ngIf="b.foto" [src]="getFotoUrl(b.foto)" [alt]="b.nome" />
+              <i *ngIf="!b.foto" class="fas fa-user"></i>
+            </div>
+            <div class="barbeiro-info">
+              <h3>{{ b.nome }}</h3>
+              <p class="barbeiro-dias"><i class="fas fa-calendar-alt"></i> {{ getDiasAtivos(b) }}</p>
+              <p class="barbeiro-horario" *ngIf="getHorarioResumo(b)"><i class="fas fa-clock"></i> {{ getHorarioResumo(b) }}</p>
+            </div>
+            <div class="barbeiro-selecionar">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="vazio" *ngIf="barbearia.barbeiros.length === 0">
+          <i class="fas fa-user-slash"></i>
+          <p>Nenhum barbeiro disponível no momento</p>
+        </div>
+      </div>
+
+      <!-- Etapa 2: Escolher Serviço -->
+      <div class="etapa-conteudo" *ngIf="etapa === 2">
+        <button class="btn-voltar-etapa" (click)="voltarEtapa()">
+          <i class="fas fa-arrow-left"></i> Voltar
+        </button>
+        <h2><i class="fas fa-cut"></i> Escolha o serviço</h2>
+        <p class="etapa-subtitulo">Barbeiro: <strong>{{ barbeiroSelecionado?.nome }}</strong></p>
+
+        <div class="servicos-grid" *ngIf="servicosDoBarbeiro.length > 0">
+          <div
+            class="servico-card"
+            *ngFor="let s of servicosDoBarbeiro"
+            (click)="selecionarServico(s)"
+            [class.selecionado]="servicoSelecionado?.id === s.id">
+            <div class="servico-icone">
+              <i class="fas fa-cut"></i>
+            </div>
+            <div class="servico-info">
+              <h3>{{ s.nome }}</h3>
+              <div class="servico-detalhes">
+                <span class="servico-preco">R$ {{ s.preco.toFixed(2) }}</span>
+                <span class="servico-duracao"><i class="fas fa-clock"></i> {{ s.duracao }} min</span>
+              </div>
+            </div>
+            <div class="servico-selecionar">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="vazio" *ngIf="servicosDoBarbeiro.length === 0">
+          <i class="fas fa-cut"></i>
+          <p>Nenhum serviço disponível no momento</p>
+        </div>
+      </div>
+
+      <!-- Etapa 3: Escolher Horário -->
+      <div class="etapa-conteudo" *ngIf="etapa === 3">
+        <button class="btn-voltar-etapa" (click)="voltarEtapa()">
+          <i class="fas fa-arrow-left"></i> Voltar
+        </button>
+        <h2><i class="fas fa-calendar-alt"></i> Escolha o horário</h2>
+        <p class="etapa-subtitulo">Barbeiro: <strong>{{ barbeiroSelecionado?.nome }}</strong> | Serviço: <strong>{{ servicoSelecionado?.nome }}</strong></p>
+
+        <!-- Seletor de data -->
+        <div class="horario-section">
+          <h3 class="horario-section-title"><i class="fas fa-calendar-day"></i> Selecione o dia</h3>
+          <div class="datas-grid">
+            <div
+              class="data-card"
+              *ngFor="let d of datasDisponiveis"
+              (click)="selecionarData(d.data)"
+              [class.selecionado]="dataSelecionada === d.data">
+              <span class="data-dia">{{ d.label.split(' - ')[0] }}</span>
+              <span class="data-semana">{{ d.label.split(' - ')[1] }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Horários do dia selecionado -->
+        <div class="horario-section" *ngIf="dataSelecionada">
+          <h3 class="horario-section-title"><i class="fas fa-clock"></i> Horários disponíveis</h3>
+          <div class="horarios-loading" *ngIf="carregandoHorarios">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Verificando disponibilidade...</p>
+          </div>
+          <div class="horarios-grid" *ngIf="!carregandoHorarios && horariosGerados.length > 0">
+            <div
+              class="horario-slot"
+              *ngFor="let h of horariosGerados"
+              (click)="selecionarHorario(h)"
+              [class.selecionado]="horarioSelecionado === h">
+              {{ h }}
+            </div>
+          </div>
+          <div class="vazio" *ngIf="!carregandoHorarios && horariosGerados.length === 0">
+            <i class="fas fa-clock"></i>
+            <p>Nenhum horário disponível neste dia</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Etapa 4: Resumo -->
+      <div class="etapa-conteudo" *ngIf="etapa === 4">
+        <button class="btn-voltar-etapa" (click)="voltarEtapa()">
+          <i class="fas fa-arrow-left"></i> Voltar
+        </button>
+        <h2><i class="fas fa-clipboard-list"></i> Resumo do agendamento</h2>
+
+        <div class="resumo-card">
+          <div class="resumo-item">
+            <div class="resumo-label">
+              <i class="fas fa-store"></i> Barbearia
+            </div>
+            <div class="resumo-valor">{{ barbearia.nome }}</div>
+          </div>
+          <div class="resumo-divider"></div>
+          <div class="resumo-item">
+            <div class="resumo-label">
+              <i class="fas fa-user-tie"></i> Barbeiro
+            </div>
+            <div class="resumo-valor">{{ barbeiroSelecionado?.nome }}</div>
+          </div>
+          <div class="resumo-divider"></div>
+          <div class="resumo-item">
+            <div class="resumo-label">
+              <i class="fas fa-calendar-alt"></i> Data
+            </div>
+            <div class="resumo-valor">{{ getDataFormatada() }}</div>
+          </div>
+          <div class="resumo-divider"></div>
+          <div class="resumo-item">
+            <div class="resumo-label">
+              <i class="fas fa-clock"></i> Horário
+            </div>
+            <div class="resumo-valor">{{ horarioSelecionado }}</div>
+          </div>
+          <div class="resumo-divider"></div>
+          <div class="resumo-item">
+            <div class="resumo-label">
+              <i class="fas fa-cut"></i> Serviço
+            </div>
+            <div class="resumo-valor">{{ servicoSelecionado?.nome }}</div>
+          </div>
+          <div class="resumo-divider"></div>
+          <div class="resumo-item">
+            <div class="resumo-label">
+              <i class="fas fa-hourglass-half"></i> Duração
+            </div>
+            <div class="resumo-valor">{{ servicoSelecionado?.duracao }} minutos</div>
+          </div>
+          <div class="resumo-divider"></div>
+          <div class="resumo-item destaque">
+            <div class="resumo-label">
+              <i class="fas fa-tag"></i> Valor
+            </div>
+            <div class="resumo-valor preco">R$ {{ servicoSelecionado?.preco?.toFixed(2) }}</div>
+          </div>
+        </div>
+
+        <button class="btn-primario btn-grande" (click)="irParaConfirmacao()">
+          <i class="fas fa-check"></i> Continuar
+        </button>
+      </div>
+
+      <!-- Etapa 5: Confirmação -->
+      <div class="etapa-conteudo" *ngIf="etapa === 5">
+        <button class="btn-voltar-etapa" (click)="voltarEtapa()">
+          <i class="fas fa-arrow-left"></i> Voltar
+        </button>
+        <h2><i class="fas fa-user-check"></i> Seus dados</h2>
+        <p class="etapa-subtitulo">Preencha seus dados para confirmar o agendamento</p>
+
+        <div class="confirmacao-form">
+          <div class="form-group">
+            <label for="nomeCliente"><i class="fas fa-user"></i> Seu nome</label>
+            <input
+              type="text"
+              id="nomeCliente"
+              [(ngModel)]="nomeCliente"
+              placeholder="Digite seu nome completo"
+              maxlength="100" />
+          </div>
+          <div class="form-group">
+            <label for="telefoneCliente"><i class="fas fa-phone"></i> Seu telefone</label>
+            <input
+              type="tel"
+              id="telefoneCliente"
+              [value]="telefoneCliente"
+              (input)="onTelefoneInput($event)"
+              placeholder="(00) 00000-0000"
+              maxlength="15" />
+            @if (telefoneCliente && !telefoneValido) {
+              <span class="campo-erro">Telefone inválido. Use DDD + número.</span>
+            }
+          </div>
+
+          <div class="confirmacao-resumo">
+            <div class="mini-resumo">
+              <span><strong>{{ barbeiroSelecionado?.nome }}</strong></span>
+              <span>{{ getDataFormatada() }} às {{ horarioSelecionado }}</span>
+              <span>{{ servicoSelecionado?.nome }} - <strong>R$ {{ servicoSelecionado?.preco?.toFixed(2) }}</strong></span>
+              <span>{{ servicoSelecionado?.duracao }} min</span>
+            </div>
+          </div>
+
+          <button
+            class="btn-primario btn-grande btn-confirmar"
+            [disabled]="!confirmacaoValida"
+            [disabled]="!confirmacaoValida || salvandoAgendamento"
+            (click)="confirmarAgendamento()">
+            @if (salvandoAgendamento) {
+              <i class="fas fa-spinner fa-spin"></i> Salvando...
+            } @else {
+              <i class="fas fa-calendar-check"></i> Confirmar Agendamento
+            }
+          </button>
+          @if (erroAgendamento) {
+            <p class="erro-msg" style="color: #e74c3c; margin-top: 8px; font-size: 0.9rem;">{{ erroAgendamento }}</p>
+          }
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal de Sucesso -->
+  <div class="modal-overlay" *ngIf="agendamentoConfirmado" (click)="fecharSucesso()">
+    <div class="modal-sucesso" (click)="$event.stopPropagation()">
+      <div class="sucesso-icone">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h2>Agendamento Confirmado!</h2>
+      <p>Seu agendamento foi realizado com sucesso.</p>
+      <div class="sucesso-detalhes">
+        <p><strong>{{ barbearia?.nome }}</strong></p>
+        <p>Barbeiro: {{ barbeiroSelecionado?.nome }}</p>
+        <p>Data: {{ getDataFormatada() }} às {{ horarioSelecionado }}</p>
+        <p>Serviço: {{ servicoSelecionado?.nome }}</p>
+        <p>Valor: R$ {{ servicoSelecionado?.preco?.toFixed(2) }}</p>
+        <p>Cliente: {{ nomeCliente }}</p>
+        <p>Telefone: {{ telefoneCliente }}</p>
+      </div>
+      @if (user) {
+        <button class="btn-primario btn-grande" (click)="fecharSucesso()">
+          <i class="fas fa-calendar-check"></i> Ver Meus Agendamentos
+        </button>
+      } @else {
+        <button class="btn-primario btn-grande" (click)="fecharSucesso()">
+          <i class="fas fa-home"></i> Voltar ao início
+        </button>
+      }
+    </div>
+  </div>
+
+</div>

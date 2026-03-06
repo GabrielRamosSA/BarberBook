@@ -1,0 +1,95 @@
+<div class="dashboard-layout" [class.collapsed]="sidebarCollapsed">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <a routerLink="/" class="sidebar-logo">
+        <i class="fa-solid fa-scissors"></i>
+        @if (!sidebarCollapsed) {
+          <span>CortaAí</span>
+        }
+      </a>
+      <button class="sidebar-toggle" (click)="toggleSidebar()">
+        <i [class]="sidebarCollapsed ? 'fa-solid fa-angles-right' : 'fa-solid fa-angles-left'"></i>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="/dashboard" class="nav-item" [class.active]="activeRoute === '/dashboard'">
+        <i class="fa-solid fa-chart-line"></i>
+        @if (!sidebarCollapsed) {
+          <span>Painel</span>
+        }
+      </a>
+
+      <a routerLink="/dashboard/barbearias" class="nav-item" [class.active]="isActive('/dashboard/barbearias')">
+        <i class="fa-solid fa-store"></i>
+        @if (!sidebarCollapsed) {
+          <span>Minhas Barbearias</span>
+        }
+      </a>
+
+      <a routerLink="/dashboard/agenda" class="nav-item" [class.active]="isActive('/dashboard/agenda')">
+        <i class="fa-solid fa-calendar-days"></i>
+        @if (!sidebarCollapsed) {
+          <span>Agenda</span>
+        }
+      </a>
+
+      <a routerLink="/dashboard/clientes" class="nav-item" [class.active]="isActive('/dashboard/clientes')">
+        <i class="fa-solid fa-users"></i>
+        @if (!sidebarCollapsed) {
+          <span>Clientes</span>
+        }
+      </a>
+
+      <a routerLink="/dashboard/planos" class="nav-item" [class.active]="isActive('/dashboard/planos')">
+        <i class="fa-solid fa-crown"></i>
+        @if (!sidebarCollapsed) {
+          <span>Planos</span>
+        }
+      </a>
+
+      <div class="nav-separator"></div>
+
+      <a routerLink="/perfil" class="nav-item">
+        <i class="fa-solid fa-user-gear"></i>
+        @if (!sidebarCollapsed) {
+          <span>Meu Perfil</span>
+        }
+      </a>
+
+      <button class="nav-item nav-logout" (click)="logout()">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        @if (!sidebarCollapsed) {
+          <span>Sair</span>
+        }
+      </button>
+    </nav>
+
+    @if (!sidebarCollapsed && user) {
+      <div class="sidebar-footer">
+        <div class="user-info">
+          @if (getAvatarUrl()) {
+            <img [src]="getAvatarUrl()" alt="Avatar" class="sidebar-avatar" />
+          } @else {
+            <div class="sidebar-avatar-placeholder">
+              {{ user.nome.charAt(0).toUpperCase() }}
+            </div>
+          }
+          <div class="user-details">
+            <span class="user-name">{{ user.nome }}</span>
+            <div class="user-meta">
+              <span class="user-role">BARBEIRO</span>
+              <span class="user-plano" [class]="'plano-' + (user.plano || 'BASICO').toLowerCase()">{{ user.plano || 'BASICO' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </aside>
+
+  <!-- Main content -->
+  <main class="dashboard-main">
+    <router-outlet></router-outlet>
+  </main>
+</div>

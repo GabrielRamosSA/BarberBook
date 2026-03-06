@@ -1,0 +1,286 @@
+<div class="agenda-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1><i class="fa-solid fa-calendar-days"></i> Agenda</h1>
+      <p>Gerencie os agendamentos do dia</p>
+    </div>
+  </div>
+
+  <!-- Date Selector -->
+  <div class="date-selector">
+    <button class="btn-nav" (click)="mudarData(-1)">
+      <i class="fa-solid fa-chevron-left"></i>
+    </button>
+
+    <div class="date-display" (click)="dateInput.showPicker()">
+      <i class="fa-solid fa-calendar"></i>
+      <span class="date-text">{{ dataFormatada }}</span>
+      @if (isHoje) {
+        <span class="badge-hoje">HOJE</span>
+      }
+      <input
+        #dateInput
+        type="date"
+        [value]="dataSelecionada"
+        (change)="onDateInput($event)"
+        class="date-hidden-input"
+      />
+    </div>
+
+    <button class="btn-nav" (click)="mudarData(1)">
+      <i class="fa-solid fa-chevron-right"></i>
+    </button>
+
+    @if (!isHoje) {
+      <button class="btn-hoje" (click)="irParaHoje()">
+        <i class="fa-solid fa-rotate-left"></i> Hoje
+      </button>
+    }
+  </div>
+
+  <!-- Lembretes pendentes -->
+  @if (lembretes.length > 0) {
+    <div class="lembretes-container">
+      <div class="lembretes-header">
+        <i class="fa-solid fa-bell"></i>
+        <span>Lembretes para enviar ({{ lembretes.length }})</span>
+      </div>
+      @for (lembrete of lembretes; track lembrete.id) {
+        <div class="lembrete-card">
+          <div class="lembrete-info">
+            <div class="lembrete-cliente">
+              <strong>{{ lembrete.nomeCliente }}</strong>
+              <span class="lembrete-horario">
+                <i class="fa-solid fa-clock"></i>
+                {{ lembrete.horario }} — em {{ getMinutosRestantes(lembrete) }} min
+              </span>
+            </div>
+            <div class="lembrete-servico">
+              <i class="fa-solid fa-scissors"></i>
+              {{ lembrete.servico.nome }}
+            </div>
+            <div class="lembrete-mensagem">
+              "{{ lembrete.mensagemFormatada }}"
+            </div>
+          </div>
+          <div class="lembrete-acoes">
+            <button class="btn-lembrete-enviar" (click)="enviarLembreteWhatsApp(lembrete)">
+              <i class="fa-brands fa-whatsapp"></i> Enviar WhatsApp
+            </button>
+            <button class="btn-lembrete-descartar" (click)="descartarLembrete(lembrete)" title="Descartar">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Stats do dia -->
+  <div class="day-stats">
+    <div class="day-stat">
+      <div class="stat-icon pendente">
+        <i class="fa-solid fa-clock"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ pendentes.length }}</span>
+        <span class="stat-label">Pendentes</span>
+      </div>
+    </div>
+    <div class="day-stat">
+      <div class="stat-icon confirmado">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ confirmados.length }}</span>
+        <span class="stat-label">Confirmados</span>
+      </div>
+    </div>
+    <div class="day-stat">
+      <div class="stat-icon concluido">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ concluidos.length }}</span>
+        <span class="stat-label">Concluídos</span>
+      </div>
+    </div>
+    @if (user?.plano === 'PREMIUM') {
+      <div class="day-stat">
+        <div class="stat-icon receita">
+          <i class="fa-solid fa-dollar-sign"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">R$ {{ getReceitaDia().toFixed(2) }}</span>
+          <span class="stat-label">Receita do dia</span>
+        </div>
+      </div>
+    }
+    @if (usoMensal && usoMensal.limite !== -1) {
+      <div class="day-stat" [class.stat-alerta]="usoMensal.usado >= usoMensal.limite">
+        <div class="stat-icon uso-mensal" [class.uso-esgotado]="usoMensal.usado >= usoMensal.limite">
+          <i class="fa-solid fa-chart-pie"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ usoMensal.usado }}/{{ usoMensal.limite }}</span>
+          <span class="stat-label">Agendamentos do mês</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Filtro por barbearia -->
+  @if (barbeariasUnicas.length > 1) {
+    <div class="filtro-barbearias">
+      <button
+        class="filtro-btn"
+        [class.ativo]="!barbeariaFiltro"
+        (click)="barbeariaFiltro = ''">
+        <i class="fa-solid fa-layer-group"></i> Todas
+      </button>
+      @for (b of barbeariasUnicas; track b.id) {
+        <button
+          class="filtro-btn"
+          [class.ativo]="barbeariaFiltro === b.id"
+          (click)="filtrarPorBarbearia(b.id)">
+          <i class="fa-solid fa-store"></i> {{ b.nome }}
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (carregando) {
+    <div class="loading-state">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+      <p>Carregando agenda...</p>
+    </div>
+  }
+
+  <!-- Sem agendamentos -->
+  @if (!carregando && agendamentosFiltrados.length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">
+        <i class="fa-solid fa-calendar-xmark"></i>
+      </div>
+      <h3>Nenhum agendamento</h3>
+      <p>{{ barbeariaFiltro ? 'Nenhum agendamento para esta barbearia neste dia.' : 'Não há agendamentos para este dia.' }}</p>
+    </div>
+  }
+
+  <!-- Lista de agendamentos -->
+  @if (!carregando && agendamentosFiltrados.length > 0) {
+    <div class="agendamentos-timeline">
+      @for (ag of agendamentosFiltrados; track ag.id) {
+        <div class="timeline-item" [ngClass]="getStatusClass(ag.status)">
+          <!-- Hora -->
+          <div class="timeline-hora">
+            <span class="hora">{{ ag.horario }}</span>
+            <span class="duracao">{{ ag.servico.duracao }} min</span>
+          </div>
+
+          <!-- Linha do tempo -->
+          <div class="timeline-line">
+            <div class="timeline-dot"></div>
+          </div>
+
+          <!-- Card -->
+          <div class="timeline-card">
+            <div class="card-top">
+              <!-- Avatar do cliente -->
+              <div class="cliente-info">
+                @if (getClienteAvatar(ag)) {
+                  <img [src]="getClienteAvatar(ag)" alt="" class="cliente-avatar" />
+                } @else {
+                  <div class="cliente-avatar-placeholder">
+                    {{ getClienteInicial(ag) }}
+                  </div>
+                }
+                <div class="cliente-dados">
+                  <strong class="cliente-nome">{{ getClienteNome(ag) }}</strong>
+                  <span class="cliente-telefone">
+                    <i class="fa-solid fa-phone"></i> {{ getClienteTelefone(ag) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Status badge -->
+              <span class="status-badge" [ngClass]="getStatusClass(ag.status)">
+                {{ getStatusLabel(ag.status) }}
+              </span>
+            </div>
+
+            <div class="card-servico">
+              <div class="servico-detalhe">
+                <i class="fa-solid fa-scissors"></i>
+                <span>{{ ag.servico.nome }}</span>
+              </div>
+              <div class="servico-meta">
+                <span class="preco">R$ {{ ag.servico.preco.toFixed(2) }}</span>
+                <span class="separador">•</span>
+                <span class="barbeiro-nome">
+                  <i class="fa-solid fa-user"></i> {{ ag.barbeiro.nome }}
+                </span>
+              </div>
+            </div>
+
+            @if (ag.barbearia) {
+              <div class="card-barbearia">
+                <i class="fa-solid fa-store"></i>
+                <span>{{ ag.barbearia.nome }}</span>
+              </div>
+            }
+
+            <!-- Ações -->
+            <div class="card-acoes">
+              @if (ag.status === 'PENDENTE') {
+                <button
+                  class="btn-acao btn-confirmar"
+                  [disabled]="atualizandoId === ag.id"
+                  (click)="atualizarStatus(ag.id, 'CONFIRMADO')">
+                  @if (atualizandoId === ag.id) {
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                  } @else {
+                    <i class="fa-solid fa-check"></i>
+                  }
+                  Confirmar
+                </button>
+                <button
+                  class="btn-acao btn-cancelar"
+                  [disabled]="atualizandoId === ag.id"
+                  (click)="atualizarStatus(ag.id, 'CANCELADO')">
+                  <i class="fa-solid fa-times"></i> Cancelar
+                </button>
+              }
+              @if (ag.status === 'CONFIRMADO') {
+                <button
+                  class="btn-acao btn-concluir"
+                  [disabled]="atualizandoId === ag.id"
+                  (click)="atualizarStatus(ag.id, 'CONCLUIDO')">
+                  @if (atualizandoId === ag.id) {
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                  } @else {
+                    <i class="fa-solid fa-circle-check"></i>
+                  }
+                  Concluir
+                </button>
+                <button
+                  class="btn-acao btn-cancelar"
+                  [disabled]="atualizandoId === ag.id"
+                  (click)="atualizarStatus(ag.id, 'CANCELADO')">
+                  <i class="fa-solid fa-times"></i> Cancelar
+                </button>
+              }
+              <button
+                class="btn-acao btn-whatsapp"
+                (click)="abrirWhatsApp(getClienteTelefone(ag))">
+                <i class="fa-brands fa-whatsapp"></i> WhatsApp
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

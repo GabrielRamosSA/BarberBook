@@ -1,0 +1,166 @@
+<div class="barbearias-page">
+  <div class="page-header">
+    <div>
+      <h1>Minhas Barbearias</h1>
+      <p>Gerencie suas barbearias</p>
+    </div>
+    @if (limiteAtingido || limiteExcedido) {
+      <span class="btn-primary btn-disabled" title="Limite do plano atingido">
+        <i class="fa-solid fa-lock"></i> Nova Barbearia
+      </span>
+    } @else {
+      <a routerLink="/dashboard/barbearias/nova" class="btn-primary">
+        Nova Barbearia
+      </a>
+    }
+  </div>
+
+  @if (limiteExcedido) {
+    <div class="alerta-excedente">
+      <div class="alerta-icon">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <div class="alerta-content">
+        <strong>Limite de barbearias excedido</strong>
+        <p>
+          Seu plano <strong>{{ planoUsuario }}</strong> permite no máximo
+          <strong>{{ maxBarbearias }}</strong> barbearia{{ maxBarbearias > 1 ? 's' : '' }}.
+          Você possui <strong>{{ barbearias.length }}</strong>.
+          Exclua {{ quantidadeExcedente }} barbearia{{ quantidadeExcedente > 1 ? 's' : '' }}
+          para voltar ao limite ou faça upgrade do seu plano.
+        </p>
+      </div>
+    </div>
+  }
+
+  @if (carregando) {
+    <div class="loading">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+      <p>Carregando...</p>
+    </div>
+  } @else if (barbearias.length === 0) {
+    <div class="empty-state">
+      <i class="fa-solid fa-store"></i>
+      <h3>Nenhuma barbearia cadastrada</h3>
+      <p>Cadastre sua primeira barbearia para começar a receber agendamentos.</p>
+      <a routerLink="/dashboard/barbearias/nova" class="btn-primary">
+        Adicionar Barbearia
+      </a>
+    </div>
+  } @else {
+    <div class="barbearias-grid">
+      @for (b of barbearias; track b.id; let idx = $index) {
+        <div class="barbearia-card" [class.card-excedente]="isExcedente(idx)">
+          @if (isExcedente(idx)) {
+            <div class="card-excedente-badge">
+              <i class="fa-solid fa-lock"></i> Excedente — exclua ou faça upgrade
+            </div>
+          }
+          <div class="card-header">
+            @if (getAllFotos(b).length > 0) {
+              <div class="carousel">
+                <div class="carousel-track" [style.transform]="'translateX(-' + (b._carouselIndex || 0) * 100 + '%)'">
+                  @for (fotoUrl of getAllFotos(b); track fotoUrl) {
+                    <img [src]="fotoUrl" alt="{{ b.nome }}" class="carousel-slide" />
+                  }
+                </div>
+
+                @if (getAllFotos(b).length > 1) {
+                  <button class="carousel-btn carousel-prev" (click)="carouselPrev(b, $event)">
+                    <i class="fa-solid fa-chevron-left"></i>
+                  </button>
+                  <button class="carousel-btn carousel-next" (click)="carouselNext(b, $event)">
+                    <i class="fa-solid fa-chevron-right"></i>
+                  </button>
+
+                  <div class="carousel-dots">
+                    @for (fotoUrl of getAllFotos(b); track fotoUrl; let idx = $index) {
+                      <span class="dot" [class.active]="idx === (b._carouselIndex || 0)" (click)="carouselGoTo(b, idx, $event)"></span>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="card-foto-placeholder">
+                <i class="fa-solid fa-store"></i>
+              </div>
+            }
+            <span class="card-status" [class.ativa]="b.ativa" [class.inativa]="!b.ativa">
+              {{ b.ativa ? 'Ativa' : 'Inativa' }}
+            </span>
+          </div>
+
+          <div class="card-body">
+            <h3>{{ b.nome }}</h3>
+            <p class="card-endereco">
+              <i class="fa-solid fa-location-dot"></i>
+              {{ b.endereco }}, {{ b.cidade }} - {{ b.estado }}
+            </p>
+            @if (b.telefone) {
+              <p class="card-tel">
+                <i class="fa-solid fa-phone"></i>
+                {{ b.telefone }}
+              </p>
+            }
+          </div>
+
+          <div class="card-actions">
+            @if (isExcedente(idx)) {
+              <span class="btn-card btn-editar btn-card-disabled">
+                <i class="fa-solid fa-pen"></i> Editar
+              </span>
+              <span class="btn-card btn-toggle btn-card-disabled">
+                <i class="fa-solid fa-eye-slash"></i>
+                {{ b.ativa ? 'Desativar' : 'Ativar' }}
+              </span>
+            } @else {
+              <a [routerLink]="['/dashboard/barbearias', b.id]" class="btn-card btn-editar">
+                <i class="fa-solid fa-pen"></i> Editar
+              </a>
+              <button class="btn-card btn-toggle" (click)="toggleAtiva(b)">
+                <i [class]="b.ativa ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                {{ b.ativa ? 'Desativar' : 'Ativar' }}
+              </button>
+            }
+            <button class="btn-card btn-excluir" (click)="excluir(b)">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Toast -->
+@if (toast) {
+  <div class="toast-notificacao" [class.toast-sucesso]="toast.tipo === 'sucesso'" [class.toast-erro]="toast.tipo === 'erro'">
+    <i [class]="toast.tipo === 'sucesso' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'"></i>
+    <span>{{ toast.mensagem }}</span>
+  </div>
+}
+
+<!-- Modal de exclusão -->
+@if (modalExcluir) {
+  <div class="modal-overlay" (click)="cancelarExclusao()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-icon">
+        <i class="fa-solid fa-trash-can"></i>
+      </div>
+      <h3>Excluir barbearia</h3>
+      <p>Tem certeza que deseja excluir <strong>"{{ modalExcluir.nome }}"</strong>? Essa ação não pode ser desfeita.</p>
+      <div class="modal-acoes">
+        <button class="btn-modal btn-cancelar" (click)="cancelarExclusao()" [disabled]="excluindo">
+          Cancelar
+        </button>
+        <button class="btn-modal btn-excluir" (click)="confirmarExclusao()" [disabled]="excluindo">
+          @if (excluindo) {
+            <i class="fa-solid fa-spinner fa-spin"></i> Excluindo...
+          } @else {
+            <i class="fa-solid fa-trash"></i> Excluir
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

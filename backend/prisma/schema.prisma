@@ -1,0 +1,167 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(uuid())
+  nome              String
+  email             String   @unique
+  senha             String?
+  telefone          String?
+  tipo              UserType @default(CLIENTE)
+  plano             Plano    @default(BASICO)
+  googleId          String?  @unique
+  avatar            String?
+  emailVerified     Boolean  @default(false)
+  verificationCode  String?
+  verificationExpires DateTime?
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  subscriptionId       String?   @unique
+  subscriptionStatus   String?
+  planoExpiraEm        DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  barbearias        Barbearia[]
+  agendamentos      Agendamento[]
+
+  @@map("users")
+}
+
+model Barbearia {
+  id          String   @id @default(uuid())
+  nome        String
+  slug        String?  @unique
+  descricao   String?
+  endereco    String
+  cidade      String
+  estado      String
+  cep              String?
+  pontoReferencia  String?
+  latitude         Float?
+  longitude        Float?
+  telefone         String?
+  whatsapp         String?
+  mensagemLembrete String?
+  lembreteAtivo    Boolean  @default(false)
+  foto             String?
+  fotos            String[]
+  ownerId          String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ativa       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  barbeiros   Barbeiro[]
+  servicos    Servico[]
+  agendamentos Agendamento[]
+
+  @@map("barbearias")
+}
+
+model Barbeiro {
+  id           String   @id @default(uuid())
+  nome         String
+  foto         String?
+  barbeariaId  String
+  barbearia    Barbearia @relation(fields: [barbeariaId], references: [id], onDelete: Cascade)
+  ativo        Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  horarios     HorarioDisponivel[]
+  servicos     Servico[]
+  agendamentos Agendamento[]
+
+  @@map("barbeiros")
+}
+
+model Servico {
+  id           String   @id @default(uuid())
+  nome         String
+  preco        Float
+  duracao      Int      // duração em minutos
+  barbeariaId  String
+  barbearia    Barbearia @relation(fields: [barbeariaId], references: [id], onDelete: Cascade)
+  barbeiroId   String?
+  barbeiro     Barbeiro? @relation(fields: [barbeiroId], references: [id], onDelete: SetNull)
+  ativo        Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  agendamentos Agendamento[]
+
+  @@map("servicos")
+}
+
+model Agendamento {
+  id           String   @id @default(uuid())
+  data         String   // "2026-03-05"
+  horario      String   // "10:00"
+  status       AgendamentoStatus @default(PENDENTE)
+  nomeCliente  String
+  telefoneCliente String
+
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  barbeariaId  String
+  barbearia    Barbearia @relation(fields: [barbeariaId], references: [id], onDelete: Cascade)
+
+  barbeiroId   String
+  barbeiro     Barbeiro @relation(fields: [barbeiroId], references: [id], onDelete: Cascade)
+
+  servicoId    String
+  servico      Servico  @relation(fields: [servicoId], references: [id], onDelete: Cascade)
+
+  lembreteEnviado Boolean @default(false)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("agendamentos")
+}
+
+enum AgendamentoStatus {
+  PENDENTE
+  CONFIRMADO
+  CANCELADO
+  CONCLUIDO
+}
+
+model HorarioDisponivel {
+  id            String   @id @default(uuid())
+  barbeiroId    String
+  barbeiro      Barbeiro @relation(fields: [barbeiroId], references: [id], onDelete: Cascade)
+  diaSemana     Int      // 0=Domingo, 1=Segunda, ..., 6=Sábado
+  horaInicio    String   // "09:00"
+  horaFim       String   // "18:00"
+  almocoInicio  String?  // "12:00"
+  almocoFim     String?  // "13:00"
+
+  @@map("horarios_disponiveis")
+}
+
+enum UserType {
+  CLIENTE
+  BARBEIRO
+  ADMIN
+}
+
+enum Plano {
+  BASICO
+  PROFISSIONAL
+  PREMIUM
+}

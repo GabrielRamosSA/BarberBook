@@ -1,0 +1,1066 @@
+$cor-primaria: #071522;
+$cor-branco: #fff;
+$cor-cinza-claro: #f5f6fa;
+$cor-cinza: #e0e0e0;
+$cor-texto: #222;
+$cor-texto-claro: #666;
+$cor-sucesso: #27ae60;
+$cor-preco: #071522;
+
+.agendar-page {
+  min-height: 100vh;
+  background: $cor-cinza-claro;
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+}
+
+// ==============================
+// Header
+// ==============================
+.agendar-header {
+  background: $cor-primaria;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: 64px;
+  }
+
+  .logo {
+    color: $cor-branco;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    i {
+      font-size: 1.3rem;
+    }
+  }
+
+  .btn-voltar {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: $cor-branco;
+    padding: 8px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
+  }
+}
+
+// ==============================
+// Loading / Erro
+// ==============================
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: $cor-texto-claro;
+
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid $cor-cinza;
+    border-top-color: $cor-primaria;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 16px;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.erro-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: $cor-texto-claro;
+
+  i {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    color: #e74c3c;
+  }
+
+  h2 {
+    margin-bottom: 20px;
+  }
+}
+
+// ==============================
+// Conteúdo principal
+// ==============================
+.conteudo {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+// ==============================
+// Info da barbearia
+// ==============================
+.barbearia-info {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 40px;
+  background: $cor-branco;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+  overflow: hidden;
+
+  .info-esquerda {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .info-direita {
+    width: 400px;
+    flex-shrink: 0;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+
+    h3 {
+      font-size: 1rem;
+      color: $cor-primaria;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+}
+
+// Carousel
+.barbearia-carousel {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  overflow: hidden;
+  background: #eee;
+
+  &.no-foto {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, $cor-primaria 0%, #1a3a52 100%);
+
+    i {
+      font-size: 4rem;
+      color: rgba(255, 255, 255, 0.4);
+    }
+  }
+
+  .carousel-track {
+    display: flex;
+    height: 100%;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .carousel-slide {
+    min-width: 100%;
+    height: 100%;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.45);
+    border: none;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    z-index: 2;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.7);
+    }
+
+    &.prev { left: 12px; }
+    &.next { right: 12px; }
+  }
+
+  .carousel-dots {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 2;
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &.active {
+        background: white;
+        transform: scale(1.3);
+      }
+    }
+  }
+}
+
+.info-detalhes {
+  padding: 24px;
+
+  h1 {
+    font-size: 1.6rem;
+    color: $cor-primaria;
+    margin-bottom: 8px;
+  }
+
+  .descricao {
+    color: $cor-texto-claro;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    color: $cor-texto;
+    font-size: 0.95rem;
+
+    i {
+      width: 20px;
+      text-align: center;
+      color: $cor-primaria;
+    }
+
+    a {
+      color: $cor-sucesso;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+// Mapa
+.mapa-container {
+  width: 100%;
+  flex: 1;
+  min-height: 250px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid $cor-cinza;
+  position: relative;
+  z-index: 1;
+}
+
+// ==============================
+// Etapas indicador
+// ==============================
+.agendamento-section {
+  background: $cor-branco;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+  padding: 32px;
+}
+
+.etapas-indicador {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 36px;
+
+  .etapa-dot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+
+    span {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: $cor-cinza;
+      color: $cor-texto-claro;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+
+    small {
+      font-size: 0.75rem;
+      color: $cor-texto-claro;
+      transition: color 0.3s;
+    }
+
+    &.ativo span {
+      background: $cor-primaria;
+      color: $cor-branco;
+    }
+
+    &.ativo small {
+      color: $cor-primaria;
+      font-weight: 600;
+    }
+
+    &.completo span {
+      background: $cor-sucesso;
+      color: $cor-branco;
+    }
+  }
+
+  .etapa-linha {
+    width: 60px;
+    height: 3px;
+    background: $cor-cinza;
+    margin: 0 8px;
+    margin-bottom: 20px;
+    border-radius: 2px;
+    transition: background 0.3s;
+
+    &.ativo {
+      background: $cor-sucesso;
+    }
+  }
+}
+
+// ==============================
+// Etapa conteúdo
+// ==============================
+.etapa-conteudo {
+  h2 {
+    font-size: 1.3rem;
+    color: $cor-primaria;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .etapa-subtitulo {
+    color: $cor-texto-claro;
+    margin-bottom: 24px;
+    font-size: 0.95rem;
+  }
+}
+
+.btn-voltar-etapa {
+  background: none;
+  border: none;
+  color: $cor-primaria;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 4px 0;
+  font-weight: 500;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.7;
+  }
+}
+
+// ==============================
+// Barbeiros grid
+// ==============================
+.barbeiros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.barbeiro-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: $cor-cinza-claro;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.25s;
+
+  &:hover {
+    border-color: $cor-primaria;
+    box-shadow: 0 4px 16px rgba(7, 21, 34, 0.1);
+    transform: translateY(-2px);
+  }
+
+  &.selecionado {
+    border-color: $cor-primaria;
+    background: rgba(7, 21, 34, 0.04);
+  }
+
+  .barbeiro-foto {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: $cor-cinza;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    i {
+      font-size: 1.5rem;
+      color: $cor-texto-claro;
+    }
+  }
+
+  .barbeiro-info {
+    flex: 1;
+    min-width: 0;
+
+    h3 {
+      font-size: 1.05rem;
+      color: $cor-texto;
+      margin-bottom: 4px;
+    }
+
+    .barbeiro-dias,
+    .barbeiro-horario {
+      font-size: 0.85rem;
+      color: $cor-texto-claro;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      i {
+        font-size: 0.8rem;
+        color: $cor-primaria;
+      }
+    }
+  }
+
+  .barbeiro-selecionar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: $cor-primaria;
+    color: $cor-branco;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+  }
+
+  &:hover .barbeiro-selecionar {
+    transform: scale(1.1);
+  }
+}
+
+// ==============================
+// Horários (datas + slots)
+// ==============================
+.horario-section {
+  margin-bottom: 28px;
+
+  .horario-section-title {
+    font-size: 1rem;
+    color: $cor-primaria;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+}
+
+.datas-grid {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: $cor-cinza-claro;
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: $cor-cinza;
+    border-radius: 3px;
+  }
+}
+
+.data-card {
+  min-width: 100px;
+  padding: 14px 12px;
+  border: 2px solid $cor-cinza;
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+  background: $cor-branco;
+
+  .data-dia {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: $cor-texto;
+  }
+
+  .data-semana {
+    font-size: 0.8rem;
+    color: $cor-texto-claro;
+  }
+
+  &:hover {
+    border-color: $cor-primaria;
+    box-shadow: 0 2px 10px rgba(7, 21, 34, 0.1);
+  }
+
+  &.selecionado {
+    border-color: $cor-primaria;
+    background: $cor-primaria;
+
+    .data-dia,
+    .data-semana {
+      color: $cor-branco;
+    }
+  }
+}
+
+.horarios-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.horario-slot {
+  padding: 12px 20px;
+  border: 2px solid $cor-cinza;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  color: $cor-texto;
+  background: $cor-branco;
+  transition: all 0.2s;
+  min-width: 80px;
+  text-align: center;
+
+  &:hover {
+    border-color: $cor-primaria;
+    box-shadow: 0 2px 10px rgba(7, 21, 34, 0.1);
+  }
+
+  &.selecionado {
+    border-color: $cor-primaria;
+    background: $cor-primaria;
+    color: $cor-branco;
+  }
+}
+
+// ==============================
+// Serviços grid
+// ==============================
+.servicos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.servico-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: $cor-cinza-claro;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.25s;
+
+  &:hover {
+    border-color: $cor-primaria;
+    box-shadow: 0 4px 16px rgba(7, 21, 34, 0.1);
+    transform: translateY(-2px);
+  }
+
+  &.selecionado {
+    border-color: $cor-primaria;
+    background: rgba(7, 21, 34, 0.04);
+  }
+
+  .servico-icone {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: $cor-primaria;
+    color: $cor-branco;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+
+  .servico-info {
+    flex: 1;
+    min-width: 0;
+
+    h3 {
+      font-size: 1.05rem;
+      color: $cor-texto;
+      margin-bottom: 6px;
+    }
+
+    .servico-detalhes {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .servico-preco {
+      font-weight: 700;
+      color: $cor-preco;
+      font-size: 1.1rem;
+    }
+
+    .servico-duracao {
+      font-size: 0.85rem;
+      color: $cor-texto-claro;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      i {
+        font-size: 0.8rem;
+      }
+    }
+  }
+
+  .servico-selecionar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: $cor-primaria;
+    color: $cor-branco;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+  }
+
+  &:hover .servico-selecionar {
+    transform: scale(1.1);
+  }
+}
+
+// ==============================
+// Resumo
+// ==============================
+.resumo-card {
+  background: $cor-cinza-claro;
+  border-radius: 14px;
+  padding: 28px;
+  margin-bottom: 28px;
+
+  .resumo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+
+    .resumo-label {
+      color: $cor-texto-claro;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+
+      i {
+        color: $cor-primaria;
+        width: 18px;
+        text-align: center;
+      }
+    }
+
+    .resumo-valor {
+      font-weight: 600;
+      color: $cor-texto;
+      font-size: 1rem;
+
+      &.preco {
+        font-size: 1.25rem;
+        color: $cor-primaria;
+      }
+    }
+
+    &.destaque {
+      background: rgba(7, 21, 34, 0.04);
+      margin: 0 -28px;
+      padding: 16px 28px;
+      border-radius: 10px;
+    }
+  }
+
+  .resumo-divider {
+    height: 1px;
+    background: $cor-cinza;
+  }
+}
+
+// ==============================
+// Confirmação form
+// ==============================
+.confirmacao-form {
+  max-width: 480px;
+  margin: 0 auto;
+
+  .form-group {
+    margin-bottom: 20px;
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      color: $cor-texto;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+
+      i {
+        color: $cor-primaria;
+      }
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid $cor-cinza;
+      border-radius: 10px;
+      font-size: 1rem;
+      color: $cor-texto;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+
+      &:focus {
+        outline: none;
+        border-color: $cor-primaria;
+      }
+
+      &::placeholder {
+        color: #aaa;
+      }
+    }
+
+    .campo-erro {
+      display: block;
+      color: #e74c3c;
+      font-size: 0.8rem;
+      margin-top: 6px;
+    }
+  }
+
+  .confirmacao-resumo {
+    background: $cor-cinza-claro;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 24px;
+
+    .mini-resumo {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.9rem;
+      color: $cor-texto;
+      text-align: center;
+    }
+  }
+}
+
+// ==============================
+// Botões
+// ==============================
+.btn-primario {
+  background: $cor-primaria;
+  color: $cor-branco;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.btn-grande {
+  width: 100%;
+  justify-content: center;
+  padding: 16px;
+  font-size: 1.1rem;
+}
+
+.btn-confirmar {
+  background: $cor-sucesso;
+
+  &:hover {
+    background: #219a52;
+  }
+}
+
+// ==============================
+// Vazio
+// ==============================
+.horarios-loading {
+  text-align: center;
+  padding: 32px 20px;
+  color: $cor-texto-claro;
+
+  i {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  p {
+    font-size: 0.9rem;
+    margin: 0;
+  }
+}
+
+.vazio {
+  text-align: center;
+  padding: 48px 20px;
+  color: $cor-texto-claro;
+
+  i {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  p {
+    font-size: 1rem;
+  }
+}
+
+// ==============================
+// Modal de sucesso
+// ==============================
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-sucesso {
+  background: $cor-branco;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+  animation: slideUp 0.35s ease;
+
+  .sucesso-icone {
+    margin-bottom: 16px;
+
+    i {
+      font-size: 4rem;
+      color: $cor-sucesso;
+    }
+  }
+
+  h2 {
+    color: $cor-texto;
+    margin-bottom: 8px;
+    font-size: 1.4rem;
+  }
+
+  > p {
+    color: $cor-texto-claro;
+    margin-bottom: 20px;
+  }
+
+  .sucesso-detalhes {
+    background: $cor-cinza-claro;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+    text-align: left;
+
+    p {
+      margin-bottom: 4px;
+      font-size: 0.95rem;
+      color: $cor-texto;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ==============================
+// Responsivo
+// ==============================
+@media (max-width: 900px) {
+  .barbearia-info {
+    flex-direction: column;
+
+    .info-direita {
+      width: 100%;
+      padding: 20px;
+    }
+  }
+
+  .mapa-container {
+    min-height: 200px;
+  }
+}
+
+@media (max-width: 600px) {
+  .conteudo {
+    padding: 16px 12px;
+  }
+
+  .agendamento-section {
+    padding: 20px 16px;
+  }
+
+  .barbeiros-grid,
+  .servicos-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .etapas-indicador {
+    .etapa-linha {
+      width: 30px;
+    }
+
+    .etapa-dot {
+      span {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+      }
+
+      small {
+        font-size: 0.65rem;
+      }
+    }
+  }
+
+  .barbearia-carousel {
+    height: 220px;
+  }
+
+  .info-detalhes h1 {
+    font-size: 1.3rem;
+  }
+
+  .resumo-card {
+    padding: 16px;
+
+    .resumo-item.destaque {
+      margin: 0 -16px;
+      padding: 12px 16px;
+    }
+  }
+
+  .modal-sucesso {
+    padding: 28px 20px;
+  }
+}

@@ -1,0 +1,262 @@
+import { BarbeariaService } from './barbearia.service';
+import { CreateBarbeariaDto, UpdateBarbeariaDto } from './dto/barbearia.dto';
+import type { Request } from 'express';
+export declare class BarbeariaController {
+    private barbeariaService;
+    constructor(barbeariaService: BarbeariaService);
+    search(estado?: string, cidade?: string): Promise<({
+        owner: {
+            nome: string;
+            id: string;
+            avatar: string | null;
+        };
+    } & {
+        nome: string;
+        telefone: string | null;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        descricao: string | null;
+        endereco: string;
+        cidade: string;
+        estado: string;
+        cep: string | null;
+        pontoReferencia: string | null;
+        latitude: number | null;
+        longitude: number | null;
+        whatsapp: string | null;
+        mensagemLembrete: string | null;
+        lembreteAtivo: boolean;
+        ativa: boolean;
+        slug: string | null;
+        foto: string | null;
+        fotos: string[];
+        ownerId: string;
+    })[]>;
+    findById(id: string): Promise<{
+        owner: {
+            nome: string;
+            id: string;
+            avatar: string | null;
+        };
+        barbeiros: ({
+            servicos: {
+                nome: string;
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                ativo: boolean;
+                barbeariaId: string;
+                preco: number;
+                duracao: number;
+                barbeiroId: string | null;
+            }[];
+            horarios: {
+                id: string;
+                diaSemana: number;
+                barbeiroId: string;
+                horaInicio: string;
+                horaFim: string;
+                almocoInicio: string | null;
+                almocoFim: string | null;
+            }[];
+        } & {
+            nome: string;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            foto: string | null;
+            ativo: boolean;
+            barbeariaId: string;
+        })[];
+        servicos: {
+            nome: string;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            ativo: boolean;
+            barbeariaId: string;
+            preco: number;
+            duracao: number;
+            barbeiroId: string | null;
+        }[];
+    } & {
+        nome: string;
+        telefone: string | null;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        descricao: string | null;
+        endereco: string;
+        cidade: string;
+        estado: string;
+        cep: string | null;
+        pontoReferencia: string | null;
+        latitude: number | null;
+        longitude: number | null;
+        whatsapp: string | null;
+        mensagemLembrete: string | null;
+        lembreteAtivo: boolean;
+        ativa: boolean;
+        slug: string | null;
+        foto: string | null;
+        fotos: string[];
+        ownerId: string;
+    }>;
+    myBarbearias(req: Request): Promise<{
+        nome: string;
+        telefone: string | null;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        descricao: string | null;
+        endereco: string;
+        cidade: string;
+        estado: string;
+        cep: string | null;
+        pontoReferencia: string | null;
+        latitude: number | null;
+        longitude: number | null;
+        whatsapp: string | null;
+        mensagemLembrete: string | null;
+        lembreteAtivo: boolean;
+        ativa: boolean;
+        slug: string | null;
+        foto: string | null;
+        fotos: string[];
+        ownerId: string;
+    }[]>;
+    create(req: Request, dto: CreateBarbeariaDto): Promise<{
+        message: string;
+        barbearia: {
+            nome: string;
+            telefone: string | null;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            descricao: string | null;
+            endereco: string;
+            cidade: string;
+            estado: string;
+            cep: string | null;
+            pontoReferencia: string | null;
+            latitude: number | null;
+            longitude: number | null;
+            whatsapp: string | null;
+            mensagemLembrete: string | null;
+            lembreteAtivo: boolean;
+            ativa: boolean;
+            slug: string | null;
+            foto: string | null;
+            fotos: string[];
+            ownerId: string;
+        };
+    }>;
+    update(req: Request, id: string, dto: UpdateBarbeariaDto): Promise<{
+        message: string;
+        barbearia: {
+            nome: string;
+            telefone: string | null;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            descricao: string | null;
+            endereco: string;
+            cidade: string;
+            estado: string;
+            cep: string | null;
+            pontoReferencia: string | null;
+            latitude: number | null;
+            longitude: number | null;
+            whatsapp: string | null;
+            mensagemLembrete: string | null;
+            lembreteAtivo: boolean;
+            ativa: boolean;
+            slug: string | null;
+            foto: string | null;
+            fotos: string[];
+            ownerId: string;
+        };
+    }>;
+    uploadFoto(req: Request, id: string, file: Express.Multer.File): Promise<{
+        message: string;
+        barbearia: {
+            nome: string;
+            telefone: string | null;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            descricao: string | null;
+            endereco: string;
+            cidade: string;
+            estado: string;
+            cep: string | null;
+            pontoReferencia: string | null;
+            latitude: number | null;
+            longitude: number | null;
+            whatsapp: string | null;
+            mensagemLembrete: string | null;
+            lembreteAtivo: boolean;
+            ativa: boolean;
+            slug: string | null;
+            foto: string | null;
+            fotos: string[];
+            ownerId: string;
+        };
+    }>;
+    uploadFotos(req: Request, id: string, files: Express.Multer.File[]): Promise<{
+        message: string;
+        barbearia: {
+            nome: string;
+            telefone: string | null;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            descricao: string | null;
+            endereco: string;
+            cidade: string;
+            estado: string;
+            cep: string | null;
+            pontoReferencia: string | null;
+            latitude: number | null;
+            longitude: number | null;
+            whatsapp: string | null;
+            mensagemLembrete: string | null;
+            lembreteAtivo: boolean;
+            ativa: boolean;
+            slug: string | null;
+            foto: string | null;
+            fotos: string[];
+            ownerId: string;
+        };
+    }>;
+    removeFoto(req: Request, id: string, fotoUrl: string): Promise<{
+        message: string;
+        barbearia: {
+            nome: string;
+            telefone: string | null;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            descricao: string | null;
+            endereco: string;
+            cidade: string;
+            estado: string;
+            cep: string | null;
+            pontoReferencia: string | null;
+            latitude: number | null;
+            longitude: number | null;
+            whatsapp: string | null;
+            mensagemLembrete: string | null;
+            lembreteAtivo: boolean;
+            ativa: boolean;
+            slug: string | null;
+            foto: string | null;
+            fotos: string[];
+            ownerId: string;
+        };
+    }>;
+    delete(req: Request, id: string): Promise<{
+        message: string;
+    }>;
+}

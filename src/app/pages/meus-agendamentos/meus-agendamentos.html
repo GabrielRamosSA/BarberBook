@@ -1,0 +1,206 @@
+<div class="agendamentos-page">
+  <!-- Header -->
+  <header class="agendamentos-header">
+    <div class="header-inner">
+      <a routerLink="/" class="logo">
+        <i class="fa-solid fa-scissors"></i> CortaAí
+      </a>
+      <a routerLink="/" class="btn-voltar">
+        <i class="fa-solid fa-arrow-left"></i> Voltar
+      </a>
+    </div>
+  </header>
+
+  <div class="agendamentos-container">
+    <div class="page-title">
+      <h1><i class="fa-solid fa-calendar-check"></i> Meus Agendamentos</h1>
+      <p>Acompanhe todos os seus agendamentos</p>
+    </div>
+
+    <!-- Loading -->
+    @if (carregando) {
+      <div class="loading">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        <p>Carregando agendamentos...</p>
+      </div>
+    }
+
+    <!-- Não logado (e não é modo convidado) -->
+    @if (!carregando && !user && !modoConvidado) {
+      <div class="empty-state">
+        <i class="fa-solid fa-user-lock"></i>
+        <h3>Faça login para ver seus agendamentos</h3>
+        <p>Você precisa estar logado para acompanhar seus agendamentos.</p>
+        <a routerLink="/login" class="btn-primario">
+          <i class="fa-solid fa-sign-in-alt"></i> Entrar
+        </a>
+        <button class="btn-secundario" (click)="voltarConsulta()">
+          <i class="fa-solid fa-phone"></i> Consultar por telefone
+        </button>
+      </div>
+    }
+
+    <!-- Modo convidado - sem agendamentos -->
+    @if (!carregando && modoConvidado && agendamentos.length === 0) {
+      <div class="empty-state">
+        <i class="fa-solid fa-calendar-xmark"></i>
+        <h3>Nenhum agendamento encontrado</h3>
+        <p>Não encontramos agendamentos para este telefone.</p>
+        <a routerLink="/" class="btn-primario">
+          <i class="fa-solid fa-arrow-left"></i> Voltar ao início
+        </a>
+      </div>
+    }
+
+    <!-- Sem agendamentos (logado) -->
+    @if (!carregando && user && !modoConvidado && agendamentos.length === 0) {
+      <div class="empty-state">
+        <i class="fa-solid fa-calendar-xmark"></i>
+        <h3>Nenhum agendamento encontrado</h3>
+        <p>Você ainda não fez nenhum agendamento. Encontre uma barbearia e agende seu corte!</p>
+        <a routerLink="/" class="btn-primario">
+          <i class="fa-solid fa-search"></i> Buscar Barbearias
+        </a>
+      </div>
+    }
+
+    <!-- Agendamentos próximos -->
+    @if (!carregando && agendamentosProximos.length > 0) {
+      <section class="agendamentos-section">
+        <h2 class="section-title">
+          <i class="fa-solid fa-clock"></i> Próximos
+          <span class="badge">{{ agendamentosProximos.length }}</span>
+        </h2>
+
+        <div class="agendamentos-grid">
+          @for (ag of agendamentosProximos; track ag.id) {
+            <div class="agendamento-card" [class.hoje]="isHoje(ag.data)">
+              @if (isHoje(ag.data)) {
+                <div class="badge-hoje">HOJE</div>
+              }
+
+              <div class="card-header">
+                <div class="card-data">
+                  <span class="data-dia">{{ getDataFormatada(ag.data) }}</span>
+                  <span class="data-semana">{{ getDiaSemana(ag.data) }}</span>
+                </div>
+                <div class="card-horario">
+                  <i class="fa-solid fa-clock"></i>
+                  {{ ag.horario }}
+                </div>
+              </div>
+
+              <div class="card-body">
+                <div class="card-barbearia">
+                  <i class="fa-solid fa-store"></i>
+                  <div>
+                    <strong>{{ ag.barbearia.nome }}</strong>
+                    <small>{{ ag.barbearia.endereco }}</small>
+                  </div>
+                </div>
+
+                <div class="card-barbeiro">
+                  @if (getBarbeiroFoto(ag.barbeiro.foto)) {
+                    <img [src]="getBarbeiroFoto(ag.barbeiro.foto)" alt="" class="barbeiro-avatar" />
+                  } @else {
+                    <div class="barbeiro-avatar-placeholder">
+                      {{ ag.barbeiro.nome.charAt(0).toUpperCase() }}
+                    </div>
+                  }
+                  <span>{{ ag.barbeiro.nome }}</span>
+                </div>
+
+                <div class="card-servico">
+                  <div class="servico-info">
+                    <i class="fa-solid fa-cut"></i>
+                    <span>{{ ag.servico.nome }}</span>
+                  </div>
+                  <div class="servico-detalhes">
+                    <span class="preco">R$ {{ ag.servico.preco.toFixed(2) }}</span>
+                    <span class="duracao">{{ ag.servico.duracao }} min</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-footer">
+                <span class="status" [ngClass]="getStatusClass(ag.status)">
+                  {{ getStatusLabel(ag.status) }}
+                </span>
+                @if (podeCancel(ag)) {
+                  <button
+                    class="btn-cancelar"
+                    [disabled]="cancelando === ag.id"
+                    (click)="cancelarAgendamento(ag.id)">
+                    @if (cancelando === ag.id) {
+                      <i class="fa-solid fa-spinner fa-spin"></i>
+                    } @else {
+                      <i class="fa-solid fa-times"></i> Cancelar
+                    }
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Agendamentos passados -->
+    @if (!carregando && agendamentosPassados.length > 0) {
+      <section class="agendamentos-section passados">
+        <h2 class="section-title">
+          <i class="fa-solid fa-history"></i> Histórico
+          <span class="badge">{{ agendamentosPassados.length }}</span>
+        </h2>
+
+        <div class="agendamentos-grid">
+          @for (ag of agendamentosPassados; track ag.id) {
+            <div class="agendamento-card passado">
+              <div class="card-header">
+                <div class="card-data">
+                  <span class="data-dia">{{ getDataFormatada(ag.data) }}</span>
+                  <span class="data-semana">{{ getDiaSemana(ag.data) }}</span>
+                </div>
+                <div class="card-horario">
+                  <i class="fa-solid fa-clock"></i>
+                  {{ ag.horario }}
+                </div>
+              </div>
+
+              <div class="card-body">
+                <div class="card-barbearia">
+                  <i class="fa-solid fa-store"></i>
+                  <div>
+                    <strong>{{ ag.barbearia.nome }}</strong>
+                    <small>{{ ag.barbearia.endereco }}</small>
+                  </div>
+                </div>
+
+                <div class="card-servico">
+                  <div class="servico-info">
+                    <i class="fa-solid fa-cut"></i>
+                    <span>{{ ag.servico.nome }}</span>
+                  </div>
+                  <div class="servico-detalhes">
+                    <span class="preco">R$ {{ ag.servico.preco.toFixed(2) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-footer">
+                <span class="status" [ngClass]="getStatusClass(ag.status)">
+                  {{ getStatusLabel(ag.status) }}
+                </span>
+                @if (ag.barbearia.slug) {
+                  <a routerLink="/barbearia/{{ ag.barbearia.slug }}" class="btn-reagendar">
+                    <i class="fa-solid fa-redo"></i> Agendar novamente
+                  </a>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+  </div>
+</div>
