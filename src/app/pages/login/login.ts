@@ -17,35 +17,39 @@ export class LoginComponent {
   erro = '';
   carregando = false;
 
-  constructor(private authService: AuthService, private router: Router, private ngZone: NgZone) {}
+  constructor(
+    private servicoAuth: AuthService,
+    private roteador: Router,
+    private zonaNg: NgZone,
+  ) {}
 
-  onSubmit() {
+  aoEnviar() {
     this.erro = '';
     this.carregando = true;
 
-    this.authService.login(this.email, this.senha).subscribe({
-      next: (res) => {
+    this.servicoAuth.login(this.email, this.senha).subscribe({
+      next: (resposta) => {
         this.carregando = false;
-        this.ngZone.run(() => {
-          if (res.requiresVerification) {
-            this.router.navigate(['/verificar-email'], {
-              queryParams: { email: res.email || this.email },
+        this.zonaNg.run(() => {
+          if (resposta.requiresVerification) {
+            this.roteador.navigate(['/verificar-email'], {
+              queryParams: { email: resposta.email || this.email },
             });
-          } else if (res.user?.tipo === 'BARBEIRO') {
-            this.router.navigate(['/dashboard']);
+          } else if (resposta.user?.tipo === 'BARBEIRO') {
+            this.roteador.navigate(['/dashboard']);
           } else {
-            this.router.navigate(['/perfil']);
+            this.roteador.navigate(['/perfil']);
           }
         });
       },
-      error: (err) => {
+      error: (erroResposta) => {
         this.carregando = false;
-        this.erro = err.error?.message || 'Erro ao fazer login. Tente novamente.';
+        this.erro = erroResposta.error?.message || 'Erro ao fazer login. Tente novamente.';
       },
     });
   }
 
-  loginComGoogle() {
-    this.authService.loginWithGoogle();
+  entrarComGoogle() {
+    this.servicoAuth.loginWithGoogle();
   }
 }

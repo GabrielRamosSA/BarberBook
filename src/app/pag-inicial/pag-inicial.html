@@ -1,284 +1,355 @@
-<section id="topo">
-  <div id="logo">
-    <h2><i class="fa-solid fa-scissors" style="margin-right: 6px;"></i>CortaAí</h2>
-  </div>
+<div class="pagina-inicial">
+  <header class="cabecalho-pagina revelar">
+    <a class="marca" href="#inicio" aria-label="CortaAi Home" (click)="rolarParaSecao('inicio', $event)">
+      <span class="marca-icone"><i class="fa-solid fa-scissors"></i></span>
+      <span class="marca-texto">CortaAi</span>
+    </a>
 
-  @if (user) {
-    <div class="user-menu">
-      <button class="avatar-trigger" (click)="toggleMenu()">
-        @if (getAvatarUrl()) {
-          <img [src]="getAvatarUrl()" alt="Avatar" class="avatar-img" />
-        } @else {
-          <div class="avatar-placeholder">
-            {{ user.nome.charAt(0).toUpperCase() }}
+    <nav class="navegacao-principal" aria-label="Navegacao principal">
+      <a href="#beneficios" (click)="rolarParaSecao('beneficios', $event)" [class.ativo]="secaoEstaAtiva('beneficios')">Beneficios</a>
+      <a href="#inovacao" (click)="rolarParaSecao('inovacao', $event)" [class.ativo]="secaoEstaAtiva('inovacao')">Inovacao</a>
+      <a href="#planos" (click)="rolarParaSecao('planos', $event)" [class.ativo]="secaoEstaAtiva('planos')">Planos</a>
+      <a href="#final" (click)="rolarParaSecao('final', $event)" [class.ativo]="secaoEstaAtiva('final')">Comecar</a>
+    </nav>
+
+    @if (usuario) {
+      <div class="menu-usuario">
+        <button class="botao-avatar" (click)="alternarMenu()" aria-label="Abrir menu do usuario">
+          @if (obterUrlAvatar()) {
+            <img [src]="obterUrlAvatar()" alt="Avatar" class="avatar-imagem" />
+          } @else {
+            <div class="avatar-substituto">{{ usuario.nome.charAt(0).toUpperCase() }}</div>
+          }
+        </button>
+
+        @if (menuAberto) {
+          <div class="menu-suspenso">
+            <div class="menu-suspenso-cabecalho">
+              <span class="menu-suspenso-nome">{{ usuario.nome }}</span>
+              <span class="menu-suspenso-email">{{ usuario.email }}</span>
+            </div>
+            <div class="menu-suspenso-divisor"></div>
+            <a routerLink="/perfil" class="menu-suspenso-item" (click)="menuAberto = false">
+              <i class="fa-solid fa-user"></i>
+              Meu Perfil
+            </a>
+            @if (usuario.tipo !== 'BARBEIRO') {
+              <a routerLink="/meus-agendamentos" class="menu-suspenso-item" (click)="menuAberto = false">
+                <i class="fa-solid fa-calendar-check"></i>
+                Meus Agendamentos
+              </a>
+            }
+            @if (usuario.tipo === 'BARBEIRO') {
+              <a routerLink="/dashboard" class="menu-suspenso-item" (click)="menuAberto = false">
+                <i class="fa-solid fa-chart-line"></i>
+                Painel Barbeiro
+              </a>
+            }
+            <div class="menu-suspenso-divisor"></div>
+            <button class="menu-suspenso-item menu-suspenso-sair" (click)="sair()">
+              <i class="fa-solid fa-right-from-bracket"></i>
+              Sair
+            </button>
           </div>
         }
-      </button>
+      </div>
+    } @else {
+      <div class="acoes-cabecalho">
+        <a class="btn btn-ghost" routerLink="/login">Entrar</a>
+        <a class="btn btn-primary" routerLink="/registro">Criar conta</a>
+      </div>
+    }
+  </header>
 
-      @if (menuAberto) {
-        <div class="dropdown-menu">
-          <div class="dropdown-header">
-            <span class="dropdown-nome">{{ user.nome }}</span>
-            <span class="dropdown-email">{{ user.email }}</span>
-          </div>
-          <div class="dropdown-divider"></div>
-          <a routerLink="/perfil" class="dropdown-item" (click)="menuAberto = false">
-            <i class="fa-solid fa-user"></i>
-            Meu Perfil
-          </a>
-          @if (user.tipo !== 'BARBEIRO') {
-            <a routerLink="/meus-agendamentos" class="dropdown-item" (click)="menuAberto = false">
-              <i class="fa-solid fa-calendar-check"></i>
-              Meus Agendamentos
-            </a>
+  <main class="conteudo-principal">
+    <section class="destaque" id="inicio">
+      <div class="destaque-texto revelar atraso-1">
+        <span class="chamada-superior">Plataforma premium para barbearias que querem crescer rapido</span>
+        <h1>Transforme sua barbearia em uma maquina de agendamentos.</h1>
+        <p>
+          Organize agenda, clientes, pagamentos e comunicacao em um painel moderno.
+          Menos trabalho manual, mais tempo para o que importa: seu negocio.
+        </p>
+
+        <div class="destaque-acoes">
+          <a routerLink="/registro" class="btn btn-primary">Comecar gratis</a>
+          <a routerLink="/barbearias" class="btn btn-dark">Fazer um agendamento</a>
+          <a href="#planos" class="btn btn-soft" (click)="rolarParaSecao('planos', $event)">Ver planos</a>
+
+          @if (usuario && usuario.tipo === 'BARBEIRO') {
+            <a routerLink="/dashboard" class="btn btn-soft">Abrir painel</a>
+          } @else if (usuario && usuario.tipo !== 'BARBEIRO') {
+            <a routerLink="/meus-agendamentos" class="btn btn-soft">Meus agendamentos</a>
+          } @else {
+            <button type="button" class="btn btn-soft" (click)="abrirModalTelefone()">Consultar agendamento</button>
           }
-          @if (user.tipo === 'BARBEIRO') {
-            <a routerLink="/dashboard" class="dropdown-item" (click)="menuAberto = false">
-              <i class="fa-solid fa-chart-line"></i>
-              Painel Barbeiro
-            </a>
-          }
-          <div class="dropdown-divider"></div>
-          <button class="dropdown-item dropdown-logout" (click)="logout()">
-            <i class="fa-solid fa-right-from-bracket"></i>
-            Sair
-          </button>
         </div>
-      }
-    </div>
-  } @else {
-    <div id="login">
-      <button class="botao1" routerLink="/login">
-        <i class="pi pi-sign-in" style="margin-right: 7px;"></i> Entrar
-      </button>
-      <button class="botao2" routerLink="/registro">Registrar</button>
-    </div>
-  }
-</section>
 
-<div id="texto">
-  <h1>Encontre a Barbearia Perfeita</h1>
-  <p style="font-size: 21px;">Agende seu corte de cabelo com os melhores profissionais da sua cidade</p>
-  @if (user && user.tipo !== 'BARBEIRO') {
-    <a routerLink="/meus-agendamentos" class="btn-meus-agendamentos">
-      <i class="fa-solid fa-calendar-check"></i> Meus Agendamentos
-    </a>
-  } @else if (!user) {
-    <button class="btn-meus-agendamentos" (click)="abrirModalTelefone()">
-      <i class="fa-solid fa-calendar-check"></i> Meus Agendamentos
-    </button>
+        <div class="destaque-metricas">
+          <article class="cartao-metrica">
+            <strong>+3x</strong>
+            <span>mais controle da agenda</span>
+          </article>
+          <article class="cartao-metrica">
+            <strong>24h</strong>
+            <span>agendamento online ativo</span>
+          </article>
+          <article class="cartao-metrica">
+            <strong>-40%</strong>
+            <span>faltas com lembretes inteligentes</span>
+          </article>
+        </div>
+      </div>
+
+      <div class="destaque-visual revelar atraso-2">
+        <div class="brilho-destaque"></div>
+        <div class="moldura-imagem">
+          <img src="/barbearias.png" alt="Barbearia moderna utilizando o sistema CortaAi" />
+        </div>
+        <div class="nota-flutuante nota-topo">
+          <i class="fa-solid fa-bolt"></i>
+          <div>
+            <strong>Setup em minutos</strong>
+            <span>sem complicacao tecnica</span>
+          </div>
+        </div>
+        <div class="nota-flutuante nota-base">
+          <i class="fa-solid fa-calendar-check"></i>
+          <div>
+            <strong>Agenda inteligente</strong>
+            <span>confirmacao e lembrete automaticos</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="faixa-provas revelar atraso-3" aria-label="Diferenciais rapidos">
+      <div class="item-prova"><i class="fa-solid fa-mobile-screen"></i> Painel responsivo em qualquer dispositivo</div>
+      <div class="item-prova"><i class="fa-solid fa-location-dot"></i> Pagina publica para captar clientes locais</div>
+      <div class="item-prova"><i class="fa-solid fa-whatsapp"></i> Lembretes para reduzir ausencias</div>
+      <div class="item-prova"><i class="fa-solid fa-shield-halved"></i> Estrutura segura e pronta para escalar</div>
+    </section>
+
+    <section class="secao-conteudo" id="beneficios">
+      <div class="cabecalho-secao revelar">
+        <span class="etiqueta-secao">Beneficios reais</span>
+        <h2>Por que assinar o CortaAi hoje?</h2>
+        <p>Voce ganha tempo, previsibilidade e um atendimento profissional do primeiro ao ultimo agendamento.</p>
+      </div>
+
+      <div class="grade-beneficios">
+        <article class="cartao-beneficio revelar atraso-1">
+          <i class="fa-solid fa-calendar-days"></i>
+          <h3>Agenda centralizada</h3>
+          <p>Visualize o dia inteiro em segundos, altere horarios e confirme atendimentos sem dor de cabeca.</p>
+        </article>
+
+        <article class="cartao-beneficio revelar atraso-2">
+          <i class="fa-solid fa-users"></i>
+          <h3>Gestao de clientes</h3>
+          <p>Historico, preferencias e contato reunidos para voce vender melhor e fidelizar mais.</p>
+        </article>
+
+        <article class="cartao-beneficio revelar atraso-3">
+          <i class="fa-solid fa-shop"></i>
+          <h3>Pagina da barbearia</h3>
+          <p>Mostre fotos, servicos, barbeiros e localizacao para atrair novos clientes todos os dias.</p>
+        </article>
+
+        <article class="cartao-beneficio revelar atraso-1">
+          <i class="fa-solid fa-bell"></i>
+          <h3>Lembretes automaticos</h3>
+          <p>Envie avisos e reduza faltas com comunicacao inteligente antes de cada horario.</p>
+        </article>
+
+        <article class="cartao-beneficio revelar atraso-2">
+          <i class="fa-solid fa-chart-column"></i>
+          <h3>Visao do crescimento</h3>
+          <p>Acompanhe resultados e identifique o que gera mais retorno para sua equipe.</p>
+        </article>
+
+        <article class="cartao-beneficio revelar atraso-3">
+          <i class="fa-solid fa-scissors"></i>
+          <h3>Foco no atendimento</h3>
+          <p>Menos processos manuais e mais tempo para entregar uma experiencia memoravel ao cliente.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="secao-inovacao" id="inovacao">
+      <div class="midia-inovacao revelar">
+        <div class="janela-mockup">
+          <div class="cabecalho-mockup">
+            <span></span><span></span><span></span>
+          </div>
+          <div class="conteudo-mockup">
+            <div class="linha-mockup ativo"></div>
+            <div class="linha-mockup"></div>
+            <div class="linha-mockup"></div>
+            <div class="cartoes-mockup">
+              <div></div>
+              <div></div>
+              <div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="texto-inovacao revelar atraso-2">
+        <span class="etiqueta-secao">Inovacao de verdade</span>
+        <h2>O que existe de inovador no site?</h2>
+        <p>
+          O CortaAi conecta operacao, marketing e atendimento em uma experiencia unica.
+          Tudo pensado para barbearias que querem parecer grandes, mesmo com equipe enxuta.
+        </p>
+
+        <ul class="lista-inovacao">
+          <li>
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <div>
+              <strong>Fluxo inteligente de agendamento</strong>
+              <span>Cliente agenda com poucos cliques e voce recebe tudo organizado.</span>
+            </div>
+          </li>
+          <li>
+            <i class="fa-solid fa-image"></i>
+            <div>
+              <strong>Vitrine visual da sua marca</strong>
+              <span>Fotos da barbearia e dos profissionais em destaque para converter mais.</span>
+            </div>
+          </li>
+          <li>
+            <i class="fa-solid fa-layer-group"></i>
+            <div>
+              <strong>Escala por plano</strong>
+              <span>Comece no basico e evolua sem migracoes ou retrabalho.</span>
+            </div>
+          </li>
+          <li>
+            <i class="fa-solid fa-gauge-high"></i>
+            <div>
+              <strong>Performance e responsividade</strong>
+              <span>Painel rapido no celular, tablet e desktop para voce gerenciar de qualquer lugar.</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="secao-planos" id="planos">
+      <div class="cabecalho-secao revelar">
+        <span class="etiqueta-secao">Planos transparentes</span>
+        <h2>Escolha o plano ideal para o momento da sua barbearia</h2>
+        <p>Sem taxas escondidas. Comece gratis e evolua conforme o negocio cresce.</p>
+      </div>
+
+      <div class="grade-planos">
+        <article class="cartao-plano revelar atraso-1">
+          <div class="topo-plano">
+            <h3>Basico</h3>
+            <p>Para comecar organizado</p>
+          </div>
+          <div class="preco-plano">
+            <strong>Gratis</strong>
+          </div>
+          <ul>
+            <li><i class="fa-solid fa-check"></i> 1 barbearia</li>
+            <li><i class="fa-solid fa-check"></i> 2 barbeiros por barbearia</li>
+            <li><i class="fa-solid fa-check"></i> 3 servicos por barbeiro</li>
+            <li><i class="fa-solid fa-check"></i> 30 agendamentos por mes</li>
+          </ul>
+          <a routerLink="/registro" class="btn btn-dark">Criar conta gratis</a>
+        </article>
+
+        <article class="cartao-plano destaque revelar atraso-2">
+          <span class="selo-plano">Mais escolhido</span>
+          <div class="topo-plano">
+            <h3>Profissional</h3>
+            <p>Para crescer com consistencia</p>
+          </div>
+          <div class="preco-plano">
+            <strong>R$ 29,90</strong>
+            <span>/mes</span>
+          </div>
+          <ul>
+            <li><i class="fa-solid fa-check"></i> 3 barbearias</li>
+            <li><i class="fa-solid fa-check"></i> 5 barbeiros por barbearia</li>
+            <li><i class="fa-solid fa-check"></i> Agendamentos ilimitados</li>
+            <li><i class="fa-solid fa-check"></i> Gestao de clientes e lembretes</li>
+          </ul>
+          <a routerLink="/registro" class="btn btn-primary">Quero evoluir</a>
+        </article>
+
+        <article class="cartao-plano revelar atraso-3">
+          <div class="topo-plano">
+            <h3>Premium</h3>
+            <p>Para operar no maximo nivel</p>
+          </div>
+          <div class="preco-plano">
+            <strong>R$ 59,90</strong>
+            <span>/mes</span>
+          </div>
+          <ul>
+            <li><i class="fa-solid fa-check"></i> Barbearias ilimitadas</li>
+            <li><i class="fa-solid fa-check"></i> Equipe e servicos ilimitados</li>
+            <li><i class="fa-solid fa-check"></i> Relatorios de receita</li>
+            <li><i class="fa-solid fa-check"></i> Toda a stack do CortaAi liberada</li>
+          </ul>
+          <a routerLink="/registro" class="btn btn-dark">Entrar no premium</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="chamada-final revelar" id="final">
+      <div>
+        <span class="etiqueta-secao">Pronto para lotar sua agenda?</span>
+        <h2>Deixe o CortaAi cuidar da operacao enquanto voce foca no corte perfeito.</h2>
+        <p>Crie sua conta agora e leve sua barbearia para o proximo nivel ainda hoje.</p>
+      </div>
+      <div class="acoes-chamada-final">
+        <a class="btn btn-primary" routerLink="/registro">Criar minha conta</a>
+        <a class="btn btn-ghost" routerLink="/login">Ja tenho conta</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rodape-pagina">
+    <p>(c) 2026 CortaAi. Tecnologia para barbearias que pensam grande.</p>
+  </footer>
+
+  @if (modalTelefoneAberto) {
+    <div class="modal-fundo" (click)="fecharModalTelefone()">
+      <div class="modal-telefone" (click)="$event.stopPropagation()">
+        <button class="modal-fechar" (click)="fecharModalTelefone()" aria-label="Fechar modal">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="modal-icone">
+          <i class="fa-solid fa-phone"></i>
+        </div>
+        <h3>Consultar Agendamentos</h3>
+        <p>Digite o telefone usado no momento do agendamento.</p>
+        <div class="modal-grupo-input">
+          <input
+            type="tel"
+            [(ngModel)]="telefoneConsulta"
+            placeholder="(00) 00000-0000"
+            maxlength="15"
+            (input)="aoDigitarTelefoneConsulta($event)"
+            (keyup.enter)="consultarAgendamentos()"
+          />
+        </div>
+        @if (erroConsulta) {
+          <p class="modal-erro">{{ erroConsulta }}</p>
+        }
+        <button class="modal-botao" (click)="consultarAgendamentos()" [disabled]="consultandoTelefone">
+          @if (consultandoTelefone) {
+            <i class="fa-solid fa-spinner fa-spin"></i> Consultando...
+          } @else {
+            <i class="fa-solid fa-search"></i> Consultar agora
+          }
+        </button>
+      </div>
+    </div>
   }
 </div>
 
-<!-- Modal consulta por telefone -->
-@if (modalTelefoneAberto) {
-  <div class="modal-overlay" (click)="fecharModalTelefone()">
-    <div class="modal-telefone" (click)="$event.stopPropagation()">
-      <button class="modal-fechar" (click)="fecharModalTelefone()">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-      <div class="modal-icon">
-        <i class="fa-solid fa-phone"></i>
-      </div>
-      <h3>Consultar Agendamentos</h3>
-      <p>Digite o telefone que você usou ao agendar</p>
-      <div class="modal-input-group">
-        <input
-          type="tel"
-          [(ngModel)]="telefoneConsulta"
-          placeholder="(00) 00000-0000"
-          (keyup.enter)="consultarAgendamentos()"
-        />
-      </div>
-      @if (erroConsulta) {
-        <p class="modal-erro">{{ erroConsulta }}</p>
-      }
-      <button class="modal-btn" (click)="consultarAgendamentos()" [disabled]="consultandoTelefone">
-        @if (consultandoTelefone) {
-          <i class="fa-solid fa-spinner fa-spin"></i> Consultando...
-        } @else {
-          <i class="fa-solid fa-search"></i> Consultar
-        }
-      </button>
-    </div>
-  </div>
-}
-
-<section id="busca">
-  <div class="busca-card">
-    <p class="busca-titulo">Buscar por localização</p>
-    <div id="cards">
-      <!-- ESTADO -->
-      <div class="campo custom-select-estado">
-        <label>Estado</label>
-        <div class="custom-select" [class.open]="estadoAberto" (click)="toggleEstado()">
-          <div class="select-display">
-            <span [class.placeholder]="!selectedEstado">
-              {{ selectedEstado ? selectedEstado.name : 'Selecione um Estado' }}
-            </span>
-            <div class="select-icons">
-              @if (selectedEstado) {
-                <button type="button" class="select-clear" (click)="limparEstado($event)" title="Limpar">
-                  <i class="fa-solid fa-xmark"></i>
-                </button>
-              }
-              <i class="fa-solid fa-chevron-down select-arrow" [class.rotated]="estadoAberto"></i>
-            </div>
-          </div>
-        </div>
-
-        @if (estadoAberto) {
-          <div class="select-dropdown">
-            <div class="select-search">
-              <i class="fa-solid fa-magnifying-glass"></i>
-              <input type="text" [(ngModel)]="estadoFiltro" placeholder="Buscar estado..." (click)="$event.stopPropagation()" autofocus />
-            </div>
-            <div class="select-options">
-              @for (estado of estadosFiltrados; track estado.code) {
-                <div class="select-option" [class.selected]="selectedEstado?.code === estado.code" (click)="selecionarEstado(estado); $event.stopPropagation()">
-                  {{ estado.name }}
-                </div>
-              }
-              @if (estadosFiltrados.length === 0) {
-                <div class="select-empty">Nenhum estado encontrado</div>
-              }
-            </div>
-          </div>
-        }
-      </div>
-
-      <!-- CIDADE -->
-      <div class="campo custom-select-cidade">
-        <label>Cidade</label>
-        <div class="custom-select" [class.open]="cidadeAberta" [class.disabled]="!selectedEstado" (click)="toggleCidade()">
-          <div class="select-display">
-            <span [class.placeholder]="!selectedCidade">
-              {{ selectedCidade ? selectedCidade.name : (selectedEstado ? 'Selecione uma Cidade' : 'Primeiro selecione um Estado') }}
-            </span>
-            <div class="select-icons">
-              @if (selectedCidade) {
-                <button type="button" class="select-clear" (click)="limparCidade($event)" title="Limpar">
-                  <i class="fa-solid fa-xmark"></i>
-                </button>
-              }
-              <i class="fa-solid fa-chevron-down select-arrow" [class.rotated]="cidadeAberta"></i>
-            </div>
-          </div>
-        </div>
-
-        @if (cidadeAberta) {
-          <div class="select-dropdown">
-            <div class="select-search">
-              <i class="fa-solid fa-magnifying-glass"></i>
-              <input type="text" [(ngModel)]="cidadeFiltro" placeholder="Buscar cidade..." (click)="$event.stopPropagation()" autofocus />
-            </div>
-            <div class="select-options">
-              @for (cidade of cidadesFiltradaList; track cidade.name) {
-                <div class="select-option" [class.selected]="selectedCidade?.name === cidade.name" (click)="selecionarCidade(cidade); $event.stopPropagation()">
-                  {{ cidade.name }}
-                </div>
-              }
-              @if (cidadesFiltradaList.length === 0) {
-                <div class="select-empty">Nenhuma cidade encontrada</div>
-              }
-            </div>
-          </div>
-        }
-      </div>
-    </div>
-  </div>
-</section>
-<section id="barbearias">
-  @if (buscandoBarbearias) {
-    <div class="barbearias-loading">
-      <i class="fa-solid fa-spinner fa-spin"></i>
-      <p>Buscando barbearias...</p>
-    </div>
-  } @else if (buscaRealizada && barbearias.length > 0) {
-    <div class="barbearias-header">
-      <h2>Barbearias em {{ selectedCidade?.name }}</h2>
-      <p>{{ barbearias.length }} barbearia{{ barbearias.length > 1 ? 's' : '' }} encontrada{{ barbearias.length > 1 ? 's' : '' }}</p>
-    </div>
-    <div class="barbearias-grid">
-      @for (b of barbearias; track b.id) {
-        <div class="barbearia-card">
-          <div class="barbearia-card-img">
-            @if (getAllFotos(b).length > 0) {
-              <div class="card-carousel">
-                <div class="card-carousel-track" [style.transform]="'translateX(-' + (b._carouselIndex || 0) * 100 + '%)'">
-                  @for (fotoUrl of getAllFotos(b); track fotoUrl) {
-                    <img [src]="fotoUrl" [alt]="b.nome" class="card-carousel-slide" />
-                  }
-                </div>
-
-                @if (getAllFotos(b).length > 1) {
-                  <button class="card-carousel-btn card-carousel-prev" (click)="carouselPrev(b, $event)">
-                    <i class="fa-solid fa-chevron-left"></i>
-                  </button>
-                  <button class="card-carousel-btn card-carousel-next" (click)="carouselNext(b, $event)">
-                    <i class="fa-solid fa-chevron-right"></i>
-                  </button>
-
-                  <div class="card-carousel-dots">
-                    @for (fotoUrl of getAllFotos(b); track fotoUrl; let idx = $index) {
-                      <span class="card-dot" [class.active]="idx === (b._carouselIndex || 0)" (click)="carouselGoTo(b, idx, $event)"></span>
-                    }
-                  </div>
-                }
-              </div>
-            } @else {
-              <div class="barbearia-card-placeholder">
-                <i class="fa-solid fa-store"></i>
-              </div>
-            }
-          </div>
-          <div class="barbearia-card-body">
-            <h3>{{ b.nome }}</h3>
-            @if (b.descricao) {
-              <p class="barbearia-desc">{{ b.descricao }}</p>
-            }
-            <div class="barbearia-info">
-              <span><i class="fa-solid fa-location-dot"></i> {{ b.endereco }}</span>
-              @if (b.telefone) {
-                <span><i class="fa-solid fa-phone"></i> {{ b.telefone }}</span>
-              }
-              @if (b.whatsapp) {
-                <span><i class="fa-brands fa-whatsapp"></i> {{ b.whatsapp }}</span>
-              }
-            </div>
-            @if (b.pontoReferencia) {
-              <div class="barbearia-ref">
-                <i class="fa-solid fa-map-pin"></i> {{ b.pontoReferencia }}
-              </div>
-            }
-          </div>
-          <div class="barbearia-card-footer">
-            <button class="btn-ver-mais" routerLink="/barbearia/{{ b.slug || b.id }}">
-              <i class="fa-solid fa-scissors"></i> Agendar corte
-            </button>
-          </div>
-        </div>
-      }
-    </div>
-  } @else if (buscaRealizada && barbearias.length === 0) {
-    <div class="barbearias-header">
-      <h2>Barbearias em {{ selectedCidade?.name }}</h2>
-      <p>0 barbearias encontradas</p>
-    </div>
-    <div id="resultado">
-      <i class="fa-solid fa-scissors"></i>
-      <p class="resultado-msg">Nenhuma barbearia encontrada nesta localização</p>
-      <p class="resultado-hint">Tente selecionar outro estado ou cidade</p>
-    </div>
-  } @else {
-    <div class="barbearias-header">
-      <h2>Todas as Barbearias</h2>
-      <p>Selecione um estado e cidade para buscar</p>
-    </div>
-    <div id="resultado">
-      <i class="fa-solid fa-scissors"></i>
-      <p class="resultado-msg">Nenhuma barbearia encontrada nesta localização</p>
-      <p class="resultado-hint">Tente selecionar outro estado ou cidade</p>
-    </div>
-  }
-</section>

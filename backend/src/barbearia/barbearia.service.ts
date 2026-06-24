@@ -9,6 +9,16 @@ import * as path from 'path';
 export class BarbeariaService {
   constructor(private prisma: PrismaService) {}
 
+  private normalizarTexto(valor?: string): string | undefined {
+    if (!valor) return undefined;
+    return valor.trim();
+  }
+
+  private normalizarUf(valor?: string): string | undefined {
+    if (!valor) return undefined;
+    return valor.trim().toUpperCase();
+  }
+
   private gerarSlug(nome: string): string {
     return nome
       .toLowerCase()
@@ -55,6 +65,8 @@ export class BarbeariaService {
     const barbearia = await this.prisma.barbearia.create({
       data: {
         ...dto,
+        cidade: this.normalizarTexto(dto.cidade) || dto.cidade,
+        estado: this.normalizarUf(dto.estado) || dto.estado,
         slug,
         ownerId,
       },
@@ -185,6 +197,8 @@ export class BarbeariaService {
       where: { id },
       data: {
         ...dto,
+        cidade: dto.cidade !== undefined ? (this.normalizarTexto(dto.cidade) || dto.cidade) : undefined,
+        estado: dto.estado !== undefined ? (this.normalizarUf(dto.estado) || dto.estado) : undefined,
         slug: dto.nome ? await this.gerarSlugUnico(dto.nome, id) : undefined,
       },
     });
@@ -331,8 +345,12 @@ export class BarbeariaService {
   // Busca pública por cidade/estado
   async search(estado?: string, cidade?: string) {
     const where: any = { ativa: true };
-    if (estado) where.estado = estado;
-    if (cidade) where.cidade = cidade;
+    if (estado?.trim()) {
+      where.estado = { equals: estado.trim(), mode: 'insensitive' };
+    }
+    if (cidade?.trim()) {
+      where.cidade = { equals: cidade.trim(), mode: 'insensitive' };
+    }
 
     return this.prisma.barbearia.findMany({
       where,

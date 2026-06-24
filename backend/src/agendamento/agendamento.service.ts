@@ -6,6 +6,10 @@ import { PLANO_LIMITES, PlanoType } from '../plano/plano.config';
 export class AgendamentoService {
   constructor(private prisma: PrismaService) {}
 
+  private normalizeTelefone(telefone: string): string {
+    return (telefone || '').replace(/\D/g, '');
+  }
+
   async contarAgendamentosMes(ownerId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: ownerId } });
     const plano = (user?.plano as PlanoType) || 'BASICO';
@@ -43,7 +47,7 @@ export class AgendamentoService {
     userId?: string;
   }) {
     // Validar telefone (10-11 dígitos: DDD + número)
-    const telDigits = data.telefoneCliente.replace(/\D/g, '');
+    const telDigits = this.normalizeTelefone(data.telefoneCliente);
     if (telDigits.length < 10 || telDigits.length > 11) {
       throw new BadRequestException('Telefone inválido. Informe DDD + número (10 ou 11 dígitos).');
     }
@@ -82,7 +86,8 @@ export class AgendamentoService {
         data: data.data,
         horario: data.horario,
         nomeCliente: data.nomeCliente,
-        telefoneCliente: data.telefoneCliente,
+        // Salvar sempre normalizado para manter consistência na consulta.
+        telefoneCliente: telDigits,
         barbeariaId: data.barbeariaId,
         barbeiroId: data.barbeiroId,
         servicoId: data.servicoId,
@@ -99,8 +104,17 @@ export class AgendamentoService {
   }
 
   async findByUser(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { telefone: true },
+    });
+    const tel = user?.telefone ? this.normalizeTelefone(user.telefone) : '';
+    const where = tel.length >= 10
+      ? { OR: [{ userId }, { userId: null, telefoneCliente: tel }] }
+      : { userId };
+
     return this.prisma.agendamento.findMany({
-      where: { userId },
+      where,
       include: {
         barbearia: { select: { id: true, nome: true, endereco: true, telefone: true, slug: true } },
         barbeiro: { select: { id: true, nome: true, foto: true } },
@@ -179,11 +193,15 @@ export class AgendamentoService {
 
   // Buscar agendamentos por telefone (para clientes sem conta)
   async findByTelefone(telefone: string) {
-    const tel = telefone.replace(/\D/g, '');
-    return this.prisma.agendamento.findMany({
+    const tel = this.normalizeTelefone(telefone);
+    if (tel.length < 10 || tel.length > 11) {
+      return [];
+    }
+
+    const last8 = tel.slice(-8);
+    const candidatos = await this.prisma.agendamento.findMany({
       where: {
-        telefoneCliente: { contains: tel },
-        userId: null,
+        telefoneCliente: { contains: last8 },
       },
       include: {
         barbearia: { select: { id: true, nome: true, endereco: true, telefone: true, slug: true } },
@@ -192,16 +210,23 @@ export class AgendamentoService {
       },
       orderBy: [{ data: 'desc' }, { horario: 'desc' }],
     });
+
+    return candidatos.filter((ag) => {
+      const agTel = this.normalizeTelefone(ag.telefoneCliente);
+      return agTel === tel || agTel.endsWith(tel) || tel.endsWith(agTel);
+    });
   }
 
   // Cancelar agendamento por telefone (para clientes sem conta)
   async cancelarPorTelefone(id: string, telefone: string) {
-    const tel = telefone.replace(/\D/g, '');
+    const tel = this.normalizeTelefone(telefone);
     const agendamento = await this.prisma.agendamento.findUnique({
       where: { id },
     });
     if (!agendamento) throw new NotFoundException('Agendamento não encontrado.');
-    if (!agendamento.telefoneCliente.replace(/\D/g, '').includes(tel)) {
+    const agTel = this.normalizeTelefone(agendamento.telefoneCliente);
+    const telefoneConfere = agTel === tel || agTel.endsWith(tel) || tel.endsWith(agTel);
+    if (!telefoneConfere) {
       throw new ForbiddenException('Telefone não confere.');
     }
     if (agendamento.userId) {

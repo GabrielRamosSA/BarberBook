@@ -164,6 +164,19 @@ export class UserService {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('Usuário não encontrado');
 
+    // Se a assinatura já foi cancelada, mantém o plano pago até o fim do período.
+    if (
+      plano === 'BASICO' &&
+      user.plano !== 'BASICO' &&
+      user.subscriptionStatus === 'cancelled' &&
+      user.planoExpiraEm &&
+      user.planoExpiraEm > new Date()
+    ) {
+      throw new BadRequestException(
+        `Seu plano permanece ativo até ${user.planoExpiraEm.toLocaleDateString('pt-BR')}.`,
+      );
+    }
+
     const updatedUser = await this.prisma.user.update({
       where: { id },
       data: { plano: plano as any },

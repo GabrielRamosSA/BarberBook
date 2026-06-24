@@ -2,6 +2,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export declare class AgendamentoService {
     private prisma;
     constructor(prisma: PrismaService);
+    private normalizeTelefone;
     contarAgendamentosMes(ownerId: string): Promise<{
         usado: number;
         limite: 30 | -1;

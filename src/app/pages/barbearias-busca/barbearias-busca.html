@@ -1,0 +1,287 @@
+<section id="topo">
+  <div id="logo">
+    <h2><i class="fa-solid fa-scissors" style="margin-right: 6px;"></i>CortaAi</h2>
+  </div>
+
+  @if (usuario) {
+    <div class="menu-usuario">
+      <button class="botao-avatar" (click)="alternarMenu()">
+        @if (obterUrlAvatar()) {
+          <img [src]="obterUrlAvatar()" alt="Avatar" class="avatar-imagem" />
+        } @else {
+          <div class="avatar-substituto">
+            {{ usuario.nome.charAt(0).toUpperCase() }}
+          </div>
+        }
+      </button>
+
+      @if (menuAberto) {
+        <div class="menu-suspenso">
+          <div class="menu-suspenso-cabecalho">
+            <span class="menu-suspenso-nome">{{ usuario.nome }}</span>
+            <span class="menu-suspenso-email">{{ usuario.email }}</span>
+          </div>
+          <div class="menu-suspenso-divisor"></div>
+          <a routerLink="/perfil" class="menu-suspenso-item" (click)="menuAberto = false">
+            <i class="fa-solid fa-user"></i>
+            Meu Perfil
+          </a>
+          @if (usuario.tipo !== 'BARBEIRO') {
+            <a routerLink="/meus-agendamentos" class="menu-suspenso-item" (click)="menuAberto = false">
+              <i class="fa-solid fa-calendar-check"></i>
+              Meus Agendamentos
+            </a>
+          }
+          @if (usuario.tipo === 'BARBEIRO') {
+            <a routerLink="/dashboard" class="menu-suspenso-item" (click)="menuAberto = false">
+              <i class="fa-solid fa-chart-line"></i>
+              Painel Barbeiro
+            </a>
+          }
+          <div class="menu-suspenso-divisor"></div>
+          <button class="menu-suspenso-item menu-suspenso-sair" (click)="sair()">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            Sair
+          </button>
+        </div>
+      }
+    </div>
+  } @else {
+    <div id="acesso">
+      <button class="botao-entrar" routerLink="/login">
+        <i class="pi pi-sign-in" style="margin-right: 7px;"></i> Entrar
+      </button>
+      <button class="botao-registrar" routerLink="/registro">Registrar</button>
+    </div>
+  }
+</section>
+
+<div id="texto">
+  <h1>Encontre a Barbearia Perfeita</h1>
+  <p style="font-size: 21px;">Agende seu corte de cabelo com os melhores profissionais da sua cidade</p>
+  @if (usuario && usuario.tipo !== 'BARBEIRO') {
+    <a routerLink="/meus-agendamentos" class="botao-meus-agendamentos">
+      <i class="fa-solid fa-calendar-check"></i> Meus Agendamentos
+    </a>
+  } @else if (!usuario) {
+    <button class="botao-meus-agendamentos" (click)="abrirModalTelefone()">
+      <i class="fa-solid fa-calendar-check"></i> Meus Agendamentos
+    </button>
+  }
+</div>
+
+<!-- Modal consulta por telefone -->
+@if (modalTelefoneAberto) {
+  <div class="modal-fundo" (click)="fecharModalTelefone()">
+    <div class="modal-telefone" (click)="$event.stopPropagation()">
+      <button class="modal-fechar" (click)="fecharModalTelefone()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="modal-icone">
+        <i class="fa-solid fa-phone"></i>
+      </div>
+      <h3>Consultar Agendamentos</h3>
+      <p>Digite o telefone que voce usou ao agendar</p>
+        <div class="modal-grupo-input">
+        <input
+          type="tel"
+          [(ngModel)]="telefoneConsulta"
+          placeholder="(00) 00000-0000"
+          maxlength="15"
+            (input)="aoDigitarTelefoneConsulta($event)"
+          (keyup.enter)="consultarAgendamentos()"
+        />
+      </div>
+      @if (erroConsulta) {
+        <p class="modal-erro">{{ erroConsulta }}</p>
+      }
+      <button class="modal-botao" (click)="consultarAgendamentos()" [disabled]="consultandoTelefone">
+        @if (consultandoTelefone) {
+          <i class="fa-solid fa-spinner fa-spin"></i> Consultando...
+        } @else {
+          <i class="fa-solid fa-search"></i> Consultar
+        }
+      </button>
+    </div>
+  </div>
+}
+
+<section id="busca">
+  <div class="cartao-busca">
+    <p class="titulo-busca">Buscar por localizacao</p>
+    <div id="cartoes">
+      <!-- ESTADO -->
+      <div class="campo seletor-estado">
+        <label>Estado</label>
+        <div class="seletor-personalizado" [class.aberto]="estadoAberto" (click)="alternarEstado()">
+          <div class="seletor-exibicao">
+            <span [class.espaco-reservado]="!estadoSelecionado">
+              {{ estadoSelecionado ? estadoSelecionado.nome : 'Selecione um Estado' }}
+            </span>
+            <div class="seletor-icones">
+              @if (estadoSelecionado) {
+                <button type="button" class="seletor-limpar" (click)="limparEstado($event)" title="Limpar">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              }
+              <i class="fa-solid fa-chevron-down seletor-seta" [class.rotacionado]="estadoAberto"></i>
+            </div>
+          </div>
+        </div>
+
+        @if (estadoAberto) {
+          <div class="seletor-lista">
+            <div class="seletor-busca">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" [(ngModel)]="filtroEstado" placeholder="Buscar estado..." (click)="$event.stopPropagation()" autofocus />
+            </div>
+            <div class="seletor-opcoes">
+              @for (estado of listaEstadosFiltrados; track estado.sigla) {
+                <div class="seletor-opcao" [class.selecionado]="estadoSelecionado?.sigla === estado.sigla" (click)="selecionarEstado(estado); $event.stopPropagation()">
+                  {{ estado.nome }}
+                </div>
+              }
+              @if (listaEstadosFiltrados.length === 0) {
+                <div class="seletor-vazio">Nenhum estado encontrado</div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- CIDADE -->
+      <div class="campo seletor-cidade">
+        <label>Cidade</label>
+        <div class="seletor-personalizado" [class.aberto]="cidadeAberta" [class.desabilitado]="!estadoSelecionado" (click)="alternarCidade()">
+          <div class="seletor-exibicao">
+            <span [class.espaco-reservado]="!cidadeSelecionada">
+              {{ cidadeSelecionada ? cidadeSelecionada.nome : (estadoSelecionado ? 'Selecione uma Cidade' : 'Primeiro selecione um Estado') }}
+            </span>
+            <div class="seletor-icones">
+              @if (cidadeSelecionada) {
+                <button type="button" class="seletor-limpar" (click)="limparCidade($event)" title="Limpar">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              }
+              <i class="fa-solid fa-chevron-down seletor-seta" [class.rotacionado]="cidadeAberta"></i>
+            </div>
+          </div>
+        </div>
+
+        @if (cidadeAberta) {
+          <div class="seletor-lista">
+            <div class="seletor-busca">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" [(ngModel)]="filtroCidade" placeholder="Buscar cidade..." (click)="$event.stopPropagation()" autofocus />
+            </div>
+            <div class="seletor-opcoes">
+              @for (cidade of listaCidadesFiltradas; track cidade.nome) {
+                <div class="seletor-opcao" [class.selecionado]="cidadeSelecionada?.nome === cidade.nome" (click)="selecionarCidade(cidade); $event.stopPropagation()">
+                  {{ cidade.nome }}
+                </div>
+              }
+              @if (listaCidadesFiltradas.length === 0) {
+                <div class="seletor-vazio">Nenhuma cidade encontrada</div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</section>
+<section id="barbearias">
+  @if (buscandoBarbearias) {
+    <div class="carregando-barbearias">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+      <p>Buscando barbearias...</p>
+    </div>
+  } @else if (buscaRealizada && barbearias.length > 0) {
+    <div class="cabecalho-barbearias">
+      <h2>Barbearias em {{ cidadeSelecionada?.nome }}</h2>
+      <p>{{ barbearias.length }} barbearia{{ barbearias.length > 1 ? 's' : '' }} encontrada{{ barbearias.length > 1 ? 's' : '' }}</p>
+    </div>
+    <div class="grade-barbearias">
+      @for (barbearia of barbearias; track barbearia.id) {
+        <div class="cartao-barbearia">
+          <div class="cartao-barbearia-imagem">
+            @if (obterTodasFotos(barbearia).length > 0) {
+              <div class="carrossel-cartao">
+                <div class="carrossel-trilha" [style.transform]="'translateX(-' + (barbearia._indiceCarrossel || 0) * 100 + '%)'">
+                  @for (urlFoto of obterTodasFotos(barbearia); track urlFoto) {
+                    <img [src]="urlFoto" [alt]="barbearia.nome" class="carrossel-slide" />
+                  }
+                </div>
+
+                @if (obterTodasFotos(barbearia).length > 1) {
+                  <button class="carrossel-botao carrossel-anterior" (click)="carrosselAnterior(barbearia, $event)">
+                    <i class="fa-solid fa-chevron-left"></i>
+                  </button>
+                  <button class="carrossel-botao carrossel-proximo" (click)="carrosselProximo(barbearia, $event)">
+                    <i class="fa-solid fa-chevron-right"></i>
+                  </button>
+
+                  <div class="carrossel-pontos">
+                    @for (urlFoto of obterTodasFotos(barbearia); track urlFoto; let indice = $index) {
+                      <span class="carrossel-ponto" [class.ativo]="indice === (barbearia._indiceCarrossel || 0)" (click)="carrosselIrPara(barbearia, indice, $event)"></span>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="cartao-barbearia-vazio">
+                <i class="fa-solid fa-store"></i>
+              </div>
+            }
+          </div>
+          <div class="cartao-barbearia-corpo">
+            <h3>{{ barbearia.nome }}</h3>
+            @if (barbearia.descricao) {
+              <p class="barbearia-descricao">{{ barbearia.descricao }}</p>
+            }
+            <div class="barbearia-infos">
+              <span><i class="fa-solid fa-location-dot"></i> {{ barbearia.endereco }}</span>
+              @if (barbearia.telefone) {
+                <span><i class="fa-solid fa-phone"></i> {{ barbearia.telefone }}</span>
+              }
+              @if (barbearia.whatsapp) {
+                <span><i class="fa-brands fa-whatsapp"></i> {{ barbearia.whatsapp }}</span>
+              }
+            </div>
+            @if (barbearia.pontoReferencia) {
+              <div class="barbearia-referencia">
+                <i class="fa-solid fa-map-pin"></i> {{ barbearia.pontoReferencia }}
+              </div>
+            }
+          </div>
+          <div class="cartao-barbearia-rodape">
+            <button class="botao-ver-mais" routerLink="/barbearia/{{ barbearia.slug || barbearia.id }}">
+              <i class="fa-solid fa-scissors"></i> Agendar corte
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (buscaRealizada && barbearias.length === 0) {
+    <div class="cabecalho-barbearias">
+      <h2>Barbearias em {{ cidadeSelecionada?.nome }}</h2>
+      <p>0 barbearias encontradas</p>
+    </div>
+    <div id="resultado">
+      <i class="fa-solid fa-scissors"></i>
+      <p class="resultado-mensagem">Nenhuma barbearia encontrada nesta localizacao</p>
+      <p class="resultado-dica">Tente selecionar outro estado ou cidade</p>
+    </div>
+  } @else {
+    <div class="cabecalho-barbearias">
+      <h2>Todas as Barbearias</h2>
+      <p>Selecione um estado e cidade para buscar</p>
+    </div>
+    <div id="resultado">
+      <i class="fa-solid fa-scissors"></i>
+      <p class="resultado-mensagem">Nenhuma barbearia encontrada nesta localizacao</p>
+      <p class="resultado-dica">Tente selecionar outro estado ou cidade</p>
+    </div>
+  }
+</section>
+

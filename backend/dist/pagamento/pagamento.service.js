@@ -8,17 +8,20 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var PagamentoService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PagamentoService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const prisma_service_1 = require("../prisma/prisma.service");
 const mercadopago_1 = require("mercadopago");
-let PagamentoService = class PagamentoService {
+let PagamentoService = PagamentoService_1 = class PagamentoService {
     configService;
     prisma;
+    logger = new common_1.Logger(PagamentoService_1.name);
     client;
     preApproval;
+    expiracaoTimer = null;
     planosPreco = {
         PROFISSIONAL: 29.9,
         PREMIUM: 59.9,
@@ -29,6 +32,46 @@ let PagamentoService = class PagamentoService {
         const accessToken = this.configService.get('MERCADO_PAGO_ACCESS_TOKEN') || '';
         this.client = new mercadopago_1.MercadoPagoConfig({ accessToken });
         this.preApproval = new mercadopago_1.PreApproval(this.client);
+    }
+    async onModuleInit() {
+        await this.executarVerificacaoExpirados('startup');
+        this.agendarProximaVerificacao();
+    }
+    onModuleDestroy() {
+        if (this.expiracaoTimer) {
+            clearTimeout(this.expiracaoTimer);
+            this.expiracaoTimer = null;
+        }
+    }
+    agendarProximaVerificacao() {
+        if (this.expiracaoTimer) {
+            clearTimeout(this.expiracaoTimer);
+            this.expiracaoTimer = null;
+        }
+        const agora = new Date();
+        const proxima = new Date(agora);
+        proxima.setDate(proxima.getDate() + 1);
+        proxima.setHours(0, 5, 0, 0);
+        const msAteProxima = Math.max(10_000, proxima.getTime() - agora.getTime());
+        this.expiracaoTimer = setTimeout(async () => {
+            await this.executarVerificacaoExpirados('diaria');
+            this.agendarProximaVerificacao();
+        }, msAteProxima);
+        this.logger.log(`Proxima verificacao de planos expirados agendada para ${proxima.toISOString()}.`);
+    }
+    async executarVerificacaoExpirados(origem) {
+        try {
+            const resultado = await this.verificarPlanosExpirados();
+            if (resultado.downgraded > 0) {
+                this.logger.log(`[${origem}] ${resultado.downgraded} usuario(s) tiveram downgrade para BASICO por expiracao.`);
+            }
+            else {
+                this.logger.log(`[${origem}] Nenhum plano expirado para downgrade.`);
+            }
+        }
+        catch (error) {
+            this.logger.error(`[${origem}] Falha ao verificar planos expirados: ${error?.message || error}`);
+        }
     }
     async criarAssinatura(userId, data) {
         const preco = this.planosPreco[data.plano];
@@ -97,7 +140,9 @@ let PagamentoService = class PagamentoService {
                 body: { status: 'cancelled' },
             });
             const agora = new Date();
-            const fimPeriodo = new Date(agora.getFullYear(), agora.getMonth() + 1, agora.getDate());
+            const fimPeriodo = user.planoExpiraEm && user.planoExpiraEm > agora
+                ? user.planoExpiraEm
+                : new Date(agora.getFullYear(), agora.getMonth() + 1, agora.getDate());
             const updatedUser = await this.prisma.user.update({
                 where: { id: userId },
                 data: {
@@ -117,6 +162,8 @@ let PagamentoService = class PagamentoService {
             return {
                 status: 'cancelled',
                 message: `Assinatura cancelada. Seu plano ${user.plano} ficará ativo até ${fimPeriodo.toLocaleDateString('pt-BR')}.`,
+                planoExpiraEm: fimPeriodo,
+                planoAtual: user.plano,
                 user: updatedUser,
             };
         }
@@ -126,7 +173,7 @@ let PagamentoService = class PagamentoService {
         }
     }
     async consultarAssinatura(userId) {
-        const user = await this.prisma.user.findUnique({
+        let user = await this.prisma.user.findUnique({
             where: { id: userId },
             select: {
                 plano: true,
@@ -137,6 +184,25 @@ let PagamentoService = class PagamentoService {
         });
         if (!user) {
             throw new common_1.BadRequestException('Usuário não encontrado.');
+        }
+        const agora = new Date();
+        const expirou = !!user.planoExpiraEm && user.planoExpiraEm <= agora;
+        if (expirou && user.subscriptionStatus !== 'authorized') {
+            user = await this.prisma.user.update({
+                where: { id: userId },
+                data: {
+                    plano: 'BASICO',
+                    subscriptionId: null,
+                    subscriptionStatus: null,
+                    planoExpiraEm: null,
+                },
+                select: {
+                    plano: true,
+                    subscriptionId: true,
+                    subscriptionStatus: true,
+                    planoExpiraEm: true,
+                },
+            });
         }
         return {
             plano: user.plano,
@@ -206,7 +272,7 @@ let PagamentoService = class PagamentoService {
     }
 };
 exports.PagamentoService = PagamentoService;
-exports.PagamentoService = PagamentoService = __decorate([
+exports.PagamentoService = PagamentoService = PagamentoService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [config_1.ConfigService,
         prisma_service_1.PrismaService])

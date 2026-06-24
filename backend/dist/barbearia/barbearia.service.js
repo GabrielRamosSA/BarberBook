@@ -53,6 +53,16 @@ let BarbeariaService = class BarbeariaService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    normalizarTexto(valor) {
+        if (!valor)
+            return undefined;
+        return valor.trim();
+    }
+    normalizarUf(valor) {
+        if (!valor)
+            return undefined;
+        return valor.trim().toUpperCase();
+    }
     gerarSlug(nome) {
         return nome
             .toLowerCase()
@@ -92,6 +102,8 @@ let BarbeariaService = class BarbeariaService {
         const barbearia = await this.prisma.barbearia.create({
             data: {
                 ...dto,
+                cidade: this.normalizarTexto(dto.cidade) || dto.cidade,
+                estado: this.normalizarUf(dto.estado) || dto.estado,
                 slug,
                 ownerId,
             },
@@ -204,6 +216,8 @@ let BarbeariaService = class BarbeariaService {
             where: { id },
             data: {
                 ...dto,
+                cidade: dto.cidade !== undefined ? (this.normalizarTexto(dto.cidade) || dto.cidade) : undefined,
+                estado: dto.estado !== undefined ? (this.normalizarUf(dto.estado) || dto.estado) : undefined,
                 slug: dto.nome ? await this.gerarSlugUnico(dto.nome, id) : undefined,
             },
         });
@@ -322,10 +336,12 @@ let BarbeariaService = class BarbeariaService {
     }
     async search(estado, cidade) {
         const where = { ativa: true };
-        if (estado)
-            where.estado = estado;
-        if (cidade)
-            where.cidade = cidade;
+        if (estado?.trim()) {
+            where.estado = { equals: estado.trim(), mode: 'insensitive' };
+        }
+        if (cidade?.trim()) {
+            where.cidade = { equals: cidade.trim(), mode: 'insensitive' };
+        }
         return this.prisma.barbearia.findMany({
             where,
             include: {

@@ -778,6 +778,100 @@
   50% { transform: rotate(0); }
 }
 
+:host-context(.theme-dark) .agenda-page {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .page-header h1,
+:host-context(.theme-dark) .page-header h1 i {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .page-header p {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .btn-nav,
+:host-context(.theme-dark) .date-display,
+:host-context(.theme-dark) .day-stat,
+:host-context(.theme-dark) .timeline-card {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+  box-shadow: var(--app-shadow);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .day-stat.stat-alerta {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+:host-context(.theme-dark) .badge-hoje {
+  background: var(--app-text);
+  color: #0b1120;
+}
+
+:host-context(.theme-dark) .btn-hoje {
+  border-color: var(--app-border);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .btn-hoje:hover {
+  background: var(--app-text);
+  color: #0b1120;
+}
+
+:host-context(.theme-dark) .filtro-btn {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .filtro-btn:hover {
+  background: var(--app-surface-2);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .filtro-btn.ativo {
+  background: var(--app-text);
+  color: #0b1120;
+  border-color: var(--app-text);
+}
+
+:host-context(.theme-dark) .loading-state,
+:host-context(.theme-dark) .empty-state p,
+:host-context(.theme-dark) .stat-label,
+:host-context(.theme-dark) .timeline-hora .duracao,
+:host-context(.theme-dark) .cliente-telefone,
+:host-context(.theme-dark) .servico-meta {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .stat-value,
+:host-context(.theme-dark) .timeline-hora .hora,
+:host-context(.theme-dark) .cliente-nome,
+:host-context(.theme-dark) .servico-detalhe,
+:host-context(.theme-dark) .card-barbearia {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .timeline-line::after {
+  background: var(--app-border);
+}
+
+:host-context(.theme-dark) .cliente-avatar,
+:host-context(.theme-dark) .cliente-avatar-placeholder {
+  border-color: var(--app-border);
+}
+
+:host-context(.theme-dark) .card-servico {
+  background: var(--app-surface-2);
+}
+
+:host-context(.theme-dark) .card-acoes {
+  border-top-color: var(--app-border);
+}
+
 .lembrete-card {
   display: flex;
   align-items: center;

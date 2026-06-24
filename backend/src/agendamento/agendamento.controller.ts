@@ -34,13 +34,19 @@ export class AgendamentoController {
       barbeiroId: string;
       servicoId: string;
     },
+    @Req() req: Request,
     @Headers('authorization') authHeader?: string,
   ) {
     // Extrair userId do token se existir (sem obrigar auth)
     let userId: string | undefined;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
+    const bearerToken = authHeader && authHeader.startsWith('Bearer ')
+      ? authHeader.split(' ')[1]
+      : undefined;
+    const cookieToken = (req as any)?.cookies?.token as string | undefined;
+    const token = bearerToken || cookieToken;
+
+    if (token) {
       try {
-        const token = authHeader.split(' ')[1];
         const decoded = this.jwtService.verify(token) as any;
         userId = decoded.sub;
       } catch {

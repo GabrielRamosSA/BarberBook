@@ -20,6 +20,8 @@ const servico_module_1 = require("./servico/servico.module");
 const horario_module_1 = require("./horario/horario.module");
 const agendamento_module_1 = require("./agendamento/agendamento.module");
 const pagamento_module_1 = require("./pagamento/pagamento.module");
+const suporte_module_1 = require("./suporte/suporte.module");
+const admin_dev_module_1 = require("./admin-dev/admin-dev.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -36,6 +38,8 @@ exports.AppModule = AppModule = __decorate([
             horario_module_1.HorarioModule,
             agendamento_module_1.AgendamentoModule,
             pagamento_module_1.PagamentoModule,
+            suporte_module_1.SuporteModule,
+            admin_dev_module_1.AdminDevModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

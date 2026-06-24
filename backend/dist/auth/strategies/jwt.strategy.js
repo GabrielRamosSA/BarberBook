@@ -19,7 +19,25 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
     prisma;
     constructor(configService, prisma) {
         super({
-            jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
+            jwtFromRequest: passport_jwt_1.ExtractJwt.fromExtractors([
+                (req) => {
+                    try {
+                        if (!req || !req.headers)
+                            return null;
+                        const cookie = req.headers.cookie;
+                        if (!cookie)
+                            return null;
+                        const match = cookie.split(';').map((c) => c.trim()).find((c) => c.startsWith('token='));
+                        if (!match)
+                            return null;
+                        return decodeURIComponent(match.split('=')[1]);
+                    }
+                    catch {
+                        return null;
+                    }
+                },
+                passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
+            ]),
             ignoreExpiration: false,
             secretOrKey: configService.get('JWT_SECRET'),
         });

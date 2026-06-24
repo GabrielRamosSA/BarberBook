@@ -451,3 +451,44 @@
     text-align: center;
   }
 }
+
+:host-context(.theme-dark) .planos-page {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .page-header h1,
+:host-context(.theme-dark) .plano-header h2,
+:host-context(.theme-dark) .preco-moeda,
+:host-context(.theme-dark) .preco-valor,
+:host-context(.theme-dark) .faq-section h2 {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .page-header p,
+:host-context(.theme-dark) .preco-periodo,
+:host-context(.theme-dark) .plano-desc,
+:host-context(.theme-dark) .faq-item p {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .plano-card,
+:host-context(.theme-dark) .faq-item {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+  box-shadow: var(--app-shadow);
+}
+
+:host-context(.theme-dark) .plano-features li {
+  border-bottom-color: var(--app-border);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .plano-features li.not-included {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .btn-plano.basico,
+:host-context(.theme-dark) .btn-plano.atual {
+  background: var(--app-surface-2);
+  color: var(--app-muted);
+}

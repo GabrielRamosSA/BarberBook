@@ -111,8 +111,7 @@
 // QUICK ACTIONS
 // ========================
 .actions-grid {
-  display: flex;
-  align-items: center;
+  display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 16px;
 }
@@ -254,4 +253,131 @@
   &:hover {
     background: #0e243a;
   }
+}
+
+@media (max-width: 960px) {
+  .overview-page {
+    padding: 20px;
+  }
+
+  .page-header {
+    margin-bottom: 24px;
+
+    h1 {
+      font-size: 1.5rem;
+    }
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 26px;
+  }
+
+  .stat-card {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .stat-icon {
+    width: 42px;
+    height: 42px;
+    font-size: 1rem;
+  }
+
+  .stat-value {
+    font-size: 1.35rem;
+  }
+
+  .actions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .action-card {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .overview-page {
+    padding: 14px;
+  }
+
+  .stats-grid,
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .barbearia-card-mini {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 14px 18px;
+    font-size: 0.95rem;
+  }
+}
+
+:host-context(.theme-dark) .overview-page {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .page-header h1,
+:host-context(.theme-dark) .section h2,
+:host-context(.theme-dark) .barbearia-nome,
+:host-context(.theme-dark) .stat-value {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .page-header p,
+:host-context(.theme-dark) .stat-label,
+:host-context(.theme-dark) .barbearia-local,
+:host-context(.theme-dark) .empty-state p {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .stat-card,
+:host-context(.theme-dark) .action-card,
+:host-context(.theme-dark) .barbearia-card-mini,
+:host-context(.theme-dark) .empty-state {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+  box-shadow: var(--app-shadow);
+}
+
+:host-context(.theme-dark) .section-link {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .section-link:hover {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .action-card i {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .action-card {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .action-card span {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .action-card:hover {
+  border-color: var(--app-text);
+}
+
+:host-context(.theme-dark) .empty-state i {
+  color: var(--app-border);
 }

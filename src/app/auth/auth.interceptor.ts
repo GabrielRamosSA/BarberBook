@@ -1,18 +1,10 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  // Lê o token direto do localStorage (não depende do AuthService)
-  let token: string | null = null;
-  if (typeof localStorage !== 'undefined') {
-    token = localStorage.getItem('token');
-  }
-
-  if (token) {
-    const cloned = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+  // Só envia cookies em requisições ao backend (/api). Não alterar requests externas (ex: IBGE).
+  const isBackendApi = req.url.startsWith('/api') || req.url.startsWith(window.location.origin + '/api');
+  if (isBackendApi) {
+    const cloned = req.clone({ withCredentials: true });
     return next(cloned);
   }
 

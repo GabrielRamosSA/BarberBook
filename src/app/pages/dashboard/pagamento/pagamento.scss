@@ -1,3 +1,4 @@
+
 .pagamento-page {
   padding: 24px;
   max-width: 1000px;
@@ -6,7 +7,24 @@
   position: relative;
 }
 
-// Toast
+.pagamento-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+
+  h1 {
+    margin: 0;
+    font-size: 2rem;
+    color: #071522;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: #667085;
+  }
+}
+
 .toast-notificacao {
   position: fixed;
   top: 24px;
@@ -19,87 +37,19 @@
   font-weight: 500;
   font-size: 0.95rem;
   z-index: 9999;
-  animation: slideIn 0.3s ease;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
 
-  &.toast-sucesso {
-    background: #d4edda;
-    color: #155724;
-    .input-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
+.toast-sucesso {
+  background: #d4edda;
+  color: #155724;
+}
 
-      > i:first-child {
-        position: absolute;
-        left: 14px;
-        color: #9ca3af;
-        font-size: 0.95rem;
-        z-index: 1;
-      }
+.toast-erro {
+  background: #f8d7da;
+  color: #842029;
+}
 
-      input {
-        width: 100%;
-        padding: 12px 14px 12px 42px;
-        border: 1.5px solid #e0e0e0;
-        border-radius: 10px;
-        font-size: 0.95rem;
-        color: #071522;
-        background: #fafafa;
-        transition: all 0.2s;
-        outline: none;
-
-        &::placeholder {
-          color: #bbb;
-        }
-
-        &:focus {
-          border-color: #071522;
-          background: #fff;
-          box-shadow: 0 0 0 3px rgba(7, 21, 34, 0.08);
-        }
-      }
-
-      .input-brand {
-        position: absolute;
-        right: 14px;
-        font-size: 1.3rem;
-      }
-    }
-
-    // Estilo customizado para o select do tipo de pagamento
-    select[type],
-    .input-wrapper select {
-      width: 100%;
-      padding: 12px 14px 12px 42px;
-      border: 1.5px solid #e0e0e0;
-      border-radius: 10px;
-      font-size: 0.95rem;
-      color: #071522;
-      background: #fafafa;
-      transition: all 0.2s;
-      outline: none;
-      appearance: none;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      background-image: url('data:image/svg+xml;utf8,<svg fill="%239ca3af" height="20" viewBox="0 0 20 20" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7.293 7.293a1 1 0 011.414 0L10 8.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z"/></svg>');
-      background-repeat: no-repeat;
-      background-position: right 14px center;
-      background-size: 18px 18px;
-      cursor: pointer;
-    }
-
-    select[type]:focus,
-    .input-wrapper select:focus {
-      border-color: #071522;
-      background: #fff;
-      box-shadow: 0 0 0 3px rgba(7, 21, 34, 0.08);
-    }
-
-    select[type]::-ms-expand,
-    .input-wrapper select::-ms-expand {
-      display: none;
-    }
 .btn-voltar {
   width: 42px;
   height: 42px;
@@ -120,14 +70,12 @@
   }
 }
 
-// Content layout
 .pagamento-content {
   display: flex;
   gap: 32px;
   align-items: flex-start;
 }
 
-// Card form section
 .card-form-section {
   flex: 1;
   display: flex;
@@ -135,7 +83,6 @@
   gap: 28px;
 }
 
-// Card Preview
 .card-preview {
   perspective: 1000px;
 }
@@ -234,7 +181,6 @@
   letter-spacing: 0.5px;
 }
 
-// Card Form Inputs
 .card-form {
   background: #fff;
   border: 1px solid #e8e8e8;
@@ -279,7 +225,8 @@
     z-index: 1;
   }
 
-  input {
+  input,
+  select {
     width: 100%;
     padding: 12px 14px 12px 42px;
     border: 1.5px solid #e0e0e0;
@@ -289,16 +236,28 @@
     background: #fafafa;
     transition: all 0.2s;
     outline: none;
+  }
 
-    &::placeholder {
-      color: #bbb;
-    }
+  input::placeholder {
+    color: #bbb;
+  }
 
-    &:focus {
-      border-color: #071522;
-      background: #fff;
-      box-shadow: 0 0 0 3px rgba(7, 21, 34, 0.08);
-    }
+  input:focus,
+  select:focus {
+    border-color: #071522;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(7, 21, 34, 0.08);
+  }
+
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%239ca3af" height="20" viewBox="0 0 20 20" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7.293 7.293a1 1 0 011.414 0L10 8.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 18px;
+    cursor: pointer;
   }
 
   .input-brand {
@@ -308,7 +267,6 @@
   }
 }
 
-// Resumo da compra
 .resumo-compra {
   width: 340px;
   background: #fff;
@@ -322,7 +280,7 @@
     font-size: 1.1rem;
     font-weight: 700;
     color: #071522;
-    margin: 0 0 20px 0;
+    margin: 0 0 20px;
   }
 }
 
@@ -469,18 +427,30 @@
   color: #9ca3af;
 }
 
-// Responsivo
 @media (max-width: 768px) {
   .pagamento-page {
     padding: 16px;
   }
 
+  .pagamento-header {
+    h1 {
+      font-size: 1.6rem;
+    }
+  }
+
   .pagamento-content {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .card-form-section,
+  .card-preview,
+  .card-form,
+  .resumo-compra {
+    width: 100%;
   }
 
   .resumo-compra {
-    width: 100%;
     position: static;
   }
 
@@ -502,4 +472,63 @@
     flex-direction: column;
     gap: 18px;
   }
- }
+}
+
+:host-context(.theme-dark) .pagamento-page {
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .pagamento-header h1 {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .pagamento-header p {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .btn-voltar {
+  background: var(--app-surface-2);
+  border-color: var(--app-border);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .card-form,
+:host-context(.theme-dark) .resumo-compra {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+  box-shadow: var(--app-shadow);
+}
+
+:host-context(.theme-dark) .input-wrapper input,
+:host-context(.theme-dark) .input-wrapper select {
+  background: var(--app-surface-2);
+  border-color: var(--app-border);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .input-wrapper input::placeholder {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .resumo-plano {
+  background: var(--app-surface-2);
+}
+
+:host-context(.theme-dark) .resumo-plano-icon {
+  background: #1f2937;
+}
+
+:host-context(.theme-dark) .resumo-plano-info strong,
+:host-context(.theme-dark) .resumo-total span:first-child,
+:host-context(.theme-dark) .total-valor {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .resumo-item,
+:host-context(.theme-dark) .resumo-plano-info span,
+:host-context(.theme-dark) .seguranca-info,
+:host-context(.theme-dark) .metodos-aceitos span,
+:host-context(.theme-dark) .metodos-icons {
+  color: var(--app-muted);
+}

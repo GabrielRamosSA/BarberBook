@@ -418,3 +418,137 @@
     background: #0d2235;
   }
 }
+
+@media (max-width: 900px) {
+  .perfil-header {
+    .header-content {
+      padding: 0 14px;
+    }
+  }
+
+  .perfil-main {
+    max-width: 680px;
+    padding: 24px 14px;
+  }
+
+  .perfil-card {
+    padding: 24px 16px;
+  }
+
+  .perfil-actions,
+  .edit-actions {
+    flex-direction: column;
+
+    .btn-editar,
+    .btn-excluir,
+    .btn-salvar,
+    .btn-cancelar {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .perfil-header {
+    .logo {
+      font-size: 1.1rem;
+      gap: 8px;
+    }
+  }
+
+  .btn-logout {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    gap: 6px;
+  }
+
+  .perfil-top {
+    margin-bottom: 20px;
+
+    h2 {
+      font-size: 1.25rem;
+    }
+  }
+
+  .avatar-wrapper {
+    .avatar,
+    .avatar-placeholder {
+      width: 84px;
+      height: 84px;
+    }
+
+    .avatar-placeholder i {
+      font-size: 2rem;
+    }
+  }
+
+  .info-item {
+    padding: 12px;
+    gap: 10px;
+
+    .info-value {
+      word-break: break-word;
+    }
+  }
+}
+
+:host-context(.theme-dark) .perfil-container {
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .perfil-card {
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow);
+}
+
+:host-context(.theme-dark) .perfil-top h2 {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .info-item {
+  background: var(--app-surface-2);
+}
+
+:host-context(.theme-dark) .info-label {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .info-value {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .campo label {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .campo input {
+  background: var(--app-surface-2);
+  border-color: var(--app-border);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .btn-excluir {
+  background: var(--app-surface-2);
+  border-color: var(--app-border);
+}
+
+:host-context(.theme-dark) .avatar-btn-delete {
+  background: var(--app-surface-2);
+  border-color: var(--app-border) !important;
+}
+
+:host-context(.theme-dark) .sucesso-msg {
+  background: rgba(34, 197, 94, 0.16);
+  color: #bbf7d0;
+}
+
+:host-context(.theme-dark) .erro-msg {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+}
+
+:host-context(.theme-dark) .loading {
+  color: var(--app-muted);
+}

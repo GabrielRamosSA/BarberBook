@@ -1,1 +1,13 @@
+<button
+	class="alternar-tema"
+	type="button"
+	(click)="alternarTema()"
+	[attr.aria-pressed]="modoEscuroAtivo"
+	[attr.aria-label]="modoEscuroAtivo ? 'Ativar modo claro' : 'Ativar modo noturno'"
+	[attr.title]="modoEscuroAtivo ? 'Modo claro' : 'Modo noturno'"
+>
+	<i class="fa-solid" [class.fa-sun]="modoEscuroAtivo" [class.fa-moon]="!modoEscuroAtivo"></i>
+	<span class="alternar-tema-texto">{{ modoEscuroAtivo ? 'Claro' : 'Noturno' }}</span>
+</button>
+
 <router-outlet></router-outlet>

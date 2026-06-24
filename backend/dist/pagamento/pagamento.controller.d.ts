@@ -16,6 +16,8 @@ export declare class PagamentoController {
     cancelar(req: Request): Promise<{
         status: string;
         message: string;
+        planoExpiraEm: Date;
+        planoAtual: import("@prisma/client").$Enums.Plano;
         user: {
             nome: string;
             email: string;

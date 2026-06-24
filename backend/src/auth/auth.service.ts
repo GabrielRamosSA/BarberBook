@@ -21,7 +21,7 @@ export class AuthService {
   ) {}
 
   async checkEmailExists(email: string) {
-    // 1. Verifica se o domínio do e-mail tem registros MX válidos
+  
     const domain = email.split('@')[1];
     if (!domain) {
       return { exists: false, valid: false, reason: 'E-mail inválido.' };
@@ -36,7 +36,7 @@ export class AuthService {
       return { exists: false, valid: false, reason: 'Este domínio de e-mail não existe.' };
     }
 
-    // 2. Verifica se já está cadastrado no banco
+
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -49,7 +49,7 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto) {
-    // Valida domínio do e-mail
+
     const domain = dto.email.split('@')[1];
     if (domain) {
       try {
@@ -68,7 +68,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      // Se existe mas não verificou, permite reenviar código
+
       if (!existingUser.emailVerified) {
         const code = this.emailService.generateCode();
         await this.prisma.user.update({
@@ -110,7 +110,6 @@ export class AuthService {
       },
     });
 
-    // Envia código de verificação por e-mail
     await this.emailService.sendVerificationCode(dto.email, code, dto.nome);
 
     return {
@@ -145,7 +144,7 @@ export class AuthService {
       throw new BadRequestException('Código incorreto.');
     }
 
-    // Verificar e ativar conta
+
     const verifiedUser = await this.prisma.user.update({
       where: { id: user.id },
       data: {
@@ -217,9 +216,8 @@ export class AuthService {
       throw new UnauthorizedException('Email ou senha incorretos');
     }
 
-    // Bloqueia login se o e-mail não foi verificado
+  
     if (!user.emailVerified) {
-      // Reenvia o código automaticamente
       const code = this.emailService.generateCode();
       await this.prisma.user.update({
         where: { id: user.id },
@@ -259,7 +257,7 @@ export class AuthService {
       where: { email: dto.email },
     });
 
-    // Sempre retorna sucesso para não revelar se o e-mail existe
+
     if (!user || !user.emailVerified) {
       return { message: 'Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.' };
     }

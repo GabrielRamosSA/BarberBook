@@ -1,0 +1,58 @@
+<div class="suporte-page">
+  @if (toast) {
+    <div class="toast-notificacao" [class.toast-sucesso]="toast.tipo === 'sucesso'" [class.toast-erro]="toast.tipo === 'erro'">
+      <i [class]="toast.tipo === 'sucesso' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'"></i>
+      <span>{{ toast.mensagem }}</span>
+    </div>
+  }
+
+  <div class="page-header">
+    <h1><i class="fa-solid fa-envelope-open-text"></i> Suporte</h1>
+    <p>Atendimento profissional por e-mail para resolver problemas da sua barbearia.</p>
+  </div>
+
+  <div class="status-grid">
+    <div class="status-card destaque">
+      <span class="status-label">Plano atual</span>
+      <span class="status-value">{{ plano }}</span>
+    </div>
+
+    <div class="status-card">
+      <span class="status-label">Canal ativo</span>
+      <span class="status-value">{{ canal === 'HUMANO_EMAIL' ? 'E-mail humano' : canal }}</span>
+    </div>
+
+    <div class="status-card">
+      <span class="status-label">Resposta estimada</span>
+      <span class="status-value">Em ate 24h</span>
+    </div>
+  </div>
+
+  <section class="fallback-card">
+    <h2>Abrir chamado por e-mail</h2>
+    <p>
+      Descreva o problema de forma objetiva e nosso time responde no seu e-mail cadastrado.
+      @if (fallbackEmail) {
+        Destino atual: <strong>{{ fallbackEmail }}</strong>
+      }
+    </p>
+
+    <div class="campo">
+      <label>Assunto do chamado</label>
+      <input type="text" [(ngModel)]="assuntoFallback" placeholder="Ex: Erro ao confirmar agendamento" />
+    </div>
+
+    <div class="campo">
+      <label>Mensagem detalhada</label>
+      <textarea [(ngModel)]="mensagemFallback" rows="8" placeholder="Informe o que aconteceu, quando ocorreu e, se possivel, o passo a passo para reproduzir."></textarea>
+    </div>
+
+    <button class="btn-email" (click)="enviarFallbackEmail()" [disabled]="enviandoFallback">
+      @if (enviandoFallback) {
+        <i class="fa-solid fa-spinner fa-spin"></i> Enviando chamado...
+      } @else {
+        <i class="fa-solid fa-envelope"></i> Enviar chamado ao suporte humano
+      }
+    </button>
+  </section>
+</div>

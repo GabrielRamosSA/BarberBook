@@ -1,0 +1,112 @@
+<section class="dev-admin-wrapper">
+  <div class="bg-shape"></div>
+
+  <div class="card" *ngIf="!logado">
+    <h1>Painel Secreto Dev</h1>
+    <p class="subtitle">Acesso restrito para operacao interna.</p>
+
+    <form (ngSubmit)="login()" class="login-form">
+      <label>
+        Usuario
+        <input
+          type="text"
+          name="username"
+          [(ngModel)]="username"
+          placeholder="Digite seu usuario"
+          required
+        />
+      </label>
+
+      <label>
+        Senha
+        <input
+          type="password"
+          name="password"
+          [(ngModel)]="password"
+          placeholder="Digite sua senha"
+          required
+        />
+      </label>
+
+      <button type="submit" [disabled]="carregando">
+        {{ carregando ? 'Entrando...' : 'Entrar no painel' }}
+      </button>
+    </form>
+
+    <p class="alert erro" *ngIf="erro">{{ erro }}</p>
+  </div>
+
+  <div class="card painel" *ngIf="logado">
+    <header>
+      <h1>Painel Secreto Dev</h1>
+      <button type="button" class="logout" (click)="logout()">Sair</button>
+    </header>
+
+    <div class="toolbar">
+      <label>
+        Filtrar contas
+        <select name="filtroTipo" [(ngModel)]="filtroTipo" (change)="carregarContas()">
+          <option value="TODOS">Todos</option>
+          <option value="CLIENTE">Clientes</option>
+          <option value="BARBEIRO">Barbeiros</option>
+        </select>
+      </label>
+
+      <button type="button" (click)="carregarContas()" [disabled]="carregandoContas">
+        {{ carregandoContas ? 'Atualizando...' : 'Atualizar lista' }}
+      </button>
+    </div>
+
+    <p class="alert erro" *ngIf="erro">{{ erro }}</p>
+    <p class="alert sucesso" *ngIf="sucesso">{{ sucesso }}</p>
+
+    <div class="tabela-wrapper" *ngIf="!carregandoContas">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Tipo</th>
+            <th>Plano</th>
+            <th>Acao</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let conta of contas">
+            <td>{{ conta.nome }}</td>
+            <td>{{ conta.email }}</td>
+            <td>{{ conta.tipo }}</td>
+            <td>
+              <ng-container *ngIf="conta.tipo === 'BARBEIRO'; else planoFixado">
+                <select [(ngModel)]="planosEdicao[conta.id]" [name]="'plano_' + conta.id">
+                  <option value="BASICO">Basico</option>
+                  <option value="PROFISSIONAL">Profissional</option>
+                  <option value="PREMIUM">Premium</option>
+                </select>
+              </ng-container>
+              <ng-template #planoFixado>
+                <span>{{ conta.plano }}</span>
+              </ng-template>
+            </td>
+            <td>
+              <button
+                type="button"
+                class="save"
+                *ngIf="conta.tipo === 'BARBEIRO'"
+                [disabled]="salvandoPlanoId === conta.id"
+                (click)="atualizarPlano(conta)"
+              >
+                {{ salvandoPlanoId === conta.id ? 'Salvando...' : 'Salvar plano' }}
+              </button>
+              <span *ngIf="conta.tipo !== 'BARBEIRO'">-</span>
+            </td>
+          </tr>
+
+          <tr *ngIf="contas.length === 0">
+            <td colspan="5" class="vazio">Nenhuma conta encontrada para o filtro selecionado.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

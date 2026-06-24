@@ -24,11 +24,11 @@ export class RegistroComponent {
   erro = '';
   carregando = false;
 
-  // Email check
-  emailErro = '';
+  // Verificacao de e-mail
+  erroEmail = '';
   verificandoEmail = false;
   emailValido = false;
-  private emailCheck$ = new Subject<string>();
+  private checagemEmail$ = new Subject<string>();
 
   // Password strength
   senhaForca = 0; // 0-4
@@ -41,62 +41,62 @@ export class RegistroComponent {
     special: false,
   };
 
-  private apiUrl = '/api/auth';
+  private urlApi = '/api/auth';
 
   constructor(
-    private authService: AuthService,
-    private http: HttpClient,
-    private router: Router,
+    private servicoAuth: AuthService,
+    private clienteHttp: HttpClient,
+    private roteador: Router,
   ) {
-    // Debounce email check
-    this.emailCheck$
+    // Debounce da checagem de e-mail
+    this.checagemEmail$
       .pipe(
         debounceTime(500),
         distinctUntilChanged(),
         switchMap((email) => {
           this.verificandoEmail = true;
-          return this.http.get<{ exists: boolean; valid: boolean; reason: string | null }>(
-            `${this.apiUrl}/check-email?email=${encodeURIComponent(email)}`,
+          return this.clienteHttp.get<{ exists: boolean; valid: boolean; reason: string | null }>(
+            `${this.urlApi}/check-email?email=${encodeURIComponent(email)}`,
           );
         }),
       )
       .subscribe({
-        next: (res) => {
+        next: (resposta) => {
           this.verificandoEmail = false;
-          if (!res.valid) {
-            this.emailErro = res.reason || 'Este domínio de e-mail não existe.';
+          if (!resposta.valid) {
+            this.erroEmail = resposta.reason || 'Este domínio de e-mail não existe.';
             this.emailValido = false;
-          } else if (res.exists) {
-            this.emailErro = res.reason || 'Este e-mail já está cadastrado.';
+          } else if (resposta.exists) {
+            this.erroEmail = resposta.reason || 'Este e-mail já está cadastrado.';
             this.emailValido = false;
           } else {
-            this.emailErro = '';
+            this.erroEmail = '';
             this.emailValido = true;
           }
         },
         error: () => {
           this.verificandoEmail = false;
-          this.emailErro = '';
+          this.erroEmail = '';
         },
       });
   }
 
-  onEmailChange() {
+  aoAlterarEmail() {
     this.emailValido = false;
-    this.emailErro = '';
+    this.erroEmail = '';
 
-    if (!this.email || !this.isEmailFormat(this.email)) {
+    if (!this.email || !this.emailFormatoValido(this.email)) {
       return;
     }
 
-    this.emailCheck$.next(this.email);
+    this.checagemEmail$.next(this.email);
   }
 
-  private isEmailFormat(email: string): boolean {
+  private emailFormatoValido(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
 
-  onSenhaChange() {
+  aoAlterarSenha() {
     const s = this.senha;
 
     this.senhaRequisitos = {
@@ -128,14 +128,14 @@ export class RegistroComponent {
     );
   }
 
-  onSubmit() {
+  aoEnviar() {
     this.erro = '';
 
     if (!this.formValido) return;
 
     this.carregando = true;
 
-    this.authService
+    this.servicoAuth
       .register({
         nome: this.nome,
         email: this.email,
@@ -144,25 +144,25 @@ export class RegistroComponent {
         tipo: this.tipo,
       })
       .subscribe({
-        next: (res) => {
+        next: (resposta) => {
           this.carregando = false;
-          if (res.requiresVerification) {
+          if (resposta.requiresVerification) {
             // Redireciona para a página de verificação
-            this.router.navigate(['/verificar-email'], {
-              queryParams: { email: res.email || this.email },
+            this.roteador.navigate(['/verificar-email'], {
+              queryParams: { email: resposta.email || this.email },
             });
           } else {
-            this.router.navigate(['/perfil']);
+            this.roteador.navigate(['/perfil']);
           }
         },
-        error: (err) => {
+        error: (erroResposta) => {
           this.carregando = false;
-          this.erro = err.error?.message || 'Erro ao criar conta. Tente novamente.';
+          this.erro = erroResposta.error?.message || 'Erro ao criar conta. Tente novamente.';
         },
       });
   }
 
-  loginComGoogle() {
-    this.authService.loginWithGoogle();
+  entrarComGoogle() {
+    this.servicoAuth.loginWithGoogle();
   }
 }

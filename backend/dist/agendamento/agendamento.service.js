@@ -18,6 +18,9 @@ let AgendamentoService = class AgendamentoService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    normalizeTelefone(telefone) {
+        return (telefone || '').replace(/\D/g, '');
+    }
     async contarAgendamentosMes(ownerId) {
         const user = await this.prisma.user.findUnique({ where: { id: ownerId } });
         const plano = user?.plano || 'BASICO';
@@ -41,7 +44,7 @@ let AgendamentoService = class AgendamentoService {
         };
     }
     async create(data) {
-        const telDigits = data.telefoneCliente.replace(/\D/g, '');
+        const telDigits = this.normalizeTelefone(data.telefoneCliente);
         if (telDigits.length < 10 || telDigits.length > 11) {
             throw new common_1.BadRequestException('Telefone inválido. Informe DDD + número (10 ou 11 dígitos).');
         }
@@ -74,7 +77,7 @@ let AgendamentoService = class AgendamentoService {
                 data: data.data,
                 horario: data.horario,
                 nomeCliente: data.nomeCliente,
-                telefoneCliente: data.telefoneCliente,
+                telefoneCliente: telDigits,
                 barbeariaId: data.barbeariaId,
                 barbeiroId: data.barbeiroId,
                 servicoId: data.servicoId,
@@ -89,8 +92,16 @@ let AgendamentoService = class AgendamentoService {
         return { message: 'Agendamento realizado com sucesso!', agendamento };
     }
     async findByUser(userId) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { telefone: true },
+        });
+        const tel = user?.telefone ? this.normalizeTelefone(user.telefone) : '';
+        const where = tel.length >= 10
+            ? { OR: [{ userId }, { userId: null, telefoneCliente: tel }] }
+            : { userId };
         return this.prisma.agendamento.findMany({
-            where: { userId },
+            where,
             include: {
                 barbearia: { select: { id: true, nome: true, endereco: true, telefone: true, slug: true } },
                 barbeiro: { select: { id: true, nome: true, foto: true } },
@@ -161,11 +172,14 @@ let AgendamentoService = class AgendamentoService {
         return { message: 'Agendamento cancelado.', agendamento: updated };
     }
     async findByTelefone(telefone) {
-        const tel = telefone.replace(/\D/g, '');
-        return this.prisma.agendamento.findMany({
+        const tel = this.normalizeTelefone(telefone);
+        if (tel.length < 10 || tel.length > 11) {
+            return [];
+        }
+        const last8 = tel.slice(-8);
+        const candidatos = await this.prisma.agendamento.findMany({
             where: {
-                telefoneCliente: { contains: tel },
-                userId: null,
+                telefoneCliente: { contains: last8 },
             },
             include: {
                 barbearia: { select: { id: true, nome: true, endereco: true, telefone: true, slug: true } },
@@ -174,15 +188,21 @@ let AgendamentoService = class AgendamentoService {
             },
             orderBy: [{ data: 'desc' }, { horario: 'desc' }],
         });
+        return candidatos.filter((ag) => {
+            const agTel = this.normalizeTelefone(ag.telefoneCliente);
+            return agTel === tel || agTel.endsWith(tel) || tel.endsWith(agTel);
+        });
     }
     async cancelarPorTelefone(id, telefone) {
-        const tel = telefone.replace(/\D/g, '');
+        const tel = this.normalizeTelefone(telefone);
         const agendamento = await this.prisma.agendamento.findUnique({
             where: { id },
         });
         if (!agendamento)
             throw new common_1.NotFoundException('Agendamento não encontrado.');
-        if (!agendamento.telefoneCliente.replace(/\D/g, '').includes(tel)) {
+        const agTel = this.normalizeTelefone(agendamento.telefoneCliente);
+        const telefoneConfere = agTel === tel || agTel.endsWith(tel) || tel.endsWith(agTel);
+        if (!telefoneConfere) {
             throw new common_1.ForbiddenException('Telefone não confere.');
         }
         if (agendamento.userId) {

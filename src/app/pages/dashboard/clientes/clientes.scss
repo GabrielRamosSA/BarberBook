@@ -751,3 +751,80 @@
     align-items: center;
   }
 }
+
+:host-context(.theme-dark) .clientes-page {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .page-header h1,
+:host-context(.theme-dark) .page-header h1 i {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .page-header p,
+:host-context(.theme-dark) .stat-label,
+:host-context(.theme-dark) .info-contato .telefone,
+:host-context(.theme-dark) .info-contato .email,
+:host-context(.theme-dark) .mini-stat,
+:host-context(.theme-dark) .historico-resumo,
+:host-context(.theme-dark) .historico-vazio,
+:host-context(.theme-dark) .hist-hora,
+:host-context(.theme-dark) .hist-barbeiro,
+:host-context(.theme-dark) .link-login {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .stat-card,
+:host-context(.theme-dark) .cliente-card,
+:host-context(.theme-dark) .historico-item {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+  box-shadow: var(--app-shadow);
+}
+
+:host-context(.theme-dark) .card-historico {
+  background: var(--app-surface-2);
+  border-top-color: var(--app-border);
+}
+
+:host-context(.theme-dark) .stat-value,
+:host-context(.theme-dark) .cliente-nome,
+:host-context(.theme-dark) .historico-header h4,
+:host-context(.theme-dark) .hist-servico,
+:host-context(.theme-dark) .hist-preco {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .search-box input,
+:host-context(.theme-dark) .sort-select select {
+  background: var(--app-surface-2);
+  border-color: var(--app-border);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .search-box input::placeholder {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .chip {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .chip.active {
+  background: var(--app-text);
+  color: #0b1120;
+  border-color: var(--app-text);
+}
+
+:host-context(.theme-dark) .btn-action {
+  background: var(--app-surface-2);
+  border-color: var(--app-border);
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .btn-ver-mais {
+  border-color: var(--app-border);
+  color: var(--app-muted);
+}

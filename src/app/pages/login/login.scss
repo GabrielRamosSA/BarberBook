@@ -1,4 +1,4 @@
-.login-container {
+.conteiner-login {
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -7,7 +7,7 @@
   padding: 20px;
 }
 
-.login-card {
+.cartao-login {
   background: #fff;
   border-radius: 16px;
   padding: 40px;
@@ -16,11 +16,11 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
-.login-header {
+.cabecalho-login {
   text-align: center;
   margin-bottom: 30px;
 
-  .login-icon {
+  .icone-login {
     font-size: 2.5rem;
     color: #071522;
     margin-bottom: 10px;
@@ -40,7 +40,7 @@
   }
 }
 
-.login-form {
+.formulario-login {
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -58,7 +58,7 @@
   }
 }
 
-.input-wrapper {
+.campo-input {
   position: relative;
 
   i {
@@ -91,7 +91,7 @@
   }
 }
 
-.erro-msg {
+.mensagem-erro {
   background: #fff0f0;
   color: #d32f2f;
   padding: 12px 16px;
@@ -106,7 +106,7 @@
   }
 }
 
-.btn-login {
+.botao-login {
   padding: 14px;
   border: none;
   border-radius: 10px;
@@ -144,7 +144,7 @@
   }
 }
 
-.divider {
+.divisor {
   display: flex;
   align-items: center;
   margin: 24px 0;
@@ -164,7 +164,7 @@
   }
 }
 
-.btn-google {
+.botao-google {
   width: 100%;
   padding: 14px;
   border: 2px solid #e0e0e0;
@@ -207,4 +207,104 @@
       text-decoration: underline;
     }
   }
+}
+
+@media (max-width: 600px) {
+  .conteiner-login {
+    padding: 14px;
+  }
+
+  .cartao-login {
+    padding: 24px 16px;
+    border-radius: 14px;
+  }
+
+  .cabecalho-login {
+    margin-bottom: 20px;
+
+    .icone-login {
+      font-size: 2rem;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+    }
+
+    p {
+      font-size: 0.88rem;
+    }
+  }
+
+  .esqueceu-senha {
+    text-align: left;
+    margin-top: -2px;
+  }
+
+  .botao-login,
+  .botao-google {
+    width: 100%;
+  }
+
+  .divisor {
+    margin: 18px 0;
+  }
+
+  .link-registro {
+    font-size: 0.84rem;
+  }
+}
+
+:host-context(.theme-dark) .cartao-login {
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .cabecalho-login h1,
+:host-context(.theme-dark) .cabecalho-login .icone-login {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .cabecalho-login p,
+:host-context(.theme-dark) .link-registro {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .campo label {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .campo-input input {
+  background: var(--app-surface-2);
+  border-color: var(--app-border);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .campo-input i {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .divisor::before,
+:host-context(.theme-dark) .divisor::after {
+  background: var(--app-border);
+}
+
+:host-context(.theme-dark) .divisor span {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .botao-google {
+  background: var(--app-surface-2);
+  border-color: var(--app-border);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .esqueceu-senha a,
+:host-context(.theme-dark) .link-registro a {
+  color: #93c5fd;
+}
+
+:host-context(.theme-dark) .mensagem-erro {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
 }

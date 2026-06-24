@@ -11,6 +11,8 @@ import { ServicoModule } from './servico/servico.module';
 import { HorarioModule } from './horario/horario.module';
 import { AgendamentoModule } from './agendamento/agendamento.module';
 import { PagamentoModule } from './pagamento/pagamento.module';
+import { SuporteModule } from './suporte/suporte.module';
+import { AdminDevModule } from './admin-dev/admin-dev.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { PagamentoModule } from './pagamento/pagamento.module';
     HorarioModule,
     AgendamentoModule,
     PagamentoModule,
+    SuporteModule,
+    AdminDevModule,
   ],
   controllers: [AppController],
   providers: [AppService],

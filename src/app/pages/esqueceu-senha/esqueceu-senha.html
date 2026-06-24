@@ -1,7 +1,7 @@
-<div class="forgot-container">
-  <div class="forgot-card">
-    <div class="forgot-header">
-      <i class="fa-solid fa-scissors forgot-icon"></i>
+<div class="conteiner-esqueceu-senha">
+  <div class="cartao-esqueceu-senha">
+    <div class="cabecalho-esqueceu-senha">
+      <i class="fa-solid fa-scissors icone-esqueceu-senha"></i>
       <h1>CortaAí</h1>
       <p>Esqueceu sua senha?</p>
     </div>
@@ -11,9 +11,9 @@
         Informe seu e-mail cadastrado e enviaremos um link para redefinir sua senha.
       </p>
 
-      <form (ngSubmit)="onSubmit()" class="forgot-form">
+      <form (ngSubmit)="aoEnviar()" class="formulario-esqueceu-senha">
         @if (erro) {
-          <div class="erro-msg">
+          <div class="mensagem-erro">
             <i class="fa-solid fa-circle-exclamation"></i>
             {{ erro }}
           </div>
@@ -21,7 +21,7 @@
 
         <div class="campo">
           <label for="email">E-mail</label>
-          <div class="input-wrapper">
+          <div class="campo-input">
             <i class="fa-solid fa-envelope"></i>
             <input
               type="email"
@@ -34,7 +34,7 @@
           </div>
         </div>
 
-        <button type="submit" class="btn-enviar" [disabled]="carregando || !email">
+        <button type="submit" class="botao-enviar" [disabled]="carregando || !email">
           @if (carregando) {
             <i class="fa-solid fa-spinner fa-spin"></i> Enviando...
           } @else {
@@ -43,12 +43,12 @@
         </button>
       </form>
     } @else {
-      <div class="sucesso-container">
-        <div class="sucesso-icon">
+      <div class="container-sucesso">
+        <div class="icone-sucesso">
           <i class="fa-solid fa-envelope-circle-check"></i>
         </div>
-        <p class="sucesso-msg">{{ mensagem }}</p>
-        <p class="sucesso-detalhe">Verifique sua caixa de entrada e spam.</p>
+        <p class="mensagem-sucesso">{{ mensagem }}</p>
+        <p class="detalhe-sucesso">Verifique sua caixa de entrada e spam.</p>
       </div>
     }
 

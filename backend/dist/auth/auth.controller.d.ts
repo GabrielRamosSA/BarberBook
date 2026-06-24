@@ -34,13 +34,7 @@ export declare class AuthController {
     resendCode(dto: ResendCodeDto): Promise<{
         message: string;
     }>;
-    login(dto: LoginDto): Promise<{
-        message: string;
-        requiresVerification: boolean;
-        email: string;
-        user?: undefined;
-        access_token?: undefined;
-    } | {
+    login(dto: LoginDto, res: Response): Promise<{
         message: string;
         user: {
             id: string;
@@ -50,10 +44,7 @@ export declare class AuthController {
             tipo: import("@prisma/client").$Enums.UserType;
             plano: import("@prisma/client").$Enums.Plano;
             avatar: string | null;
-        };
-        access_token: string;
-        requiresVerification?: undefined;
-        email?: undefined;
+        } | undefined;
     }>;
     forgotPassword(dto: ForgotPasswordDto): Promise<{
         message: string;
@@ -64,4 +55,7 @@ export declare class AuthController {
     googleAuth(): Promise<void>;
     googleAuthCallback(req: Request, res: Response): Promise<void>;
     getMe(req: Request): Promise<Express.User | undefined>;
+    logout(res: Response): Promise<{
+        message: string;
+    }>;
 }

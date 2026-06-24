@@ -1,7 +1,7 @@
-<div class="verificar-container">
-  <div class="verificar-card">
-    <div class="verificar-header">
-      <div class="icon-wrapper">
+<div class="conteiner-verificacao">
+  <div class="cartao-verificacao">
+    <div class="cabecalho-verificacao">
+      <div class="envoltorio-icone">
         <i class="fa-solid fa-envelope-circle-check"></i>
       </div>
       <h1>Verifique seu e-mail</h1>
@@ -10,26 +10,26 @@
     </div>
 
     @if (erro) {
-      <div class="erro-msg">
+      <div class="mensagem-erro">
         <i class="fa-solid fa-circle-exclamation"></i>
         {{ erro }}
       </div>
     }
 
     @if (mensagem) {
-      <div class="sucesso-msg">
+      <div class="mensagem-sucesso">
         <i class="fa-solid fa-circle-check"></i>
         {{ mensagem }}
       </div>
     }
 
-    <div class="code-section">
+    <div class="secao-codigo">
       <label>Código de verificação</label>
       <input
         type="text"
-        class="code-input"
-        [(ngModel)]="code"
-        (input)="onCodeInput($event)"
+        class="entrada-codigo"
+        [(ngModel)]="codigo"
+        (input)="aoDigitarCodigo($event)"
         placeholder="000000"
         maxlength="6"
         autofocus
@@ -37,9 +37,9 @@
     </div>
 
     <button
-      class="btn-verificar"
-      (click)="verificar()"
-      [disabled]="verificando || code.length !== 6"
+      class="botao-verificar"
+      (click)="verificarCodigo()"
+      [disabled]="verificando || codigo.length !== 6"
     >
       @if (verificando) {
         <i class="fa-solid fa-spinner fa-spin"></i> Verificando...
@@ -48,11 +48,11 @@
       }
     </button>
 
-    <div class="reenviar-section">
+    <div class="secao-reenviar">
       <p>Não recebeu o código?</p>
       <button
-        class="btn-reenviar"
-        (click)="reenviar()"
+        class="botao-reenviar"
+        (click)="reenviarCodigo()"
         [disabled]="reenviando"
       >
         @if (reenviando) {

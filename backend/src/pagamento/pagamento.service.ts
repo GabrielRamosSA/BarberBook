@@ -1,12 +1,14 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { MercadoPagoConfig, PreApproval } from 'mercadopago';
 
 @Injectable()
-export class PagamentoService {
+export class PagamentoService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(PagamentoService.name);
   private client: MercadoPagoConfig;
   private preApproval: PreApproval;
+  private expiracaoTimer: NodeJS.Timeout | null = null;
 
   private planosPreco: Record<string, number> = {
     PROFISSIONAL: 29.9,
@@ -20,6 +22,52 @@ export class PagamentoService {
     const accessToken = this.configService.get<string>('MERCADO_PAGO_ACCESS_TOKEN') || '';
     this.client = new MercadoPagoConfig({ accessToken });
     this.preApproval = new PreApproval(this.client);
+  }
+
+  async onModuleInit() {
+    await this.executarVerificacaoExpirados('startup');
+    this.agendarProximaVerificacao();
+  }
+
+  onModuleDestroy() {
+    if (this.expiracaoTimer) {
+      clearTimeout(this.expiracaoTimer);
+      this.expiracaoTimer = null;
+    }
+  }
+
+  private agendarProximaVerificacao() {
+    if (this.expiracaoTimer) {
+      clearTimeout(this.expiracaoTimer);
+      this.expiracaoTimer = null;
+    }
+
+    const agora = new Date();
+    const proxima = new Date(agora);
+    proxima.setDate(proxima.getDate() + 1);
+    proxima.setHours(0, 5, 0, 0);
+
+    const msAteProxima = Math.max(10_000, proxima.getTime() - agora.getTime());
+
+    this.expiracaoTimer = setTimeout(async () => {
+      await this.executarVerificacaoExpirados('diaria');
+      this.agendarProximaVerificacao();
+    }, msAteProxima);
+
+    this.logger.log(`Proxima verificacao de planos expirados agendada para ${proxima.toISOString()}.`);
+  }
+
+  private async executarVerificacaoExpirados(origem: 'startup' | 'diaria') {
+    try {
+      const resultado = await this.verificarPlanosExpirados();
+      if (resultado.downgraded > 0) {
+        this.logger.log(`[${origem}] ${resultado.downgraded} usuario(s) tiveram downgrade para BASICO por expiracao.`);
+      } else {
+        this.logger.log(`[${origem}] Nenhum plano expirado para downgrade.`);
+      }
+    } catch (error: any) {
+      this.logger.error(`[${origem}] Falha ao verificar planos expirados: ${error?.message || error}`);
+    }
   }
 
   // ============================
@@ -112,7 +160,9 @@ export class PagamentoService {
 
       // Manter plano até o vencimento (fim do período pago)
       const agora = new Date();
-      const fimPeriodo = new Date(agora.getFullYear(), agora.getMonth() + 1, agora.getDate());
+      const fimPeriodo = user.planoExpiraEm && user.planoExpiraEm > agora
+        ? user.planoExpiraEm
+        : new Date(agora.getFullYear(), agora.getMonth() + 1, agora.getDate());
 
       const updatedUser = await this.prisma.user.update({
         where: { id: userId },
@@ -134,6 +184,8 @@ export class PagamentoService {
       return {
         status: 'cancelled',
         message: `Assinatura cancelada. Seu plano ${user.plano} ficará ativo até ${fimPeriodo.toLocaleDateString('pt-BR')}.`,
+        planoExpiraEm: fimPeriodo,
+        planoAtual: user.plano,
         user: updatedUser,
       };
     } catch (error: any) {
@@ -146,7 +198,7 @@ export class PagamentoService {
   // Consultar status da assinatura
   // ============================
   async consultarAssinatura(userId: string) {
-    const user = await this.prisma.user.findUnique({
+    let user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: {
         plano: true,
@@ -158,6 +210,29 @@ export class PagamentoService {
 
     if (!user) {
       throw new BadRequestException('Usuário não encontrado.');
+    }
+
+    const agora = new Date();
+    const expirou = !!user.planoExpiraEm && user.planoExpiraEm <= agora;
+
+    // Garante consistência imediata quando a data de expiração já passou,
+    // sem depender apenas da rotina diária de verificação.
+    if (expirou && user.subscriptionStatus !== 'authorized') {
+      user = await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          plano: 'BASICO',
+          subscriptionId: null,
+          subscriptionStatus: null,
+          planoExpiraEm: null,
+        },
+        select: {
+          plano: true,
+          subscriptionId: true,
+          subscriptionStatus: true,
+          planoExpiraEm: true,
+        },
+      });
     }
 
     return {

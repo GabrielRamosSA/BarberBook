@@ -19,6 +19,7 @@ export class PlanosComponent implements OnInit {
   assinaturaAtiva = false;
   subscriptionStatus: string | null = null;
   planoExpiraEm: string | null = null;
+  private planoExpiraEmDate: Date | null = null;
 
   toast: { mensagem: string; tipo: 'sucesso' | 'erro' } | null = null;
   private toastTimer: any;
@@ -55,10 +56,35 @@ export class PlanosComponent implements OnInit {
       next: (data) => {
         this.assinaturaAtiva = data.assinaturaAtiva;
         this.subscriptionStatus = data.subscriptionStatus;
-        this.planoExpiraEm = data.planoExpiraEm ? new Date(data.planoExpiraEm).toLocaleDateString('pt-BR') : null;
+        this.atualizarPlanoExpiraEm(data.planoExpiraEm);
+
+        if (this.subscriptionStatus === 'cancelled' && !this.cancelamentoAindaAtivo) {
+          this.subscriptionStatus = null;
+        }
       },
       error: () => {},
     });
+  }
+
+  get cancelamentoAindaAtivo(): boolean {
+    if (this.subscriptionStatus !== 'cancelled' || !this.planoExpiraEmDate) {
+      return false;
+    }
+    return this.planoExpiraEmDate.getTime() > Date.now();
+  }
+
+  private atualizarPlanoExpiraEm(valor: unknown) {
+    const data = valor ? new Date(valor as string) : null;
+    const dataValida = data && !Number.isNaN(data.getTime()) ? data : null;
+
+    if (!dataValida || dataValida.getTime() <= Date.now()) {
+      this.planoExpiraEmDate = null;
+      this.planoExpiraEm = null;
+      return;
+    }
+
+    this.planoExpiraEmDate = dataValida;
+    this.planoExpiraEm = dataValida.toLocaleDateString('pt-BR');
   }
 
   isUpgrade(plano: string): boolean {
@@ -69,6 +95,12 @@ export class PlanosComponent implements OnInit {
 
   selecionarPlano(plano: string) {
     if (plano === this.planoAtual || this.atualizando) return;
+
+    // Se a recorrência foi cancelada, o plano pago continua até a data de expiração.
+    if (plano === 'BASICO' && this.cancelamentoAindaAtivo && this.planoExpiraEm) {
+      this.mostrarToast(`Seu plano atual permanece ativo até ${this.planoExpiraEm}.`, 'erro');
+      return;
+    }
 
     // Se tem assinatura ativa e quer trocar de plano pago, precisa cancelar primeiro
     if (this.assinaturaAtiva && plano !== 'BASICO') {
@@ -116,7 +148,10 @@ export class PlanosComponent implements OnInit {
         this.cancelando = false;
         this.assinaturaAtiva = false;
         this.subscriptionStatus = 'cancelled';
-        this.planoExpiraEm = res.user ? null : this.planoExpiraEm;
+        this.atualizarPlanoExpiraEm(res?.planoExpiraEm || null);
+        if (res?.planoAtual) {
+          this.planoAtual = res.planoAtual;
+        }
         this.mostrarToast(res.message, 'sucesso');
         this.carregarStatusAssinatura();
       },

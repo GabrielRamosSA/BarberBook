@@ -57,6 +57,8 @@ interface Barbearia {
   styleUrl: './agendar.scss',
 })
 export class AgendarComponent implements OnInit, AfterViewInit, OnDestroy {
+  private readonly LAST_PHONE_STORAGE_KEY = 'barberbook:last-phone';
+
   barbearia: Barbearia | null = null;
   carregando = true;
   erro = '';
@@ -90,7 +92,7 @@ export class AgendarComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Carousel
   private carouselInterval: any = null;
-  carouselIndex = 0;
+  indiceCarrossel = 0;
 
   // Mapa
   private mapa: L.Map | null = null;
@@ -106,6 +108,8 @@ export class AgendarComponent implements OnInit, AfterViewInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    this.telefoneCliente = this.getTelefonePersistido();
+
     // Carregar usuário logado
     this.authService.user$.subscribe((user) => {
       this.user = user;
@@ -140,7 +144,7 @@ export class AgendarComponent implements OnInit, AfterViewInit, OnDestroy {
       next: (data) => {
         this.barbearia = data;
         this.carregando = false;
-        this.iniciarCarousel();
+        this.iniciarCarrossel();
         setTimeout(() => this.inicializarMapa(), 300);
       },
       error: () => {
@@ -153,7 +157,7 @@ export class AgendarComponent implements OnInit, AfterViewInit, OnDestroy {
   // ==============================
   // Carousel de fotos
   // ==============================
-  getAllFotos(): string[] {
+  obterTodasFotos(): string[] {
     if (!this.barbearia) return [];
     const fotos: string[] = [];
     if (this.barbearia.foto) fotos.push(this.barbearia.foto);
@@ -161,44 +165,45 @@ export class AgendarComponent implements OnInit, AfterViewInit, OnDestroy {
     return fotos;
   }
 
-  iniciarCarousel() {
+  iniciarCarrossel() {
     if (this.carouselInterval) clearInterval(this.carouselInterval);
-    const total = this.getAllFotos().length;
+    const total = this.obterTodasFotos().length;
     if (total > 1) {
       this.carouselInterval = setInterval(() => {
-        this.carouselIndex = (this.carouselIndex + 1) % total;
+        this.indiceCarrossel = (this.indiceCarrossel + 1) % total;
       }, 4000);
     }
   }
 
-  carouselPrev(event: Event) {
+
+  carrosselAnterior(event: Event) {
     event.stopPropagation();
-    const total = this.getAllFotos().length;
+    const total = this.obterTodasFotos().length;
     if (total <= 1) return;
-    this.carouselIndex = (this.carouselIndex - 1 + total) % total;
-    this.resetCarousel();
+    this.indiceCarrossel = (this.indiceCarrossel - 1 + total) % total;
+    this.resetarCarrossel();
   }
 
-  carouselNext(event: Event) {
+  carrosselProximo(event: Event) {
     event.stopPropagation();
-    const total = this.getAllFotos().length;
+    const total = this.obterTodasFotos().length;
     if (total <= 1) return;
-    this.carouselIndex = (this.carouselIndex + 1) % total;
-    this.resetCarousel();
+    this.indiceCarrossel = (this.indiceCarrossel + 1) % total;
+    this.resetarCarrossel();
   }
 
-  carouselGoTo(index: number, event: Event) {
+  carrosselIrPara(index: number, event: Event) {
     event.stopPropagation();
-    this.carouselIndex = index;
-    this.resetCarousel();
+    this.indiceCarrossel = index;
+    this.resetarCarrossel();
   }
 
-  private resetCarousel() {
+  private resetarCarrossel() {
     if (this.carouselInterval) clearInterval(this.carouselInterval);
-    const total = this.getAllFotos().length;
+    const total = this.obterTodasFotos().length;
     if (total > 1) {
       this.carouselInterval = setInterval(() => {
-        this.carouselIndex = (this.carouselIndex + 1) % total;
+        this.indiceCarrossel = (this.indiceCarrossel + 1) % total;
       }, 4000);
     }
   }
@@ -206,7 +211,7 @@ export class AgendarComponent implements OnInit, AfterViewInit, OnDestroy {
   // ==============================
   // Utilitários
   // ==============================
-  getFotoUrl(foto: string | null): string {
+  obterUrlFoto(foto: string | null): string {
     if (!foto) return '';
     if (foto.startsWith('http')) return foto;
     return `${foto}`;
@@ -301,6 +306,14 @@ export class AgendarComponent implements OnInit, AfterViewInit, OnDestroy {
     this.gerarHorariosDoDia();
   }
 
+  private getHojeLocal(): string {
+    const agora = new Date();
+    const yyyy = agora.getFullYear();
+    const mm = String(agora.getMonth() + 1).padStart(2, '0');
+    const dd = String(agora.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
   gerarHorariosDoDia() {
     if (!this.barbeiroSelecionado || !this.dataSelecionada) return;
     const dia = this.datasDisponiveis.find((d) => d.data === this.dataSelecionada);
@@ -322,7 +335,7 @@ export class AgendarComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     // Verificar se é hoje para filtrar horários passados
-    const hoje = new Date().toISOString().split('T')[0];
+    const hoje = this.getHojeLocal();
     const isHoje = this.dataSelecionada === hoje;
     const agora = new Date();
     const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
@@ -421,26 +434,28 @@ export class AgendarComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   irParaConfirmacao() {
+    const telefoneSalvo = this.getTelefonePersistido();
+
     // Pre-fill com dados do usuário logado
     if (this.user) {
       if (!this.nomeCliente) this.nomeCliente = this.user.nome || '';
-      if (!this.telefoneCliente) this.telefoneCliente = this.user.telefone || '';
+      if (!this.telefoneCliente) this.telefoneCliente = this.maskTelefone(this.user.telefone || '');
     }
+
+    if (!this.telefoneCliente && telefoneSalvo) {
+      this.telefoneCliente = telefoneSalvo;
+    }
+
+    this.persistirTelefone(this.telefoneCliente);
     this.etapa = 5;
   }
 
   onTelefoneInput(event: Event) {
     const input = event.target as HTMLInputElement;
-    let raw = input.value.replace(/\D/g, '').slice(0, 11);
-    if (raw.length > 6) {
-      raw = `(${raw.slice(0, 2)}) ${raw.slice(2, 7)}-${raw.slice(7)}`;
-    } else if (raw.length > 2) {
-      raw = `(${raw.slice(0, 2)}) ${raw.slice(2)}`;
-    } else if (raw.length > 0) {
-      raw = `(${raw}`;
-    }
-    this.telefoneCliente = raw;
-    input.value = raw;
+    const mascarado = this.maskTelefone(input.value);
+    this.telefoneCliente = mascarado;
+    input.value = mascarado;
+    this.persistirTelefone(mascarado);
   }
 
   get telefoneValido(): boolean {
@@ -455,6 +470,7 @@ export class AgendarComponent implements OnInit, AfterViewInit, OnDestroy {
   confirmarAgendamento() {
     if (!this.confirmacaoValida || !this.barbearia || !this.barbeiroSelecionado || !this.servicoSelecionado) return;
 
+    this.persistirTelefone(this.telefoneCliente);
     this.salvandoAgendamento = true;
     this.erroAgendamento = '';
 
@@ -498,5 +514,36 @@ export class AgendarComponent implements OnInit, AfterViewInit, OnDestroy {
 
   voltarInicio() {
     this.router.navigate(['/']);
+  }
+
+  private maskTelefone(value: string): string {
+    let raw = (value || '').replace(/\D/g, '').slice(0, 11);
+
+    if (raw.length > 6) {
+      return `(${raw.slice(0, 2)}) ${raw.slice(2, 7)}-${raw.slice(7)}`;
+    }
+    if (raw.length > 2) {
+      return `(${raw.slice(0, 2)}) ${raw.slice(2)}`;
+    }
+    if (raw.length > 0) {
+      return `(${raw}`;
+    }
+    return '';
+  }
+
+  private persistirTelefone(value: string) {
+    if (typeof localStorage === 'undefined') return;
+
+    const digits = (value || '').replace(/\D/g, '');
+    if (digits.length >= 10) {
+      localStorage.setItem(this.LAST_PHONE_STORAGE_KEY, digits);
+    }
+  }
+
+  private getTelefonePersistido(): string {
+    if (typeof localStorage === 'undefined') return '';
+
+    const saved = localStorage.getItem(this.LAST_PHONE_STORAGE_KEY) || '';
+    return this.maskTelefone(saved);
   }
 }

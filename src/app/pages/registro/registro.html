@@ -1,16 +1,16 @@
-<div class="registro-container">
-  <div class="registro-card">
-    <div class="registro-header">
-      <i class="fa-solid fa-scissors registro-icon"></i>
+<div class="conteiner-registro">
+  <div class="cartao-registro">
+    <div class="cabecalho-registro">
+      <i class="fa-solid fa-scissors icone-registro"></i>
       <h1>CortaAí</h1>
       <p>Crie sua conta</p>
     </div>
 
     <!-- Seletor de tipo de conta -->
-    <div class="tipo-selector">
+    <div class="seletor-tipo">
       <button
         type="button"
-        class="tipo-option"
+        class="opcao-tipo"
         [class.ativo]="tipo === 'CLIENTE'"
         (click)="tipo = 'CLIENTE'"
       >
@@ -20,7 +20,7 @@
       </button>
       <button
         type="button"
-        class="tipo-option"
+        class="opcao-tipo"
         [class.ativo]="tipo === 'BARBEIRO'"
         (click)="tipo = 'BARBEIRO'"
       >
@@ -30,9 +30,9 @@
       </button>
     </div>
 
-    <form (ngSubmit)="onSubmit()" class="registro-form">
+    <form (ngSubmit)="aoEnviar()" class="formulario-registro">
       @if (erro) {
-        <div class="erro-msg">
+        <div class="mensagem-erro">
           <i class="fa-solid fa-circle-exclamation"></i>
           {{ erro }}
         </div>
@@ -40,7 +40,7 @@
 
       <div class="campo">
         <label for="nome">Nome completo</label>
-        <div class="input-wrapper">
+        <div class="campo-input">
           <i class="fa-solid fa-user"></i>
           <input
             type="text"
@@ -55,33 +55,33 @@
 
       <div class="campo">
         <label for="email">E-mail</label>
-        <div class="input-wrapper">
+        <div class="campo-input">
           <i class="fa-solid fa-envelope"></i>
           <input
             type="email"
             id="email"
             [(ngModel)]="email"
-            (ngModelChange)="onEmailChange()"
+            (ngModelChange)="aoAlterarEmail()"
             name="email"
             placeholder="seu@email.com"
             required
           />
           @if (verificandoEmail) {
-            <i class="fa-solid fa-spinner fa-spin input-status"></i>
+            <i class="fa-solid fa-spinner fa-spin status-input"></i>
           } @else if (emailValido) {
-            <i class="fa-solid fa-circle-check input-status input-status-ok"></i>
-          } @else if (emailErro) {
-            <i class="fa-solid fa-circle-xmark input-status input-status-error"></i>
+            <i class="fa-solid fa-circle-check status-input status-input-ok"></i>
+          } @else if (erroEmail) {
+            <i class="fa-solid fa-circle-xmark status-input status-input-erro"></i>
           }
         </div>
-        @if (emailErro) {
-          <span class="campo-erro">{{ emailErro }}</span>
+        @if (erroEmail) {
+          <span class="campo-erro">{{ erroEmail }}</span>
         }
       </div>
 
       <div class="campo">
         <label for="telefone">Telefone (opcional)</label>
-        <div class="input-wrapper">
+        <div class="campo-input">
           <i class="fa-solid fa-phone"></i>
           <input
             type="tel"
@@ -95,13 +95,13 @@
 
       <div class="campo">
         <label for="senha">Senha</label>
-        <div class="input-wrapper">
+        <div class="campo-input">
           <i class="fa-solid fa-lock"></i>
           <input
             type="password"
             id="senha"
             [(ngModel)]="senha"
-            (ngModelChange)="onSenhaChange()"
+            (ngModelChange)="aoAlterarSenha()"
             name="senha"
             placeholder="Crie uma senha forte"
             required
@@ -110,10 +110,10 @@
 
         <!-- Barra de força da senha -->
         @if (senha.length > 0) {
-          <div class="senha-forca">
-            <div class="senha-barra">
+          <div class="forca-senha">
+            <div class="barra-senha">
               <div
-                class="senha-barra-fill"
+                class="barra-senha-preenchida"
                 [class.forca-1]="senhaForca === 1"
                 [class.forca-2]="senhaForca === 2"
                 [class.forca-3]="senhaForca === 3"
@@ -123,7 +123,7 @@
               ></div>
             </div>
             <span
-              class="senha-forca-label"
+              class="rotulo-forca-senha"
               [class.forca-1]="senhaForca === 1"
               [class.forca-2]="senhaForca === 2"
               [class.forca-3]="senhaForca === 3"
@@ -132,7 +132,7 @@
             >{{ senhaForcaLabel }}</span>
           </div>
 
-          <ul class="senha-requisitos">
+          <ul class="requisitos-senha">
             <li [class.ok]="senhaRequisitos.minLength">
               <i [class]="senhaRequisitos.minLength ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'"></i>
               Mínimo 6 caracteres
@@ -159,7 +159,7 @@
 
       <div class="campo">
         <label for="confirmarSenha">Confirmar senha</label>
-        <div class="input-wrapper">
+        <div class="campo-input">
           <i class="fa-solid fa-lock"></i>
           <input
             type="password"
@@ -175,7 +175,7 @@
         }
       </div>
 
-      <button type="submit" class="btn-registro" [disabled]="!formValido || carregando">
+      <button type="submit" class="botao-registro" [disabled]="!formValido || carregando">
         @if (carregando) {
           <i class="fa-solid fa-spinner fa-spin"></i> Criando conta...
         } @else {
@@ -184,11 +184,11 @@
       </button>
     </form>
 
-    <div class="divider">
+    <div class="divisor">
       <span>ou</span>
     </div>
 
-    <button class="btn-google" (click)="loginComGoogle()">
+    <button class="botao-google" (click)="entrarComGoogle()">
       <i class="fa-brands fa-google"></i>
       Cadastrar com Google
     </button>

@@ -1,19 +1,9 @@
-import { Component, OnInit, OnDestroy, ViewEncapsulation, HostListener, ElementRef } from '@angular/core';
+import { Component, HostListener, OnInit, ViewEncapsulation } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService, User } from '../auth/auth.service';
-
-interface Estado {
-  name: string;
-  code: string;
-}
-
-interface Cidade {
-  name: string;
-  estado: string;
-}
 
 @Component({
   selector: 'app-pag-inicial',
@@ -22,291 +12,118 @@ interface Cidade {
   styleUrl: './pag-inicial.scss',
   encapsulation: ViewEncapsulation.None,
 })
-export class PagInicial implements OnInit, OnDestroy {
-  estados: Estado[] = [];
-  cidadesFiltradas: Cidade[] = [];
+export class PaginaInicial implements OnInit {
+  private readonly CHAVE_STORAGE_ULTIMO_TELEFONE = 'barberbook:last-phone';
+  private readonly SECOES_MENU = ['inicio', 'beneficios', 'inovacao', 'planos', 'final'];
 
-  selectedEstado: Estado | null = null;
-  selectedCidade: Cidade | null = null;
-
-  estadoAberto = false;
-  cidadeAberta = false;
-  estadoFiltro = '';
-  cidadeFiltro = '';
-
-  // Barbearias
-  barbearias: any[] = [];
-  buscandoBarbearias = false;
-  buscaRealizada = false;
-  private carouselIntervals: Map<string, any> = new Map();
-
-  user: User | null = null;
+  usuario: User | null = null;
   menuAberto = false;
+  secaoAtiva = 'inicio';
 
-  // Modal telefone (consulta de agendamentos para clientes sem conta)
   modalTelefoneAberto = false;
   telefoneConsulta = '';
   consultandoTelefone = false;
   erroConsulta = '';
 
-  private apiUrl = '/api/barbearias';
-
   constructor(
-    private http: HttpClient,
-    private authService: AuthService,
-    private elRef: ElementRef,
-    private router: Router,
+    private clienteHttp: HttpClient,
+    private servicoAuth: AuthService,
+    private roteador: Router,
   ) {}
 
   ngOnInit() {
-    this.authService.user$.subscribe((user) => {
-      this.user = user;
+    this.servicoAuth.user$.subscribe((usuario) => {
+      this.usuario = usuario;
     });
 
-    if (this.authService.isLoggedIn() && !this.user) {
-      this.authService.loadUser();
+    if (this.servicoAuth.isLoggedIn() && !this.usuario) {
+      this.servicoAuth.loadUser();
     }
 
-    this.http
-      .get<any[]>('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome')
-      .subscribe((data) => {
-        this.estados = data.map((e) => ({
-          name: e.nome,
-          code: e.sigla,
-        }));
-      });
-  }
-
-  // ==============================
-  // Estado dropdown
-  // ==============================
-  toggleEstado() {
-    this.estadoAberto = !this.estadoAberto;
-    this.cidadeAberta = false;
-    if (this.estadoAberto) {
-      this.estadoFiltro = '';
+    if (typeof window !== 'undefined') {
+      setTimeout(() => this.atualizarSecaoAtiva(), 0);
     }
   }
 
-  get estadosFiltrados(): Estado[] {
-    if (!this.estadoFiltro.trim()) return this.estados;
-    const q = this.estadoFiltro.toLowerCase();
-    return this.estados.filter((e) => e.name.toLowerCase().includes(q));
+  rolarParaSecao(idSecao: string, event?: Event) {
+    event?.preventDefault();
+
+    if (typeof document === 'undefined' || typeof window === 'undefined') return;
+
+    const alvo = document.getElementById(idSecao);
+    if (!alvo) return;
+
+    const cabecalho = document.querySelector('.cabecalho-pagina') as HTMLElement | null;
+    const alturaCabecalho = cabecalho?.offsetHeight ?? 0;
+    const deslocamento = 18;
+    const topo = alvo.getBoundingClientRect().top + window.scrollY - alturaCabecalho - deslocamento;
+
+    window.scrollTo({
+      top: Math.max(topo, 0),
+      behavior: 'smooth',
+    });
+
+    this.secaoAtiva = idSecao;
   }
 
-  selecionarEstado(estado: Estado) {
-    this.selectedEstado = estado;
-    this.estadoAberto = false;
-    this.estadoFiltro = '';
-
-    // Reset cidade
-    this.selectedCidade = null;
-    this.cidadesFiltradas = [];
-
-    this.http
-      .get<any[]>(
-        `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estado.code}/municipios?orderBy=nome`
-      )
-      .subscribe((data) => {
-        this.cidadesFiltradas = data.map((c) => ({
-          name: c.nome,
-          estado: estado.code,
-        }));
-      });
+  secaoEstaAtiva(idSecao: string): boolean {
+    return this.secaoAtiva === idSecao;
   }
 
-  limparEstado(event: Event) {
-    event.stopPropagation();
-    this.selectedEstado = null;
-    this.selectedCidade = null;
-    this.cidadesFiltradas = [];
-    this.estadoAberto = false;
-    this.barbearias = [];
-    this.buscaRealizada = false;
+  @HostListener('window:scroll')
+  aoRolarJanela() {
+    this.atualizarSecaoAtiva();
   }
 
-  // ==============================
-  // Cidade dropdown
-  // ==============================
-  toggleCidade() {
-    if (!this.selectedEstado) return;
-    this.cidadeAberta = !this.cidadeAberta;
-    this.estadoAberto = false;
-    if (this.cidadeAberta) {
-      this.cidadeFiltro = '';
-    }
-  }
+  private atualizarSecaoAtiva() {
+    if (typeof document === 'undefined' || typeof window === 'undefined') return;
 
-  get cidadesFiltradaList(): Cidade[] {
-    if (!this.cidadeFiltro.trim()) return this.cidadesFiltradas;
-    const q = this.cidadeFiltro.toLowerCase();
-    return this.cidadesFiltradas.filter((c) => c.name.toLowerCase().includes(q));
-  }
+    const cabecalho = document.querySelector('.cabecalho-pagina') as HTMLElement | null;
+    const alturaCabecalho = cabecalho?.offsetHeight ?? 0;
+    const posicaoCursor = window.scrollY + alturaCabecalho + 40;
 
-  selecionarCidade(cidade: Cidade) {
-    this.selectedCidade = cidade;
-    this.cidadeAberta = false;
-    this.cidadeFiltro = '';
-    this.buscarBarbearias();
-  }
+    let secaoAtual = this.SECOES_MENU[0];
 
-  limparCidade(event: Event) {
-    event.stopPropagation();
-    this.selectedCidade = null;
-    this.cidadeAberta = false;
-    this.barbearias = [];
-    this.buscaRealizada = false;
-  }
+    for (const idSecao of this.SECOES_MENU) {
+      const secao = document.getElementById(idSecao);
+      if (!secao) continue;
 
-  // ==============================
-  // Buscar barbearias
-  // ==============================
-  buscarBarbearias() {
-    if (!this.selectedEstado || !this.selectedCidade) return;
-
-    this.buscandoBarbearias = true;
-    this.buscaRealizada = false;
-
-    this.http
-      .get<any[]>(`${this.apiUrl}/search`, {
-        params: {
-          estado: this.selectedEstado.code,
-          cidade: this.selectedCidade.name,
-        },
-      })
-      .subscribe({
-        next: (data) => {
-          setTimeout(() => {
-            this.barbearias = data;
-            this.buscandoBarbearias = false;
-            this.buscaRealizada = true;
-            this.iniciarCarousels();
-          }, 2000);
-        },
-        error: () => {
-          setTimeout(() => {
-            this.barbearias = [];
-            this.buscandoBarbearias = false;
-            this.buscaRealizada = true;
-            this.limparCarousels();
-          }, 2000);
-        },
-      });
-  }
-
-  getFotoPrincipal(b: any): string {
-    if (b.foto) return b.foto;
-    if (b.fotos && b.fotos.length > 0) return b.fotos[0];
-    return '';
-  }
-
-  getAllFotos(b: any): string[] {
-    const fotos: string[] = [];
-    if (b.foto) fotos.push(b.foto);
-    if (b.fotos?.length) fotos.push(...b.fotos);
-    return fotos;
-  }
-
-  // ==============================
-  // Carousel
-  // ==============================
-  ngOnDestroy() {
-    this.limparCarousels();
-  }
-
-  iniciarCarousels() {
-    this.limparCarousels();
-    for (const b of this.barbearias) {
-      b._carouselIndex = 0;
-      const totalFotos = this.getAllFotos(b).length;
-      if (totalFotos > 1) {
-        const interval = setInterval(() => {
-          b._carouselIndex = ((b._carouselIndex || 0) + 1) % totalFotos;
-        }, 4000);
-        this.carouselIntervals.set(b.id, interval);
+      if (secao.offsetTop <= posicaoCursor) {
+        secaoAtual = idSecao;
       }
     }
+
+    this.secaoAtiva = secaoAtual;
   }
 
-  limparCarousels() {
-    this.carouselIntervals.forEach((interval) => clearInterval(interval));
-    this.carouselIntervals.clear();
-  }
-
-  carouselPrev(b: any, event: Event) {
-    event.stopPropagation();
-    const total = this.getAllFotos(b).length;
-    if (total <= 1) return;
-    b._carouselIndex = ((b._carouselIndex || 0) - 1 + total) % total;
-    this.resetCarouselTimer(b);
-  }
-
-  carouselNext(b: any, event: Event) {
-    event.stopPropagation();
-    const total = this.getAllFotos(b).length;
-    if (total <= 1) return;
-    b._carouselIndex = ((b._carouselIndex || 0) + 1) % total;
-    this.resetCarouselTimer(b);
-  }
-
-  carouselGoTo(b: any, index: number, event: Event) {
-    event.stopPropagation();
-    b._carouselIndex = index;
-    this.resetCarouselTimer(b);
-  }
-
-  private resetCarouselTimer(b: any) {
-    const existing = this.carouselIntervals.get(b.id);
-    if (existing) clearInterval(existing);
-    const total = this.getAllFotos(b).length;
-    if (total > 1) {
-      const interval = setInterval(() => {
-        b._carouselIndex = ((b._carouselIndex || 0) + 1) % total;
-      }, 4000);
-      this.carouselIntervals.set(b.id, interval);
-    }
-  }
-
-  // ==============================
-  // Global clicks
-  // ==============================
-  toggleMenu() {
+  alternarMenu() {
     this.menuAberto = !this.menuAberto;
   }
 
   @HostListener('document:click', ['$event'])
-  onDocumentClick(event: Event) {
+  aoClicarDocumento(event: Event) {
     const target = event.target as HTMLElement;
-    if (!target.closest('.user-menu')) {
+    if (!target.closest('.menu-usuario')) {
       this.menuAberto = false;
     }
-    if (!target.closest('.custom-select-estado')) {
-      this.estadoAberto = false;
-    }
-    if (!target.closest('.custom-select-cidade')) {
-      this.cidadeAberta = false;
-    }
   }
 
-  logout() {
+  sair() {
     this.menuAberto = false;
-    this.authService.logout();
+    this.servicoAuth.logout();
   }
 
-  getAvatarUrl(): string {
-    if (this.user?.avatar) {
-      if (this.user.avatar.startsWith('http')) return this.user.avatar;
-      return `${this.user.avatar}`;
+  obterUrlAvatar(): string {
+    if (this.usuario?.avatar) {
+      if (this.usuario.avatar.startsWith('http')) return this.usuario.avatar;
+      return `${this.usuario.avatar}`;
     }
     return '';
   }
 
-  // ==============================
-  // Modal telefone
-  // ==============================
   abrirModalTelefone() {
     this.modalTelefoneAberto = true;
-    this.telefoneConsulta = '';
+    this.telefoneConsulta = this.obterTelefoneSalvo();
     this.erroConsulta = '';
   }
 
@@ -315,27 +132,69 @@ export class PagInicial implements OnInit, OnDestroy {
   }
 
   consultarAgendamentos() {
-    const tel = this.telefoneConsulta.replace(/\D/g, '');
-    if (tel.length < 10) {
-      this.erroConsulta = 'Digite um telefone válido com DDD.';
+    const telefoneLimpo = this.telefoneConsulta.replace(/\D/g, '');
+    if (telefoneLimpo.length < 10) {
+      this.erroConsulta = 'Digite um telefone valido com DDD.';
       return;
     }
+
+    this.salvarTelefone(this.telefoneConsulta);
     this.consultandoTelefone = true;
     this.erroConsulta = '';
-    this.http.get<any[]>(`/api/agendamentos/consultar?telefone=${tel}`).subscribe({
-      next: (data) => {
+
+    this.clienteHttp.get<any[]>(`/api/agendamentos/consultar?telefone=${telefoneLimpo}`).subscribe({
+      next: (agendamentos) => {
         this.consultandoTelefone = false;
-        if (data.length === 0) {
+        if (agendamentos.length === 0) {
           this.erroConsulta = 'Nenhum agendamento encontrado para este telefone.';
           return;
         }
         this.fecharModalTelefone();
-        this.router.navigate(['/meus-agendamentos'], { queryParams: { telefone: tel } });
+        this.roteador.navigate(['/meus-agendamentos'], { queryParams: { telefone: telefoneLimpo } });
       },
       error: () => {
         this.consultandoTelefone = false;
         this.erroConsulta = 'Erro ao consultar. Tente novamente.';
       },
     });
+  }
+
+  aoDigitarTelefoneConsulta(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const mascarado = this.mascararTelefone(input.value);
+    this.telefoneConsulta = mascarado;
+    input.value = mascarado;
+    this.salvarTelefone(mascarado);
+  }
+
+  private mascararTelefone(valor: string): string {
+    const digitos = (valor || '').replace(/\D/g, '').slice(0, 11);
+
+    if (digitos.length > 6) {
+      return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
+    }
+    if (digitos.length > 2) {
+      return `(${digitos.slice(0, 2)}) ${digitos.slice(2)}`;
+    }
+    if (digitos.length > 0) {
+      return `(${digitos}`;
+    }
+    return '';
+  }
+
+  private salvarTelefone(valor: string) {
+    if (typeof localStorage === 'undefined') return;
+
+    const digitos = (valor || '').replace(/\D/g, '');
+    if (digitos.length >= 10) {
+      localStorage.setItem(this.CHAVE_STORAGE_ULTIMO_TELEFONE, digitos);
+    }
+  }
+
+  private obterTelefoneSalvo(): string {
+    if (typeof localStorage === 'undefined') return '';
+
+    const salvo = localStorage.getItem(this.CHAVE_STORAGE_ULTIMO_TELEFONE) || '';
+    return this.mascararTelefone(salvo);
   }
 }

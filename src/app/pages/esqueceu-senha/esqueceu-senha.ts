@@ -18,22 +18,22 @@ export class EsqueceuSenhaComponent {
   carregando = false;
   enviado = false;
 
-  constructor(private authService: AuthService) {}
+  constructor(private servicoAuth: AuthService) {}
 
-  onSubmit() {
+  aoEnviar() {
     this.erro = '';
     this.mensagem = '';
     this.carregando = true;
 
-    this.authService.forgotPassword(this.email).subscribe({
-      next: (res) => {
+    this.servicoAuth.forgotPassword(this.email).subscribe({
+      next: (resposta) => {
         this.carregando = false;
         this.enviado = true;
-        this.mensagem = res.message;
+        this.mensagem = resposta.message;
       },
-      error: (err) => {
+      error: (erroResposta) => {
         this.carregando = false;
-        this.erro = err.error?.message || 'Erro ao enviar. Tente novamente.';
+        this.erro = erroResposta.error?.message || 'Erro ao enviar. Tente novamente.';
       },
     });
   }

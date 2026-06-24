@@ -57,25 +57,25 @@
             </div>
           }
           <div class="card-header">
-            @if (getAllFotos(b).length > 0) {
+            @if (obterTodasFotos(b).length > 0) {
               <div class="carousel">
                 <div class="carousel-track" [style.transform]="'translateX(-' + (b._carouselIndex || 0) * 100 + '%)'">
-                  @for (fotoUrl of getAllFotos(b); track fotoUrl) {
+                  @for (fotoUrl of obterTodasFotos(b); track fotoUrl) {
                     <img [src]="fotoUrl" alt="{{ b.nome }}" class="carousel-slide" />
                   }
                 </div>
 
-                @if (getAllFotos(b).length > 1) {
-                  <button class="carousel-btn carousel-prev" (click)="carouselPrev(b, $event)">
+                @if (obterTodasFotos(b).length > 1) {
+                  <button class="carousel-btn carousel-prev" (click)="carrosselAnterior(b, $event)">
                     <i class="fa-solid fa-chevron-left"></i>
                   </button>
-                  <button class="carousel-btn carousel-next" (click)="carouselNext(b, $event)">
+                  <button class="carousel-btn carousel-next" (click)="carrosselProximo(b, $event)">
                     <i class="fa-solid fa-chevron-right"></i>
                   </button>
 
                   <div class="carousel-dots">
-                    @for (fotoUrl of getAllFotos(b); track fotoUrl; let idx = $index) {
-                      <span class="dot" [class.active]="idx === (b._carouselIndex || 0)" (click)="carouselGoTo(b, idx, $event)"></span>
+                    @for (fotoUrl of obterTodasFotos(b); track fotoUrl; let idx = $index) {
+                      <span class="dot" [class.active]="idx === (b._carouselIndex || 0)" (click)="carrosselIrPara(b, idx, $event)"></span>
                     }
                   </div>
                 }

@@ -42,20 +42,13 @@ export class AuthCallbackComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Pega o token da URL (?token=xxx)
-    const token = this.route.snapshot.queryParamMap.get('token');
-
-    if (token) {
-      // Espera salvar o token e carregar o usuário antes de redirecionar
-      this.authService.handleGoogleCallback(token).then(() => {
-        console.log('Google callback concluído com sucesso');
-      }).catch((err) => {
-        console.error('Erro no Google callback:', err);
-        this.router.navigate(['/login']);
-      });
-    } else {
-      console.error('Token não encontrado na URL');
+    // Após redirecionamento do backend, o cookie HttpOnly foi setado.
+    // Apenas chama o flow para carregar o usuário e redirecionar.
+    this.authService.handleGoogleCallback().then(() => {
+      console.log('Google callback concluído com sucesso');
+    }).catch((err) => {
+      console.error('Erro no Google callback:', err);
       this.router.navigate(['/login']);
-    }
+    });
   }
 }

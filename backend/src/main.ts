@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import cookieParser = require('cookie-parser');
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -21,6 +22,9 @@ async function bootstrap() {
       transform: true,       // Converte tipos automaticamente
     }),
   );
+
+  // Parser de cookies para ler cookie HttpOnly com JWT
+  app.use(cookieParser());
 
   // Servir arquivos estáticos (uploads de avatares)
   app.useStaticAssets(join(process.cwd(), 'uploads'), {

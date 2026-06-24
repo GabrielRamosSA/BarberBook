@@ -1,4 +1,4 @@
-.forgot-container {
+.conteiner-esqueceu-senha {
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -7,7 +7,7 @@
   padding: 20px;
 }
 
-.forgot-card {
+.cartao-esqueceu-senha {
   background: #fff;
   border-radius: 16px;
   padding: 40px;
@@ -16,11 +16,11 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
-.forgot-header {
+.cabecalho-esqueceu-senha {
   text-align: center;
   margin-bottom: 24px;
 
-  .forgot-icon {
+  .icone-esqueceu-senha {
     font-size: 2.5rem;
     color: #071522;
     margin-bottom: 10px;
@@ -48,7 +48,7 @@
   line-height: 1.5;
 }
 
-.forgot-form {
+.formulario-esqueceu-senha {
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -66,7 +66,7 @@
   }
 }
 
-.input-wrapper {
+.campo-input {
   position: relative;
 
   i {
@@ -99,7 +99,7 @@
   }
 }
 
-.erro-msg {
+.mensagem-erro {
   background: #fff0f0;
   color: #d32f2f;
   padding: 12px 16px;
@@ -114,7 +114,7 @@
   }
 }
 
-.btn-enviar {
+.botao-enviar {
   padding: 14px;
   border: none;
   border-radius: 10px;
@@ -140,24 +140,24 @@
   }
 }
 
-.sucesso-container {
+.container-sucesso {
   text-align: center;
   padding: 20px 0;
 
-  .sucesso-icon {
+  .icone-sucesso {
     font-size: 3rem;
     color: #4caf50;
     margin-bottom: 16px;
   }
 
-  .sucesso-msg {
+  .mensagem-sucesso {
     color: #333;
     font-size: 0.95rem;
     font-weight: 600;
     margin: 0 0 8px;
   }
 
-  .sucesso-detalhe {
+  .detalhe-sucesso {
     color: #999;
     font-size: 0.85rem;
     margin: 0;
@@ -181,4 +181,86 @@
       text-decoration: underline;
     }
   }
+}
+
+@media (max-width: 600px) {
+  .conteiner-esqueceu-senha {
+    padding: 14px;
+  }
+
+  .cartao-esqueceu-senha {
+    padding: 24px 16px;
+    border-radius: 14px;
+  }
+
+  .cabecalho-esqueceu-senha {
+    margin-bottom: 18px;
+
+    .icone-esqueceu-senha {
+      font-size: 2rem;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+    }
+  }
+
+  .instrucao {
+    font-size: 0.84rem;
+    margin-bottom: 16px;
+  }
+
+  .botao-enviar {
+    width: 100%;
+  }
+
+  .link-voltar {
+    margin-top: 18px;
+    font-size: 0.84rem;
+  }
+}
+
+:host-context(.theme-dark) .cartao-esqueceu-senha {
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .cabecalho-esqueceu-senha h1,
+:host-context(.theme-dark) .cabecalho-esqueceu-senha .icone-esqueceu-senha {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .cabecalho-esqueceu-senha p,
+:host-context(.theme-dark) .instrucao,
+:host-context(.theme-dark) .link-voltar {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .campo label {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .campo-input input {
+  background: var(--app-surface-2);
+  border-color: var(--app-border);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .campo-input i {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .link-voltar a {
+  color: #93c5fd;
+}
+
+:host-context(.theme-dark) .mensagem-erro {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+}
+
+:host-context(.theme-dark) .container-sucesso .mensagem-sucesso,
+:host-context(.theme-dark) .container-sucesso .detalhe-sucesso {
+  color: var(--app-muted);
 }

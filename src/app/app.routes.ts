@@ -5,7 +5,14 @@ export const routes: Routes = [
   {
     path: '',
     loadComponent: () =>
-      import('./pag-inicial/pag-inicial').then((m) => m.PagInicial),
+      import('./pag-inicial/pag-inicial').then((m) => m.PaginaInicial),
+  },
+  {
+    path: 'barbearias',
+    loadComponent: () =>
+      import('./pages/barbearias-busca/barbearias-busca').then(
+        (m) => m.BarbeariasBuscaComponent,
+      ),
   },
   {
     path: 'login',
@@ -30,6 +37,11 @@ export const routes: Routes = [
       import('./pages/auth-callback/auth-callback').then(
         (m) => m.AuthCallbackComponent,
       ),
+  },
+  {
+    path: 'dev-secret-admin-portal',
+    loadComponent: () =>
+      import('./pages/admin-dev/admin-dev').then((m) => m.AdminDevComponent),
   },
   {
     path: 'esqueceu-senha',
@@ -130,6 +142,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/dashboard/pagamento/retorno/retorno').then(
             (m) => m.RetornoPagamentoComponent,
+          ),
+      },
+      {
+        path: 'suporte',
+        loadComponent: () =>
+          import('./pages/dashboard/suporte/suporte').then(
+            (m) => m.SuporteComponent,
           ),
       },
     ],

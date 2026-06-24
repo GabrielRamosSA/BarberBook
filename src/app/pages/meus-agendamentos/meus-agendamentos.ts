@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService, User } from '../../auth/auth.service';
@@ -35,19 +36,26 @@ interface Agendamento {
 @Component({
   selector: 'app-meus-agendamentos',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './meus-agendamentos.html',
   styleUrl: './meus-agendamentos.scss',
 })
 export class MeusAgendamentosComponent implements OnInit {
+  private readonly LAST_PHONE_STORAGE_KEY = 'barberbook:last-phone';
+
   user: User | null = null;
   agendamentos: Agendamento[] = [];
   carregando = true;
   cancelando = '';
+  modalCancelarAberto = false;
+  agendamentoParaCancelar: Agendamento | null = null;
+  erroCancelamento = '';
 
   // Modo convidado (consulta por telefone)
   modoConvidado = false;
   telefoneConvidado = '';
+  erroConsultaTelefone = '';
+  modalTelefoneAberto = false;
 
   private apiUrl = '/api';
 
@@ -64,26 +72,73 @@ export class MeusAgendamentosComponent implements OnInit {
       if (params['telefone']) {
         this.modoConvidado = true;
         this.telefoneConvidado = params['telefone'];
+        this.persistirTelefone(this.telefoneConvidado);
         this.carregarAgendamentosPorTelefone(this.telefoneConvidado);
         return;
       }
 
+      this.telefoneConvidado = this.obterTelefonePersistido();
+
       // Modo normal (usuário logado)
       this.authService.user$.subscribe((user) => {
         this.user = user;
-        if (user) {
+        if (user && !this.modoConvidado) {
           this.carregarAgendamentos();
         }
       });
 
-      if (this.authService.isLoggedIn() && !this.user) {
-        this.authService.loadUser();
-      }
-
-      if (!this.authService.isLoggedIn()) {
-        this.carregando = false;
-      }
+      this.authService.loadUser().then((user) => {
+        if (!user && !this.modoConvidado) {
+          this.modalTelefoneAberto = true;
+          this.carregando = false;
+        }
+      });
     });
+  }
+
+  abrirModalTelefone() {
+    this.modalTelefoneAberto = true;
+  }
+
+  fecharModalTelefone() {
+    this.modalTelefoneAberto = false;
+    this.erroConsultaTelefone = '';
+  }
+
+  usarAgendamentosDaConta() {
+    this.modoConvidado = false;
+    this.modalTelefoneAberto = false;
+    this.erroConsultaTelefone = '';
+
+    if (this.user) {
+      this.carregarAgendamentos();
+      return;
+    }
+
+    this.authService.loadUser();
+  }
+
+  onTelefoneInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const mascarado = this.maskTelefone(input.value);
+    this.telefoneConvidado = mascarado;
+    input.value = mascarado;
+    this.persistirTelefone(mascarado);
+  }
+
+  consultarPorTelefoneManual() {
+    this.erroConsultaTelefone = '';
+    const digits = (this.telefoneConvidado || '').replace(/\D/g, '');
+    if (digits.length < 10) {
+      this.erroConsultaTelefone = 'Informe um telefone valido.';
+      return;
+    }
+
+    this.modoConvidado = true;
+    this.telefoneConvidado = this.maskTelefone(digits);
+    this.persistirTelefone(digits);
+    this.carregarAgendamentosPorTelefone(digits);
+    this.modalTelefoneAberto = false;
   }
 
   carregarAgendamentosPorTelefone(telefone: string) {
@@ -127,8 +182,8 @@ export class MeusAgendamentosComponent implements OnInit {
   }
 
   cancelarAgendamento(id: string) {
-    if (!confirm('Tem certeza que deseja cancelar este agendamento?')) return;
     this.cancelando = id;
+    this.erroCancelamento = '';
 
     if (this.modoConvidado) {
       // Cancelar por telefone
@@ -137,10 +192,11 @@ export class MeusAgendamentosComponent implements OnInit {
           const ag = this.agendamentos.find((a) => a.id === id);
           if (ag) ag.status = 'CANCELADO';
           this.cancelando = '';
+          this.fecharModalCancelamento();
         },
         error: () => {
           this.cancelando = '';
-          alert('Erro ao cancelar agendamento.');
+          this.erroCancelamento = 'Erro ao cancelar agendamento.';
         },
       });
     } else {
@@ -150,13 +206,28 @@ export class MeusAgendamentosComponent implements OnInit {
           const ag = this.agendamentos.find((a) => a.id === id);
           if (ag) ag.status = 'CANCELADO';
           this.cancelando = '';
+          this.fecharModalCancelamento();
         },
         error: () => {
           this.cancelando = '';
-          alert('Erro ao cancelar agendamento.');
+          this.erroCancelamento = 'Erro ao cancelar agendamento.';
         },
       });
     }
+  }
+
+  abrirModalCancelamento(ag: Agendamento) {
+    if (this.cancelando) return;
+    this.agendamentoParaCancelar = ag;
+    this.erroCancelamento = '';
+    this.modalCancelarAberto = true;
+  }
+
+  fecharModalCancelamento() {
+    if (this.cancelando) return;
+    this.modalCancelarAberto = false;
+    this.agendamentoParaCancelar = null;
+    this.erroCancelamento = '';
   }
 
   getDataFormatada(data: string): string {
@@ -200,5 +271,35 @@ export class MeusAgendamentosComponent implements OnInit {
 
   voltarConsulta() {
     this.router.navigate(['/']);
+  }
+
+  private persistirTelefone(value: string) {
+    if (typeof localStorage === 'undefined') return;
+
+    const digits = (value || '').replace(/\D/g, '');
+    if (digits.length >= 10) {
+      localStorage.setItem(this.LAST_PHONE_STORAGE_KEY, digits);
+    }
+  }
+
+  private obterTelefonePersistido(): string {
+    if (typeof localStorage === 'undefined') return '';
+    const saved = localStorage.getItem(this.LAST_PHONE_STORAGE_KEY) || '';
+    return this.maskTelefone(saved);
+  }
+
+  private maskTelefone(value: string): string {
+    const raw = (value || '').replace(/\D/g, '').slice(0, 11);
+
+    if (raw.length > 6) {
+      return `(${raw.slice(0, 2)}) ${raw.slice(2, 7)}-${raw.slice(7)}`;
+    }
+    if (raw.length > 2) {
+      return `(${raw.slice(0, 2)}) ${raw.slice(2)}`;
+    }
+    if (raw.length > 0) {
+      return `(${raw}`;
+    }
+    return '';
   }
 }

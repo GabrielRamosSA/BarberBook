@@ -210,3 +210,81 @@
     }
   }
 }
+
+@media (max-width: 600px) {
+  .reset-container {
+    padding: 14px;
+  }
+
+  .reset-card {
+    padding: 24px 16px;
+    border-radius: 14px;
+  }
+
+  .reset-header {
+    margin-bottom: 20px;
+
+    .reset-icon {
+      font-size: 2rem;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+    }
+  }
+
+  .btn-redefinir,
+  .btn-login {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .link-voltar {
+    margin-top: 16px;
+    font-size: 0.84rem;
+  }
+}
+
+:host-context(.theme-dark) .reset-card {
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .reset-header h1,
+:host-context(.theme-dark) .reset-header .reset-icon {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .reset-header p,
+:host-context(.theme-dark) .link-voltar {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .campo label {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .input-wrapper input {
+  background: var(--app-surface-2);
+  border-color: var(--app-border);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .input-wrapper i,
+:host-context(.theme-dark) .toggle-senha {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .erro-msg {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+}
+
+:host-context(.theme-dark) .sucesso-container .sucesso-msg {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .link-voltar a {
+  color: #93c5fd;
+}

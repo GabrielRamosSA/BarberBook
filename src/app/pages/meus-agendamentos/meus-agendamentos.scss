@@ -127,6 +127,81 @@ $cor-erro: #e74c3c;
  }
 }
 
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 200;
+}
+
+.modal-telefone {
+  width: min(520px, 92vw);
+  background: $cor-branco;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  padding: 20px 22px;
+
+  p {
+    color: $cor-texto-claro;
+    margin: 6px 0 16px;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h3 {
+    margin: 0;
+    color: $cor-primaria;
+  }
+}
+
+.btn-fechar {
+  border: none;
+  background: transparent;
+  color: $cor-texto-claro;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.modal-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.consulta-telefone-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+
+  input {
+    min-width: 220px;
+    padding: 10px 12px;
+    border: 1px solid $cor-cinza;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    outline: none;
+  }
+}
+
+.consulta-telefone-form.modal-form {
+  justify-content: flex-start;
+}
+
+.erro-consulta {
+  color: $cor-erro;
+  font-size: 0.9rem;
+  margin: 4px 0 0;
+}
+
 .btn-primario {
   display: inline-flex;
   align-items: center;
@@ -449,6 +524,158 @@ $cor-erro: #e74c3c;
 }
 
 // ==============================
+// Modal de cancelamento
+// ==============================
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 16px;
+  backdrop-filter: blur(2px);
+}
+
+.modal-cancelar {
+  width: min(520px, 100%);
+  background: $cor-branco;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.22);
+  animation: modal-entrada 0.2s ease;
+}
+
+@keyframes modal-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+
+  h3 {
+    margin: 0;
+    color: $cor-primaria;
+    font-size: 1.2rem;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: $cor-texto-claro;
+    font-size: 0.9rem;
+  }
+}
+
+.modal-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: lighten($cor-aviso, 33%);
+  color: darken($cor-aviso, 12%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  i {
+    font-size: 1rem;
+  }
+}
+
+.modal-detalhes {
+  background: $cor-cinza-claro;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.detalhe-item {
+  span {
+    display: block;
+    font-size: 0.76rem;
+    color: $cor-texto-claro;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  strong {
+    display: block;
+    margin-top: 3px;
+    color: $cor-texto;
+    font-size: 0.95rem;
+  }
+
+  &.full {
+    grid-column: 1 / -1;
+  }
+}
+
+.modal-erro {
+  margin: 0 0 12px;
+  color: darken($cor-erro, 5%);
+  background: lighten($cor-erro, 35%);
+  border: 1px solid lighten($cor-erro, 26%);
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-size: 0.88rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-modal-secundario,
+.btn-modal-perigo {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.12s, filter 0.12s;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.03);
+  }
+}
+
+.btn-modal-secundario {
+  background: #eef1f5;
+  color: #23313f;
+}
+
+.btn-modal-perigo {
+  background: $cor-erro;
+  color: $cor-branco;
+}
+
+// ==============================
 // Responsive
 // ==============================
 @media (max-width: 640px) {
@@ -484,4 +711,79 @@ $cor-erro: #e74c3c;
     align-items: flex-start;
     gap: 6px;
   }
+
+  .modal-cancelar {
+    padding: 16px;
+  }
+
+  .modal-detalhes {
+    grid-template-columns: 1fr;
+  }
+
+  .detalhe-item.full {
+    grid-column: auto;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+
+:host-context(.theme-dark) .agendamentos-page {
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .empty-state,
+:host-context(.theme-dark) .agendamento-card,
+:host-context(.theme-dark) .modal-cancelar {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+  box-shadow: var(--app-shadow);
+}
+
+:host-context(.theme-dark) .card-servico,
+:host-context(.theme-dark) .modal-detalhes {
+  background: var(--app-surface-2);
+  border-color: var(--app-border);
+}
+
+:host-context(.theme-dark) .page-title h1,
+:host-context(.theme-dark) .section-title,
+:host-context(.theme-dark) .card-data .data-dia,
+:host-context(.theme-dark) .card-horario,
+:host-context(.theme-dark) .servico-info,
+:host-context(.theme-dark) .preco,
+:host-context(.theme-dark) .detalhe-item strong {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .page-title p,
+:host-context(.theme-dark) .loading,
+:host-context(.theme-dark) .card-data .data-semana,
+:host-context(.theme-dark) .duracao,
+:host-context(.theme-dark) .card-barbearia small,
+:host-context(.theme-dark) .modal-header p,
+:host-context(.theme-dark) .detalhe-item span {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .card-header,
+:host-context(.theme-dark) .card-footer {
+  border-color: var(--app-border);
+}
+
+:host-context(.theme-dark) .modal-icon {
+  background: rgba(251, 191, 36, 0.18);
+  color: #fbbf24;
+}
+
+:host-context(.theme-dark) .btn-modal-secundario {
+  background: var(--app-surface-2);
+  color: var(--app-text);
 }

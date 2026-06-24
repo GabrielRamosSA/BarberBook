@@ -898,6 +898,82 @@ $cor-preco: #071522;
   }
 }
 
+:host-context(.theme-dark) .agendar-page {
+  background: var(--app-bg);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .barbearia-info,
+:host-context(.theme-dark) .agendamento-section,
+:host-context(.theme-dark) .resumo-card,
+:host-context(.theme-dark) .confirmacao-resumo {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  box-shadow: var(--app-shadow);
+}
+
+:host-context(.theme-dark) .barbearia-carousel {
+  background: var(--app-surface-2);
+}
+
+:host-context(.theme-dark) .barbeiro-card,
+:host-context(.theme-dark) .servico-card,
+:host-context(.theme-dark) .data-card,
+:host-context(.theme-dark) .horario-slot,
+:host-context(.theme-dark) .modal-cancelar,
+:host-context(.theme-dark) .modal-detalhes {
+  background: var(--app-surface-2);
+  border-color: var(--app-border);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .data-card .data-dia,
+:host-context(.theme-dark) .data-card .data-semana,
+:host-context(.theme-dark) .horario-slot,
+:host-context(.theme-dark) .info-detalhes h1,
+:host-context(.theme-dark) .etapa-conteudo h2,
+:host-context(.theme-dark) .barbeiro-info h3,
+:host-context(.theme-dark) .servico-info h3,
+:host-context(.theme-dark) .resumo-valor {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .info-item,
+:host-context(.theme-dark) .info-item a,
+:host-context(.theme-dark) .info-direita h3 {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .info-item i {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .descricao,
+:host-context(.theme-dark) .etapa-subtitulo,
+:host-context(.theme-dark) .barbeiro-dias,
+:host-context(.theme-dark) .barbeiro-horario,
+:host-context(.theme-dark) .servico-duracao,
+:host-context(.theme-dark) .resumo-label,
+:host-context(.theme-dark) .horarios-loading,
+:host-context(.theme-dark) .loading-container,
+:host-context(.theme-dark) .erro-container {
+  color: var(--app-muted);
+}
+
+:host-context(.theme-dark) .mapa-container {
+  border-color: var(--app-border);
+}
+
+:host-context(.theme-dark) .confirmacao-form input {
+  background: var(--app-surface-2);
+  border-color: var(--app-border);
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) .confirmacao-form input::placeholder {
+  color: var(--app-muted);
+}
+
 .vazio {
   text-align: center;
   padding: 48px 20px;

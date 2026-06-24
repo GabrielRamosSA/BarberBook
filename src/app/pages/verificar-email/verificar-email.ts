@@ -13,30 +13,30 @@ import { AuthService } from '../../auth/auth.service';
 })
 export class VerificarEmailComponent implements OnInit {
   email = '';
-  code = '';
+  codigo = '';
   erro = '';
   mensagem = '';
   verificando = false;
   reenviando = false;
 
   constructor(
-    private authService: AuthService,
-    private router: Router,
-    private route: ActivatedRoute,
-    private ngZone: NgZone,
+    private servicoAuth: AuthService,
+    private roteador: Router,
+    private rota: ActivatedRoute,
+    private zonaNg: NgZone,
   ) {}
 
   ngOnInit() {
-    this.route.queryParams.subscribe((params) => {
+    this.rota.queryParams.subscribe((params) => {
       this.email = params['email'] || '';
       if (!this.email) {
-        this.router.navigate(['/registro']);
+        this.roteador.navigate(['/registro']);
       }
     });
   }
 
-  verificar() {
-    if (this.code.length !== 6) {
+  verificarCodigo() {
+    if (this.codigo.length !== 6) {
       this.erro = 'Digite o código de 6 dígitos.';
       return;
     }
@@ -45,45 +45,45 @@ export class VerificarEmailComponent implements OnInit {
     this.erro = '';
     this.mensagem = '';
 
-    this.authService.verifyEmail(this.email, this.code).subscribe({
-      next: (res) => {
+    this.servicoAuth.verifyEmail(this.email, this.codigo).subscribe({
+      next: (resposta) => {
         this.verificando = false;
-        this.ngZone.run(() => {
-          if (res.user?.tipo === 'BARBEIRO') {
-            this.router.navigate(['/dashboard']);
+        this.zonaNg.run(() => {
+          if (resposta.user?.tipo === 'BARBEIRO') {
+            this.roteador.navigate(['/dashboard']);
           } else {
-            this.router.navigate(['/perfil']);
+            this.roteador.navigate(['/perfil']);
           }
         });
       },
-      error: (err) => {
+      error: (erroResposta) => {
         this.verificando = false;
-        this.erro = err.error?.message || 'Erro ao verificar código.';
+        this.erro = erroResposta.error?.message || 'Erro ao verificar código.';
       },
     });
   }
 
-  reenviar() {
+  reenviarCodigo() {
     this.reenviando = true;
     this.erro = '';
     this.mensagem = '';
 
-    this.authService.resendCode(this.email).subscribe({
-      next: (res) => {
+    this.servicoAuth.resendCode(this.email).subscribe({
+      next: (resposta) => {
         this.reenviando = false;
-        this.mensagem = res.message;
+        this.mensagem = resposta.message;
       },
-      error: (err) => {
+      error: (erroResposta) => {
         this.reenviando = false;
-        this.erro = err.error?.message || 'Erro ao reenviar código.';
+        this.erro = erroResposta.error?.message || 'Erro ao reenviar código.';
       },
     });
   }
 
-  onCodeInput(event: Event) {
+  aoDigitarCodigo(event: Event) {
     const input = event.target as HTMLInputElement;
     // Permite apenas números
-    this.code = input.value.replace(/\D/g, '').slice(0, 6);
-    input.value = this.code;
+    this.codigo = input.value.replace(/\D/g, '').slice(0, 6);
+    input.value = this.codigo;
   }
 }

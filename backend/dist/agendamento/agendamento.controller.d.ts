@@ -13,7 +13,7 @@ export declare class AgendamentoController {
         barbeariaId: string;
         barbeiroId: string;
         servicoId: string;
-    }, authHeader?: string): Promise<{
+    }, req: Request, authHeader?: string): Promise<{
         message: string;
         agendamento: {
             barbearia: {

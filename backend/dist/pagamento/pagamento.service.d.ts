@@ -1,12 +1,19 @@
+import { OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
-export declare class PagamentoService {
+export declare class PagamentoService implements OnModuleInit, OnModuleDestroy {
     private configService;
     private prisma;
+    private readonly logger;
     private client;
     private preApproval;
+    private expiracaoTimer;
     private planosPreco;
     constructor(configService: ConfigService, prisma: PrismaService);
+    onModuleInit(): Promise<void>;
+    onModuleDestroy(): void;
+    private agendarProximaVerificacao;
+    private executarVerificacaoExpirados;
     criarAssinatura(userId: string, data: {
         plano: string;
         email: string;
@@ -19,6 +26,8 @@ export declare class PagamentoService {
     cancelarAssinatura(userId: string): Promise<{
         status: string;
         message: string;
+        planoExpiraEm: Date;
+        planoAtual: import("@prisma/client").$Enums.Plano;
         user: {
             nome: string;
             email: string;

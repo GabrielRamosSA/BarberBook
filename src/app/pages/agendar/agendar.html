@@ -32,27 +32,27 @@
     <section class="barbearia-info">
       <div class="info-esquerda">
         <!-- Carousel de fotos -->
-        <div class="barbearia-carousel" *ngIf="getAllFotos().length > 0">
-          <div class="carousel-track" [style.transform]="'translateX(-' + (carouselIndex * 100) + '%)'">
-            <div class="carousel-slide" *ngFor="let foto of getAllFotos()">
+        <div class="barbearia-carousel" *ngIf="obterTodasFotos().length > 0">
+          <div class="carousel-track" [style.transform]="'translateX(-' + (indiceCarrossel * 100) + '%)'">
+            <div class="carousel-slide" *ngFor="let foto of obterTodasFotos()">
               <img [src]="foto" [alt]="barbearia.nome" />
             </div>
           </div>
-          <button class="carousel-btn prev" *ngIf="getAllFotos().length > 1" (click)="carouselPrev($event)">
+          <button class="carousel-btn prev" *ngIf="obterTodasFotos().length > 1" (click)="carrosselAnterior($event)">
             <i class="fas fa-chevron-left"></i>
           </button>
-          <button class="carousel-btn next" *ngIf="getAllFotos().length > 1" (click)="carouselNext($event)">
+          <button class="carousel-btn next" *ngIf="obterTodasFotos().length > 1" (click)="carrosselProximo($event)">
             <i class="fas fa-chevron-right"></i>
           </button>
-          <div class="carousel-dots" *ngIf="getAllFotos().length > 1">
+          <div class="carousel-dots" *ngIf="obterTodasFotos().length > 1">
             <span
-              *ngFor="let foto of getAllFotos(); let i = index"
+              *ngFor="let foto of obterTodasFotos(); let i = index"
               class="dot"
-              [class.active]="i === carouselIndex"
-              (click)="carouselGoTo(i, $event)"></span>
+              [class.active]="i === indiceCarrossel"
+              (click)="carrosselIrPara(i, $event)"></span>
           </div>
         </div>
-        <div class="barbearia-carousel no-foto" *ngIf="getAllFotos().length === 0">
+        <div class="barbearia-carousel no-foto" *ngIf="obterTodasFotos().length === 0">
           <i class="fas fa-store"></i>
         </div>
 
@@ -130,7 +130,7 @@
             (click)="selecionarBarbeiro(b)"
             [class.selecionado]="barbeiroSelecionado?.id === b.id">
             <div class="barbeiro-foto">
-              <img *ngIf="b.foto" [src]="getFotoUrl(b.foto)" [alt]="b.nome" />
+              <img *ngIf="b.foto" [src]="obterUrlFoto(b.foto)" [alt]="b.nome" />
               <i *ngIf="!b.foto" class="fas fa-user"></i>
             </div>
             <div class="barbeiro-info">

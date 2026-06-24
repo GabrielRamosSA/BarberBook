@@ -3,6 +3,8 @@ import { CreateBarbeariaDto, UpdateBarbeariaDto } from './dto/barbearia.dto';
 export declare class BarbeariaService {
     private prisma;
     constructor(prisma: PrismaService);
+    private normalizarTexto;
+    private normalizarUf;
     private gerarSlug;
     private gerarSlugUnico;
     create(ownerId: string, dto: CreateBarbeariaDto): Promise<{

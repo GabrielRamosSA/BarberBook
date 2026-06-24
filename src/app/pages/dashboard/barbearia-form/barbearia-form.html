@@ -328,14 +328,82 @@
         </div>
 
         <div class="campos-row">
-          <div class="campo">
-            <label for="cidade">Cidade <span class="required">*</span></label>
-            <input type="text" id="cidade" [(ngModel)]="cidade" name="cidade" placeholder="Sua cidade" required />
+          <div class="campo custom-select-estado">
+            <label>Estado <span class="required">*</span></label>
+            <div class="custom-select" [class.open]="estadoAberto" (click)="toggleEstado()">
+              <div class="select-display">
+                <span [class.placeholder]="!selectedEstado">
+                  {{ selectedEstado ? selectedEstado.name + ' (' + selectedEstado.code + ')' : 'Selecione um Estado' }}
+                </span>
+                <div class="select-icons">
+                  @if (selectedEstado) {
+                    <button type="button" class="select-clear" (click)="limparEstado($event)" title="Limpar">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  }
+                  <i class="fa-solid fa-chevron-down select-arrow" [class.rotated]="estadoAberto"></i>
+                </div>
+              </div>
+            </div>
+
+            @if (estadoAberto) {
+              <div class="select-dropdown">
+                <div class="select-search">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" [(ngModel)]="estadoFiltro" name="estadoFiltro" placeholder="Buscar estado..." (click)="$event.stopPropagation()" autofocus />
+                </div>
+                <div class="select-options">
+                  @for (estadoItem of estadosFiltrados; track estadoItem.code) {
+                    <div class="select-option" [class.selected]="selectedEstado?.code === estadoItem.code" (click)="selecionarEstado(estadoItem); $event.stopPropagation()">
+                      {{ estadoItem.name }} ({{ estadoItem.code }})
+                    </div>
+                  }
+                  @if (estadosFiltrados.length === 0) {
+                    <div class="select-empty">Nenhum estado encontrado</div>
+                  }
+                </div>
+              </div>
+            }
           </div>
-          <div class="campo campo-small">
-            <label for="estado">Estado <span class="required">*</span></label>
-            <input type="text" id="estado" [(ngModel)]="estado" name="estado" placeholder="UF" maxlength="2" required />
+
+          <div class="campo custom-select-cidade">
+            <label>Cidade <span class="required">*</span></label>
+            <div class="custom-select" [class.open]="cidadeAberta" [class.disabled]="!selectedEstado" (click)="toggleCidade()">
+              <div class="select-display">
+                <span [class.placeholder]="!selectedCidade">
+                  {{ selectedCidade ? selectedCidade.name : (selectedEstado ? 'Selecione uma Cidade' : 'Primeiro selecione um Estado') }}
+                </span>
+                <div class="select-icons">
+                  @if (selectedCidade) {
+                    <button type="button" class="select-clear" (click)="limparCidade($event)" title="Limpar">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  }
+                  <i class="fa-solid fa-chevron-down select-arrow" [class.rotated]="cidadeAberta"></i>
+                </div>
+              </div>
+            </div>
+
+            @if (cidadeAberta) {
+              <div class="select-dropdown">
+                <div class="select-search">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" [(ngModel)]="cidadeFiltro" name="cidadeFiltro" placeholder="Buscar cidade..." (click)="$event.stopPropagation()" autofocus />
+                </div>
+                <div class="select-options">
+                  @for (cidadeItem of cidadesFiltradaList; track cidadeItem.name) {
+                    <div class="select-option" [class.selected]="selectedCidade?.name === cidadeItem.name" (click)="selecionarCidade(cidadeItem); $event.stopPropagation()">
+                      {{ cidadeItem.name }}
+                    </div>
+                  }
+                  @if (cidadesFiltradaList.length === 0) {
+                    <div class="select-empty">Nenhuma cidade encontrada</div>
+                  }
+                </div>
+              </div>
+            }
           </div>
+
           <div class="campo">
             <label for="cep">CEP</label>
             <input type="text" id="cep" [(ngModel)]="cep" name="cep" placeholder="00000-000" />

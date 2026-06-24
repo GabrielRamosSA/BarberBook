@@ -103,7 +103,7 @@ export class BarbeariasListComponent implements OnInit, OnDestroy {
     this.carouselIntervals.clear();
 
     for (const b of this.barbearias) {
-      const totalFotos = this.getTotalFotos(b);
+      const totalFotos = this.obterTotalFotos(b);
       if (totalFotos > 1) {
         const interval = setInterval(() => {
           b._carouselIndex = ((b._carouselIndex || 0) + 1) % totalFotos;
@@ -113,43 +113,43 @@ export class BarbeariasListComponent implements OnInit, OnDestroy {
     }
   }
 
-  getTotalFotos(b: Barbearia): number {
+  obterTotalFotos(b: Barbearia): number {
     return (b.fotos?.length || 0) + (b.foto ? 1 : 0);
   }
 
-  getAllFotos(b: Barbearia): string[] {
+  obterTodasFotos(b: Barbearia): string[] {
     const fotos: string[] = [];
     if (b.foto) fotos.push(b.foto);
     if (b.fotos?.length) fotos.push(...b.fotos);
     return fotos;
   }
 
-  carouselPrev(b: Barbearia, event: Event) {
+  carrosselAnterior(b: Barbearia, event: Event) {
     event.stopPropagation();
-    const total = this.getTotalFotos(b);
+    const total = this.obterTotalFotos(b);
     if (total <= 1) return;
     b._carouselIndex = ((b._carouselIndex || 0) - 1 + total) % total;
-    this.resetCarouselTimer(b);
+    this.resetarTimerCarrossel(b);
   }
 
-  carouselNext(b: Barbearia, event: Event) {
+  carrosselProximo(b: Barbearia, event: Event) {
     event.stopPropagation();
-    const total = this.getTotalFotos(b);
+    const total = this.obterTotalFotos(b);
     if (total <= 1) return;
     b._carouselIndex = ((b._carouselIndex || 0) + 1) % total;
-    this.resetCarouselTimer(b);
+    this.resetarTimerCarrossel(b);
   }
 
-  carouselGoTo(b: Barbearia, index: number, event: Event) {
+  carrosselIrPara(b: Barbearia, index: number, event: Event) {
     event.stopPropagation();
     b._carouselIndex = index;
-    this.resetCarouselTimer(b);
+    this.resetarTimerCarrossel(b);
   }
 
-  private resetCarouselTimer(b: Barbearia) {
+  private resetarTimerCarrossel(b: Barbearia) {
     const existing = this.carouselIntervals.get(b.id);
     if (existing) clearInterval(existing);
-    const total = this.getTotalFotos(b);
+    const total = this.obterTotalFotos(b);
     if (total > 1) {
       const interval = setInterval(() => {
         b._carouselIndex = ((b._carouselIndex || 0) + 1) % total;

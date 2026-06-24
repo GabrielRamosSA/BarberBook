@@ -21,7 +21,7 @@
         @if (assinaturaAtiva) {
           <span class="assinatura-badge ativa"><i class="fa-solid fa-rotate"></i> Recorrente</span>
         }
-        @if (subscriptionStatus === 'cancelled' && planoExpiraEm) {
+        @if (cancelamentoAindaAtivo && planoExpiraEm) {
           <span class="assinatura-badge cancelada"><i class="fa-solid fa-clock"></i> Ativo até {{ planoExpiraEm }}</span>
         }
       </div>

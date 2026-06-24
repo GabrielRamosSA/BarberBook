@@ -181,6 +181,13 @@ let UserService = class UserService {
         const user = await this.prisma.user.findUnique({ where: { id } });
         if (!user)
             throw new common_1.NotFoundException('Usuário não encontrado');
+        if (plano === 'BASICO' &&
+            user.plano !== 'BASICO' &&
+            user.subscriptionStatus === 'cancelled' &&
+            user.planoExpiraEm &&
+            user.planoExpiraEm > new Date()) {
+            throw new common_1.BadRequestException(`Seu plano permanece ativo até ${user.planoExpiraEm.toLocaleDateString('pt-BR')}.`);
+        }
         const updatedUser = await this.prisma.user.update({
             where: { id },
             data: { plano: plano },

@@ -25,6 +25,40 @@
       </div>
     }
 
+    @if (modalTelefoneAberto) {
+      <div class="modal-overlay" (click)="fecharModalTelefone()">
+        <div class="modal-telefone" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3>Consultar agendamentos</h3>
+            <button type="button" class="btn-fechar" (click)="fecharModalTelefone()">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <p>Digite seu telefone para encontrar agendamentos feitos sem conta.</p>
+          <div class="consulta-telefone-form modal-form">
+            <input type="tel" [(ngModel)]="telefoneConvidado" (input)="onTelefoneInput($event)" placeholder="(00) 00000-0000" />
+            <button class="btn-primario" (click)="consultarPorTelefoneManual()">
+              <i class="fa-solid fa-phone"></i> Consultar
+            </button>
+          </div>
+          @if (erroConsultaTelefone) {
+            <p class="erro-consulta">{{ erroConsultaTelefone }}</p>
+          }
+          <div class="modal-actions">
+            @if (user) {
+              <button class="btn-secundario" (click)="usarAgendamentosDaConta()">
+                <i class="fa-solid fa-user"></i> Ver agendamentos da conta
+              </button>
+            } @else {
+              <a routerLink="/login" class="btn-secundario">
+                <i class="fa-solid fa-sign-in-alt"></i> Entrar
+              </a>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- Não logado (e não é modo convidado) -->
     @if (!carregando && !user && !modoConvidado) {
       <div class="empty-state">
@@ -130,7 +164,7 @@
                   <button
                     class="btn-cancelar"
                     [disabled]="cancelando === ag.id"
-                    (click)="cancelarAgendamento(ag.id)">
+                    (click)="abrirModalCancelamento(ag)">
                     @if (cancelando === ag.id) {
                       <i class="fa-solid fa-spinner fa-spin"></i>
                     } @else {
@@ -203,4 +237,56 @@
       </section>
     }
   </div>
+
+  @if (modalCancelarAberto && agendamentoParaCancelar) {
+    <div class="modal-overlay" (click)="fecharModalCancelamento()">
+      <div class="modal-cancelar" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div>
+            <h3>Cancelar agendamento?</h3>
+            <p>Essa ação não pode ser desfeita.</p>
+          </div>
+        </div>
+
+        <div class="modal-detalhes">
+          <div class="detalhe-item">
+            <span>Data</span>
+            <strong>{{ getDataFormatada(agendamentoParaCancelar.data) }}</strong>
+          </div>
+          <div class="detalhe-item">
+            <span>Horário</span>
+            <strong>{{ agendamentoParaCancelar.horario }}</strong>
+          </div>
+          <div class="detalhe-item full">
+            <span>Barbearia</span>
+            <strong>{{ agendamentoParaCancelar.barbearia.nome }}</strong>
+          </div>
+          <div class="detalhe-item full">
+            <span>Serviço</span>
+            <strong>{{ agendamentoParaCancelar.servico.nome }}</strong>
+          </div>
+        </div>
+
+        @if (erroCancelamento) {
+          <p class="modal-erro">{{ erroCancelamento }}</p>
+        }
+
+        <div class="modal-actions">
+          <button class="btn-modal-secundario" (click)="fecharModalCancelamento()" [disabled]="cancelando === agendamentoParaCancelar.id">
+            Voltar
+          </button>
+          <button class="btn-modal-perigo" (click)="cancelarAgendamento(agendamentoParaCancelar.id)" [disabled]="cancelando === agendamentoParaCancelar.id">
+            @if (cancelando === agendamentoParaCancelar.id) {
+              <i class="fa-solid fa-spinner fa-spin"></i> Cancelando...
+            } @else {
+              <i class="fa-solid fa-ban"></i> Confirmar cancelamento
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

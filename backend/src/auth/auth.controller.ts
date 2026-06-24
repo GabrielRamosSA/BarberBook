@@ -38,8 +38,21 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.login(dto);
+    const token = result.access_token;
+    const secure = process.env.NODE_ENV === 'production';
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    });
+    return {
+      message: result.message,
+      user: result.user,
+    };
   }
 
   @Post('forgot-password')
@@ -55,22 +68,34 @@ export class AuthController {
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth() {
-    // Redireciona para o Google
+
   }
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
     const result = await this.authService.googleLogin(req.user as any);
-    // Redireciona para o frontend com o token
-    res.redirect(
-      `http://localhost:4200/auth/callback?token=${result.access_token}`,
-    );
+    const token = result.access_token;
+    const secure = process.env.NODE_ENV === 'production';
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    });
+    res.redirect('http://localhost:4200/auth/callback');
   }
 
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
   async getMe(@Req() req: Request) {
     return req.user;
+  }
+
+  @Post('logout')
+  async logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('token', { path: '/' });
+    return { message: 'Logout realizado' };
   }
 }

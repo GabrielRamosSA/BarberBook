@@ -1,14 +1,14 @@
-<div class="login-container">
-  <div class="login-card">
-    <div class="login-header">
-      <i class="fa-solid fa-scissors login-icon"></i>
+<div class="conteiner-login">
+  <div class="cartao-login">
+    <div class="cabecalho-login">
+      <i class="fa-solid fa-scissors icone-login"></i>
       <h1>CortaAí</h1>
       <p>Entre na sua conta</p>
     </div>
 
-    <form (ngSubmit)="onSubmit()" class="login-form">
+    <form (ngSubmit)="aoEnviar()" class="formulario-login">
       @if (erro) {
-        <div class="erro-msg">
+        <div class="mensagem-erro">
           <i class="fa-solid fa-circle-exclamation"></i>
           {{ erro }}
         </div>
@@ -16,7 +16,7 @@
 
       <div class="campo">
         <label for="email">E-mail</label>
-        <div class="input-wrapper">
+        <div class="campo-input">
           <i class="fa-solid fa-envelope"></i>
           <input
             type="email"
@@ -31,7 +31,7 @@
 
       <div class="campo">
         <label for="senha">Senha</label>
-        <div class="input-wrapper">
+        <div class="campo-input">
           <i class="fa-solid fa-lock"></i>
           <input
             type="password"
@@ -48,7 +48,7 @@
         <a routerLink="/esqueceu-senha">Esqueceu sua senha?</a>
       </div>
 
-      <button type="submit" class="btn-login" [disabled]="carregando">
+      <button type="submit" class="botao-login" [disabled]="carregando">
         @if (carregando) {
           <i class="fa-solid fa-spinner fa-spin"></i> Entrando...
         } @else {
@@ -57,11 +57,11 @@
       </button>
     </form>
 
-    <div class="divider">
+    <div class="divisor">
       <span>ou</span>
     </div>
 
-    <button class="btn-google" (click)="loginComGoogle()">
+    <button class="botao-google" (click)="entrarComGoogle()">
       <i class="fa-brands fa-google"></i>
       Entrar com Google
     </button>

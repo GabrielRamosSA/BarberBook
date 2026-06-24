@@ -2,8 +2,104 @@
 @import "material-icons/iconfont/material-icons.css";
 @import "@fortawesome/fontawesome-free/css/all.css";
 
+:root {
+  --app-bg: #f3f6fb;
+  --app-surface: #ffffff;
+  --app-surface-2: #f8fafc;
+  --app-text: #0f172a;
+  --app-muted: #475569;
+  --app-border: #e2e8f0;
+  --app-shadow: 0 10px 26px rgba(15, 23, 42, 0.12);
+  --app-shadow-hover: 0 14px 30px rgba(15, 23, 42, 0.18);
+  --app-toggle-bg: #ffffff;
+  --app-toggle-text: #0f172a;
+}
+
+.theme-dark {
+  color-scheme: dark;
+  --app-bg: #0b1120;
+  --app-surface: #0f172a;
+  --app-surface-2: #111827;
+  --app-text: #ffffff;
+  --app-muted: #e2e8f0;
+  --app-border: #1f2937;
+  --app-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  --app-shadow-hover: 0 16px 34px rgba(0, 0, 0, 0.45);
+  --app-toggle-bg: #111827;
+  --app-toggle-text: #ffffff;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea,
+a[class*='btn-'],
+span[class*='btn-'] {
+  min-width: 0;
+  max-width: 100%;
+}
+
 body {
   margin: 0;
   padding: 0;
   font-family: 'Inter', sans-serif;
+  background: var(--app-bg);
+  color: var(--app-text);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+a {
+  color: inherit;
+}
+
+.alternar-tema {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--app-border);
+  background: var(--app-toggle-bg);
+  color: var(--app-toggle-text);
+  box-shadow: var(--app-shadow);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.alternar-tema:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--app-shadow-hover);
+}
+
+.alternar-tema:focus-visible {
+  outline: 2px solid var(--app-border);
+  outline-offset: 3px;
+}
+
+.alternar-tema i {
+  font-size: 0.95rem;
+}
+
+@media (max-width: 600px) {
+  .alternar-tema {
+    right: 12px;
+    bottom: 12px;
+    padding: 9px 12px;
+  }
+
+  .alternar-tema-texto {
+    display: none;
+  }
 }

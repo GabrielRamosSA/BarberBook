@@ -1,64 +1,82 @@
-<div class="dashboard-layout" [class.collapsed]="sidebarCollapsed">
+<div class="dashboard-layout" [class.collapsed]="sidebarCollapsed" [class.mobile]="isMobileView" [class.mobile-menu-open]="mobileMenuOpen">
+  @if (isMobileView && mobileMenuOpen) {
+    <button class="sidebar-backdrop" (click)="closeMobileMenu()" aria-label="Fechar menu"></button>
+  }
+
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-header">
-      <a routerLink="/" class="sidebar-logo">
+      <a routerLink="/" class="sidebar-logo" (click)="closeMobileMenu()">
         <i class="fa-solid fa-scissors"></i>
         @if (!sidebarCollapsed) {
           <span>CortaAí</span>
         }
       </a>
-      <button class="sidebar-toggle" (click)="toggleSidebar()">
-        <i [class]="sidebarCollapsed ? 'fa-solid fa-angles-right' : 'fa-solid fa-angles-left'"></i>
-      </button>
+
+      @if (!isMobileView) {
+        <button class="sidebar-toggle" (click)="toggleSidebar()">
+          <i [class]="sidebarCollapsed ? 'fa-solid fa-angles-right' : 'fa-solid fa-angles-left'"></i>
+        </button>
+      } @else {
+        <button class="sidebar-mobile-close" (click)="closeMobileMenu()" aria-label="Fechar menu lateral">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      }
     </div>
 
     <nav class="sidebar-nav">
-      <a routerLink="/dashboard" class="nav-item" [class.active]="activeRoute === '/dashboard'">
+      <a routerLink="/dashboard" class="nav-item" [class.active]="activeRoute === '/dashboard'" (click)="closeMobileMenu()">
         <i class="fa-solid fa-chart-line"></i>
         @if (!sidebarCollapsed) {
           <span>Painel</span>
         }
       </a>
 
-      <a routerLink="/dashboard/barbearias" class="nav-item" [class.active]="isActive('/dashboard/barbearias')">
+      <a routerLink="/dashboard/barbearias" class="nav-item" [class.active]="isActive('/dashboard/barbearias')" (click)="closeMobileMenu()">
         <i class="fa-solid fa-store"></i>
         @if (!sidebarCollapsed) {
           <span>Minhas Barbearias</span>
         }
       </a>
 
-      <a routerLink="/dashboard/agenda" class="nav-item" [class.active]="isActive('/dashboard/agenda')">
+      <a routerLink="/dashboard/agenda" class="nav-item" [class.active]="isActive('/dashboard/agenda')" (click)="closeMobileMenu()">
         <i class="fa-solid fa-calendar-days"></i>
         @if (!sidebarCollapsed) {
           <span>Agenda</span>
         }
       </a>
 
-      <a routerLink="/dashboard/clientes" class="nav-item" [class.active]="isActive('/dashboard/clientes')">
+      <a routerLink="/dashboard/clientes" class="nav-item" [class.active]="isActive('/dashboard/clientes')" (click)="closeMobileMenu()">
         <i class="fa-solid fa-users"></i>
         @if (!sidebarCollapsed) {
           <span>Clientes</span>
         }
       </a>
 
-      <a routerLink="/dashboard/planos" class="nav-item" [class.active]="isActive('/dashboard/planos')">
+      <a routerLink="/dashboard/planos" class="nav-item" [class.active]="isActive('/dashboard/planos')" (click)="closeMobileMenu()">
         <i class="fa-solid fa-crown"></i>
         @if (!sidebarCollapsed) {
           <span>Planos</span>
         }
       </a>
 
+      <a routerLink="/dashboard/suporte" class="nav-item" [class.active]="isActive('/dashboard/suporte')" (click)="closeMobileMenu()">
+        <i class="fa-solid fa-headset"></i>
+        @if (!sidebarCollapsed) {
+          <span>Suporte</span>
+        }
+      </a>
+
       <div class="nav-separator"></div>
 
-      <a routerLink="/perfil" class="nav-item">
+      <a routerLink="/perfil" class="nav-item" (click)="closeMobileMenu()">
         <i class="fa-solid fa-user-gear"></i>
         @if (!sidebarCollapsed) {
           <span>Meu Perfil</span>
         }
       </a>
 
-      <button class="nav-item nav-logout" (click)="logout()">
+      <button class="nav-item nav-logout" (click)="closeMobileMenu(); logout()">
         <i class="fa-solid fa-right-from-bracket"></i>
         @if (!sidebarCollapsed) {
           <span>Sair</span>
@@ -90,6 +108,17 @@
 
   <!-- Main content -->
   <main class="dashboard-main">
-    <router-outlet></router-outlet>
+    @if (isMobileView) {
+      <header class="mobile-topbar">
+        <button class="mobile-menu-btn" (click)="toggleMobileMenu()" aria-label="Abrir menu lateral">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <h2>{{ getCurrentPageTitle() }}</h2>
+      </header>
+    }
+
+    <div class="dashboard-content">
+      <router-outlet></router-outlet>
+    </div>
   </main>
 </div>

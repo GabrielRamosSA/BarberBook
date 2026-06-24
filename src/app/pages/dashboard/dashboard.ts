@@ -14,6 +14,10 @@ export class DashboardComponent implements OnInit {
   user: User | null = null;
   sidebarCollapsed = false;
   activeRoute = '';
+  isMobileView = false;
+  mobileMenuOpen = false;
+
+  private readonly MOBILE_BREAKPOINT = 960;
 
   constructor(
     private authService: AuthService,
@@ -21,6 +25,8 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.atualizarViewport();
+
     this.authService.user$.subscribe((user) => {
       this.user = user;
       if (user && user.tipo !== 'BARBEIRO') {
@@ -36,11 +42,32 @@ export class DashboardComponent implements OnInit {
     this.activeRoute = this.router.url;
     this.router.events.subscribe(() => {
       this.activeRoute = this.router.url;
+      if (this.isMobileView) {
+        this.mobileMenuOpen = false;
+      }
     });
   }
 
   toggleSidebar() {
+    if (this.isMobileView) {
+      this.mobileMenuOpen = !this.mobileMenuOpen;
+      return;
+    }
+
     this.sidebarCollapsed = !this.sidebarCollapsed;
+  }
+
+  toggleMobileMenu() {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+  }
+
+  closeMobileMenu() {
+    this.mobileMenuOpen = false;
+  }
+
+  @HostListener('window:resize')
+  onWindowResize() {
+    this.atualizarViewport();
   }
 
   getAvatarUrl(): string {
@@ -57,5 +84,27 @@ export class DashboardComponent implements OnInit {
 
   isActive(path: string): boolean {
     return this.activeRoute.includes(path);
+  }
+
+  getCurrentPageTitle(): string {
+    if (this.activeRoute.includes('/dashboard/barbearias')) return 'Barbearias';
+    if (this.activeRoute.includes('/dashboard/agenda')) return 'Agenda';
+    if (this.activeRoute.includes('/dashboard/clientes')) return 'Clientes';
+    if (this.activeRoute.includes('/dashboard/planos')) return 'Planos';
+    if (this.activeRoute.includes('/dashboard/suporte')) return 'Suporte';
+    return 'Painel';
+  }
+
+  private atualizarViewport() {
+    if (typeof window === 'undefined') return;
+
+    const isMobile = window.innerWidth <= this.MOBILE_BREAKPOINT;
+    this.isMobileView = isMobile;
+
+    if (isMobile) {
+      this.sidebarCollapsed = false;
+    } else {
+      this.mobileMenuOpen = false;
+    }
   }
 }

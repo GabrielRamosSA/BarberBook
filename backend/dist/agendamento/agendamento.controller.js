@@ -24,11 +24,15 @@ let AgendamentoController = class AgendamentoController {
         this.agendamentoService = agendamentoService;
         this.jwtService = jwtService;
     }
-    async create(body, authHeader) {
+    async create(body, req, authHeader) {
         let userId;
-        if (authHeader && authHeader.startsWith('Bearer ')) {
+        const bearerToken = authHeader && authHeader.startsWith('Bearer ')
+            ? authHeader.split(' ')[1]
+            : undefined;
+        const cookieToken = req?.cookies?.token;
+        const token = bearerToken || cookieToken;
+        if (token) {
             try {
-                const token = authHeader.split(' ')[1];
                 const decoded = this.jwtService.verify(token);
                 userId = decoded.sub;
             }
@@ -93,9 +97,10 @@ exports.AgendamentoController = AgendamentoController;
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Headers)('authorization')),
+    __param(1, (0, common_1.Req)()),
+    __param(2, (0, common_1.Headers)('authorization')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:paramtypes", [Object, Object, String]),
     __metadata("design:returntype", Promise)
 ], AgendamentoController.prototype, "create", null);
 __decorate([

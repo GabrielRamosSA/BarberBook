@@ -12,7 +12,7 @@ declare var MercadoPago: any;
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './pagamento.html',
-  styleUrl: './pagamento.scss',
+  styleUrls: ['./pagamento.scss'],
 })
 export class PagamentoComponent implements OnInit {
     tipoPagamento: string = 'credit_card';

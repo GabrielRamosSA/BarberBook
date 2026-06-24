@@ -34,8 +34,21 @@ let AuthController = class AuthController {
     async resendCode(dto) {
         return this.authService.resendCode(dto);
     }
-    async login(dto) {
-        return this.authService.login(dto);
+    async login(dto, res) {
+        const result = await this.authService.login(dto);
+        const token = result.access_token;
+        const secure = process.env.NODE_ENV === 'production';
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure,
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            path: '/',
+        });
+        return {
+            message: result.message,
+            user: result.user,
+        };
     }
     async forgotPassword(dto) {
         return this.authService.forgotPassword(dto);
@@ -47,10 +60,23 @@ let AuthController = class AuthController {
     }
     async googleAuthCallback(req, res) {
         const result = await this.authService.googleLogin(req.user);
-        res.redirect(`http://localhost:4200/auth/callback?token=${result.access_token}`);
+        const token = result.access_token;
+        const secure = process.env.NODE_ENV === 'production';
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure,
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            path: '/',
+        });
+        res.redirect('http://localhost:4200/auth/callback');
     }
     async getMe(req) {
         return req.user;
+    }
+    async logout(res) {
+        res.clearCookie('token', { path: '/' });
+        return { message: 'Logout realizado' };
     }
 };
 exports.AuthController = AuthController;
@@ -85,8 +111,9 @@ __decorate([
 __decorate([
     (0, common_1.Post)('login'),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [auth_dto_1.LoginDto]),
+    __metadata("design:paramtypes", [auth_dto_1.LoginDto, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
 __decorate([
@@ -127,6 +154,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "getMe", null);
+__decorate([
+    (0, common_1.Post)('logout'),
+    __param(0, (0, common_1.Res)({ passthrough: true })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "logout", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService])

@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
@@ -39,6 +39,16 @@ interface HorarioDia {
   temAlmoco: boolean;
   almocoInicio: string;
   almocoFim: string;
+}
+
+interface Estado {
+  name: string;
+  code: string;
+}
+
+interface Cidade {
+  name: string;
+  estado: string;
 }
 
 const DIAS_SEMANA = [
@@ -103,6 +113,16 @@ export class BarbeariaFormComponent implements OnInit, AfterViewInit, OnDestroy 
   // Plano do usuário
   planoUsuario: string = 'BASICO';
 
+  // Seletor de localização (igual página inicial)
+  estados: Estado[] = [];
+  cidadesFiltradas: Cidade[] = [];
+  selectedEstado: Estado | null = null;
+  selectedCidade: Cidade | null = null;
+  estadoAberto = false;
+  cidadeAberta = false;
+  estadoFiltro = '';
+  cidadeFiltro = '';
+
   get lembretePermitido(): boolean {
     return this.planoUsuario === 'PROFISSIONAL' || this.planoUsuario === 'PREMIUM';
   }
@@ -140,6 +160,8 @@ export class BarbeariaFormComponent implements OnInit, AfterViewInit, OnDestroy 
   ) {}
 
   ngOnInit() {
+    this.carregarEstados();
+
     // Carregar plano do usuário
     const user = this.authService.currentUser;
     if (user?.plano) {
@@ -186,6 +208,143 @@ export class BarbeariaFormComponent implements OnInit, AfterViewInit, OnDestroy 
       this.mapa.remove();
       this.mapa = null;
     }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.custom-select-estado')) {
+      this.estadoAberto = false;
+    }
+    if (!target.closest('.custom-select-cidade')) {
+      this.cidadeAberta = false;
+    }
+  }
+
+  private carregarEstados() {
+    this.http
+      .get<any[]>('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome')
+      .subscribe({
+        next: (data) => {
+          this.estados = data.map((e) => ({
+            name: e.nome,
+            code: e.sigla,
+          }));
+          this.sincronizarLocalizacaoAtual();
+        },
+      });
+  }
+
+  private sincronizarLocalizacaoAtual() {
+    if (!this.estado || this.estados.length === 0) return;
+
+    const estadoAtual = this.estado.trim();
+    const estadoEncontrado = this.estados.find(
+      (e) => e.code.toLowerCase() === estadoAtual.toLowerCase() || e.name.toLowerCase() === estadoAtual.toLowerCase(),
+    );
+
+    if (!estadoEncontrado) return;
+
+    this.selectedEstado = estadoEncontrado;
+    this.estado = estadoEncontrado.code;
+
+    this.http
+      .get<any[]>(
+        `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estadoEncontrado.code}/municipios?orderBy=nome`,
+      )
+      .subscribe({
+        next: (data) => {
+          this.cidadesFiltradas = data.map((c) => ({
+            name: c.nome,
+            estado: estadoEncontrado.code,
+          }));
+
+          if (this.cidade) {
+            const cidadeAtual = this.cidade.trim().toLowerCase();
+            const cidadeEncontrada = this.cidadesFiltradas.find((c) => c.name.toLowerCase() === cidadeAtual);
+            if (cidadeEncontrada) {
+              this.selectedCidade = cidadeEncontrada;
+              this.cidade = cidadeEncontrada.name;
+            }
+          }
+        },
+      });
+  }
+
+  toggleEstado() {
+    this.estadoAberto = !this.estadoAberto;
+    this.cidadeAberta = false;
+    if (this.estadoAberto) {
+      this.estadoFiltro = '';
+    }
+  }
+
+  get estadosFiltrados(): Estado[] {
+    if (!this.estadoFiltro.trim()) return this.estados;
+    const q = this.estadoFiltro.toLowerCase();
+    return this.estados.filter((e) => e.name.toLowerCase().includes(q));
+  }
+
+  selecionarEstado(estado: Estado) {
+    this.selectedEstado = estado;
+    this.estado = estado.code;
+    this.estadoAberto = false;
+    this.estadoFiltro = '';
+
+    this.selectedCidade = null;
+    this.cidade = '';
+    this.cidadesFiltradas = [];
+
+    this.http
+      .get<any[]>(
+        `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estado.code}/municipios?orderBy=nome`,
+      )
+      .subscribe((data) => {
+        this.cidadesFiltradas = data.map((c) => ({
+          name: c.nome,
+          estado: estado.code,
+        }));
+      });
+  }
+
+  limparEstado(event: Event) {
+    event.stopPropagation();
+    this.selectedEstado = null;
+    this.selectedCidade = null;
+    this.estado = '';
+    this.cidade = '';
+    this.cidadesFiltradas = [];
+    this.estadoAberto = false;
+    this.cidadeAberta = false;
+  }
+
+  toggleCidade() {
+    if (!this.selectedEstado) return;
+    this.cidadeAberta = !this.cidadeAberta;
+    this.estadoAberto = false;
+    if (this.cidadeAberta) {
+      this.cidadeFiltro = '';
+    }
+  }
+
+  get cidadesFiltradaList(): Cidade[] {
+    if (!this.cidadeFiltro.trim()) return this.cidadesFiltradas;
+    const q = this.cidadeFiltro.toLowerCase();
+    return this.cidadesFiltradas.filter((c) => c.name.toLowerCase().includes(q));
+  }
+
+  selecionarCidade(cidade: Cidade) {
+    this.selectedCidade = cidade;
+    this.cidade = cidade.name;
+    this.cidadeAberta = false;
+    this.cidadeFiltro = '';
+  }
+
+  limparCidade(event: Event) {
+    event.stopPropagation();
+    this.selectedCidade = null;
+    this.cidade = '';
+    this.cidadeAberta = false;
   }
 
   // ==============================
@@ -384,6 +543,7 @@ export class BarbeariaFormComponent implements OnInit, AfterViewInit, OnDestroy 
         }
 
         this.carregandoDados = false;
+        this.sincronizarLocalizacaoAtual();
       },
       error: () => {
         this.erro = 'Erro ao carregar dados da barbearia.';
