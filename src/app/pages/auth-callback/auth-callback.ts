@@ -41,14 +41,25 @@ export class AuthCallbackComponent implements OnInit {
     private authService: AuthService,
   ) {}
 
-  ngOnInit() {
-    // Após redirecionamento do backend, o cookie HttpOnly foi setado.
-    // Apenas chama o flow para carregar o usuário e redirecionar.
-    this.authService.handleGoogleCallback().then(() => {
-      console.log('Google callback concluído com sucesso');
-    }).catch((err) => {
-      console.error('Erro no Google callback:', err);
-      this.router.navigate(['/login']);
-    });
+  async ngOnInit() {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const token = this.route.snapshot.queryParamMap.get('token');
+
+    if (token) {
+      localStorage.setItem('token', token);
+    }
+
+    const user = await this.authService.loadUser();
+
+    if (user) {
+      const destino = user.tipo === 'BARBEIRO' || user.tipo === 'ADMIN' ? '/dashboard' : '/perfil';
+      await this.router.navigate([destino]);
+      return;
+    }
+
+    await this.router.navigate(['/login']);
   }
 }

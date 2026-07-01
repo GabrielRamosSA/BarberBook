@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap, firstValueFrom } from 'rxjs';
 
@@ -25,7 +25,8 @@ export interface AuthResponse {
   providedIn: 'root',
 })
 export class AuthService {
-  private apiUrl = '/api/auth';
+  private readonly tokenKey = 'token';
+  private readonly apiUrl = this.resolveApiUrl();
   private userSubject = new BehaviorSubject<User | null>(null);
 
   user$ = this.userSubject.asObservable();
@@ -33,6 +34,32 @@ export class AuthService {
   constructor(private http: HttpClient, private router: Router) {
     // Carrega o usuário do token se existir
     this.loadUser();
+  }
+
+  private resolveApiUrl(): string {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return '/api/auth';
+      }
+    }
+
+    return 'https://barberbook-awgp.onrender.com/api/auth';
+  }
+
+  private buildAuthOptions() {
+    const token = this.getToken();
+
+    return {
+      withCredentials: true,
+      ...(token ? { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) } : {}),
+    };
+  }
+
+  private persistTokenFromResponse(response: AuthResponse | null | undefined): void {
+    if (response?.access_token) {
+      this.saveToken(response.access_token);
+    }
   }
 
   // ========================
@@ -45,8 +72,9 @@ export class AuthService {
     telefone?: string;
     tipo?: 'CLIENTE' | 'BARBEIRO';
   }): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, data, { withCredentials: true }).pipe(
+    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, data, this.buildAuthOptions()).pipe(
       tap((res) => {
+        this.persistTokenFromResponse(res);
         if (res.user) {
           // Backend pode enviar token via cookie após verificação; atualizamos estado do usuário quando disponível
           this.userSubject.next(res.user);
@@ -60,9 +88,10 @@ export class AuthService {
   // ========================
   verifyEmail(email: string, code: string): Observable<AuthResponse> {
     return this.http
-      .post<AuthResponse>(`${this.apiUrl}/verify-email`, { email, code })
+      .post<AuthResponse>(`${this.apiUrl}/verify-email`, { email, code }, this.buildAuthOptions())
       .pipe(
         tap((res) => {
+          this.persistTokenFromResponse(res);
           if (res.user) {
             // Backend pode definir um cookie com o token; atualiza estado do usuário
             this.userSubject.next(res.user);
@@ -72,7 +101,7 @@ export class AuthService {
   }
 
   resendCode(email: string): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/resend-code`, { email });
+    return this.http.post<{ message: string }>(`${this.apiUrl}/resend-code`, { email }, this.buildAuthOptions());
   }
 
   // ========================
@@ -80,9 +109,10 @@ export class AuthService {
   // ========================
   login(email: string, senha: string): Observable<AuthResponse> {
     return this.http
-      .post<AuthResponse>(`${this.apiUrl}/login`, { email, senha }, { withCredentials: true })
+      .post<AuthResponse>(`${this.apiUrl}/login`, { email, senha }, this.buildAuthOptions())
       .pipe(
         tap((res) => {
+          this.persistTokenFromResponse(res);
           if (res.user) {
             // Token já foi enviado como cookie HttpOnly pelo backend; apenas atualizamos estado do usuário
             this.userSubject.next(res.user);
@@ -96,41 +126,34 @@ export class AuthService {
   // ========================
   loginWithGoogle(): void {
     // Redireciona para o backend que vai redirecionar para o Google
-    window.location.href = `${this.apiUrl}/google`;
+    if (typeof window !== 'undefined') {
+      window.location.href = `${this.apiUrl}/google`;
+    }
   }
 
   // ========================
   // ESQUECEU A SENHA
   // ========================
   forgotPassword(email: string): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/forgot-password`, { email });
+    return this.http.post<{ message: string }>(`${this.apiUrl}/forgot-password`, { email }, this.buildAuthOptions());
   }
 
   // ========================
   // REDEFINIR SENHA
   // ========================
   resetPassword(token: string, novaSenha: string): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/reset-password`, { token, novaSenha });
+    return this.http.post<{ message: string }>(`${this.apiUrl}/reset-password`, { token, novaSenha }, this.buildAuthOptions());
   }
 
   // ========================
   // CALLBACK DO GOOGLE (salva o token)
   // ========================
-  async handleGoogleCallback(): Promise<void> {
-    // Com a mudança para cookie HttpOnly, o backend agora seta o cookie.
-    // Não salvamos mais o token em localStorage para evitar XSS.
-    try {
-      // Espera carregar os dados do usuário ANTES de navegar
-      const user = await firstValueFrom(
-        this.http.get<User>(`${this.apiUrl}/me`, { withCredentials: true })
-      );
-      this.userSubject.next(user);
-      this.router.navigate(['/perfil']);
-    } catch (err) {
-      console.error('Erro ao carregar usuário após Google login:', err);
-      // Mesmo se falhar, o token está salvo, vai pro perfil
-      this.router.navigate(['/perfil']);
+  async handleGoogleCallback(token?: string): Promise<User | null> {
+    if (token) {
+      this.saveToken(token);
     }
+
+    return this.loadUser();
   }
 
   // ========================
@@ -138,7 +161,7 @@ export class AuthService {
   // ========================
   loadUser(): Promise<User | null> {
     return firstValueFrom(
-      this.http.get<User>(`${this.apiUrl}/me`, { withCredentials: true })
+      this.http.get<User>(`${this.apiUrl}/me`, this.buildAuthOptions())
     ).then((user) => {
       this.userSubject.next(user);
       return user;
@@ -147,6 +170,7 @@ export class AuthService {
       // Se 401, garante estado deslogado
       if (err.status === 401) {
         this.userSubject.next(null);
+        this.clearToken();
       }
       return null;
     });
@@ -157,13 +181,15 @@ export class AuthService {
   // ========================
   logout(): void {
     // Chama backend pra limpar cookie HttpOnly
-    this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true }).subscribe({
+    this.http.post(`${this.apiUrl}/logout`, {}, this.buildAuthOptions()).subscribe({
       next: () => {
         this.userSubject.next(null);
+        this.clearToken();
         this.router.navigate(['/']);
       },
       error: () => {
         this.userSubject.next(null);
+        this.clearToken();
         this.router.navigate(['/']);
       }
     });
@@ -173,17 +199,31 @@ export class AuthService {
   // HELPERS DE TOKEN
   // ========================
   getToken(): string | null {
-    // Removido: token agora é enviado via cookie HttpOnly pelo backend
-    return null;
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    return localStorage.getItem(this.tokenKey);
   }
 
   private saveToken(token: string): void {
-    // Removido: não salvar token no localStorage
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    localStorage.setItem(this.tokenKey, token);
+  }
+
+  private clearToken(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    localStorage.removeItem(this.tokenKey);
   }
 
   isLoggedIn(): boolean {
-    // Recomenda-se verificar `user$` ou chamar `loadUser()` para confirmar autenticação
-    return !!this.userSubject.value;
+    return !!this.userSubject.value || !!this.getToken();
   }
 
   get currentUser(): User | null {
