@@ -4,6 +4,8 @@ import type { Request, Response } from 'express';
 export declare class AuthController {
     private authService;
     constructor(authService: AuthService);
+    private getCookieOptions;
+    private getClearCookieOptions;
     checkEmail(email: string): Promise<{
         exists: boolean;
         valid: boolean;

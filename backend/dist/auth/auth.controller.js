@@ -22,6 +22,24 @@ let AuthController = class AuthController {
     constructor(authService) {
         this.authService = authService;
     }
+    getCookieOptions() {
+        const isProduction = process.env.NODE_ENV === 'production';
+        return {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            path: '/',
+        };
+    }
+    getClearCookieOptions() {
+        const isProduction = process.env.NODE_ENV === 'production';
+        return {
+            path: '/',
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
+        };
+    }
     async checkEmail(email) {
         return this.authService.checkEmailExists(email);
     }
@@ -37,14 +55,7 @@ let AuthController = class AuthController {
     async login(dto, res) {
         const result = await this.authService.login(dto);
         const token = result.access_token;
-        const secure = process.env.NODE_ENV === 'production';
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure,
-            sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-            path: '/',
-        });
+        res.cookie('token', token, this.getCookieOptions());
         return {
             message: result.message,
             user: result.user,
@@ -56,27 +67,19 @@ let AuthController = class AuthController {
     async resetPassword(dto) {
         return this.authService.resetPassword(dto);
     }
-    async googleAuth() {
-    }
+    async googleAuth() { }
     async googleAuthCallback(req, res) {
         const result = await this.authService.googleLogin(req.user);
         const token = result.access_token;
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
-        const secure = process.env.NODE_ENV === 'production';
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure,
-            sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-            path: '/',
-        });
-        res.redirect(`${frontendUrl}/auth/callback`);
+        res.cookie('token', token, this.getCookieOptions());
+        return res.redirect(`${frontendUrl}/auth/callback?token=${encodeURIComponent(token)}`);
     }
     async getMe(req) {
         return req.user;
     }
     async logout(res) {
-        res.clearCookie('token', { path: '/' });
+        res.clearCookie('token', this.getClearCookieOptions());
         return { message: 'Logout realizado' };
     }
 };
