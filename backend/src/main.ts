@@ -8,33 +8,35 @@ import cookieParser = require('cookie-parser');
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // Habilita CORS para o frontend Angular (porta 4200)
   app.enableCors({
-    origin: 'http://localhost:4200',
+    origin: [
+      'http://localhost:4200',
+      'https://cortaaibarberbook.pages.dev',
+    ],
     credentials: true,
   });
 
-  // Habilita validação automática dos DTOs
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,       // Remove campos não declarados no DTO
-      forbidNonWhitelisted: true, // Retorna erro se enviar campos extras
-      transform: true,       // Converte tipos automaticamente
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
     }),
   );
 
-  // Parser de cookies para ler cookie HttpOnly com JWT
   app.use(cookieParser());
 
-  // Servir arquivos estáticos (uploads de avatares)
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
   });
 
-  // Prefixo global para as rotas da API
   app.setGlobalPrefix('api');
 
-  await app.listen(process.env.PORT ?? 3000);
-  console.log(`🚀 Backend rodando em http://localhost:3000/api`);
+  const port = process.env.PORT || 3000;
+
+  await app.listen(port, '0.0.0.0');
+
+  console.log(`🚀 Backend rodando na porta ${port}`);
 }
+
 bootstrap();

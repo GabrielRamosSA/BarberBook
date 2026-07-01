@@ -8,7 +8,10 @@ const cookieParser = require("cookie-parser");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.enableCors({
-        origin: 'http://localhost:4200',
+        origin: [
+            'http://localhost:4200',
+            'https://cortaaibarberbook.pages.dev',
+        ],
         credentials: true,
     });
     app.useGlobalPipes(new common_1.ValidationPipe({
@@ -21,8 +24,9 @@ async function bootstrap() {
         prefix: '/uploads/',
     });
     app.setGlobalPrefix('api');
-    await app.listen(process.env.PORT ?? 3000);
-    console.log(`🚀 Backend rodando em http://localhost:3000/api`);
+    const port = process.env.PORT || 3000;
+    await app.listen(port, '0.0.0.0');
+    console.log(`🚀 Backend rodando na porta ${port}`);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map
