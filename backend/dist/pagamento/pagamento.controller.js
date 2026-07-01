@@ -22,7 +22,8 @@ let PagamentoController = class PagamentoController {
         this.pagamentoService = pagamentoService;
     }
     retorno(res) {
-        res.redirect('http://localhost:4200/dashboard/planos/retorno');
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+        res.redirect(`${frontendUrl}/dashboard/planos/retorno`);
     }
     async assinar(req, body) {
         const user = req.user;

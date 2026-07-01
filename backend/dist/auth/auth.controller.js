@@ -61,6 +61,7 @@ let AuthController = class AuthController {
     async googleAuthCallback(req, res) {
         const result = await this.authService.googleLogin(req.user);
         const token = result.access_token;
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
         const secure = process.env.NODE_ENV === 'production';
         res.cookie('token', token, {
             httpOnly: true,
@@ -69,7 +70,7 @@ let AuthController = class AuthController {
             maxAge: 7 * 24 * 60 * 60 * 1000,
             path: '/',
         });
-        res.redirect('https://cortaaibarberbook.pages.dev/auth/callback');
+        res.redirect(`${frontendUrl}/auth/callback`);
     }
     async getMe(req) {
         return req.user;

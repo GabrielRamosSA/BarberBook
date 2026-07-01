@@ -104,7 +104,8 @@ let EmailService = class EmailService {
         return Math.floor(100000 + Math.random() * 900000).toString();
     }
     async sendPasswordResetEmail(to, token, nome) {
-        const resetUrl = `http://localhost:4200/redefinir-senha?token=${token}`;
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+        const resetUrl = `${frontendUrl}/redefinir-senha?token=${token}`;
         try {
             await this.transporter.sendMail({
                 from: `"CortaAí" <${process.env.SMTP_USER}>`,
