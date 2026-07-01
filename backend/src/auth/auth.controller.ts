@@ -10,12 +10,41 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, VerifyEmailDto, ResendCodeDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
+import {
+  RegisterDto,
+  LoginDto,
+  VerifyEmailDto,
+  ResendCodeDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from './dto/auth.dto';
 import type { Request, Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
+
+  private getCookieOptions() {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    return {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? ('none' as const) : ('lax' as const),
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    };
+  }
+
+  private getClearCookieOptions() {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    return {
+      path: '/',
+      secure: isProduction,
+      sameSite: isProduction ? ('none' as const) : ('lax' as const),
+    };
+  }
 
   @Get('check-email')
   async checkEmail(@Query('email') email: string) {
@@ -41,14 +70,9 @@ export class AuthController {
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const result = await this.authService.login(dto);
     const token = result.access_token;
-    const secure = process.env.NODE_ENV === 'production';
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    });
+
+    res.cookie('token', token, this.getCookieOptions());
+
     return {
       message: result.message,
       user: result.user,
@@ -67,25 +91,19 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleAuth() {
-
-  }
+  async googleAuth() {}
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
     const result = await this.authService.googleLogin(req.user as any);
     const token = result.access_token;
+
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
-    const secure = process.env.NODE_ENV === 'production';
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    });
-    res.redirect(`${frontendUrl}/auth/callback`);
+
+    res.cookie('token', token, this.getCookieOptions());
+
+    return res.redirect(`${frontendUrl}/auth/callback`);
   }
 
   @Get('me')
@@ -96,7 +114,8 @@ export class AuthController {
 
   @Post('logout')
   async logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('token', { path: '/' });
+    res.clearCookie('token', this.getClearCookieOptions());
+
     return { message: 'Logout realizado' };
   }
 }
