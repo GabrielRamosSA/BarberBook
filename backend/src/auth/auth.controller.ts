@@ -76,6 +76,7 @@ export class AuthController {
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
     const result = await this.authService.googleLogin(req.user as any);
     const token = result.access_token;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
     const secure = process.env.NODE_ENV === 'production';
     res.cookie('token', token, {
       httpOnly: true,
@@ -84,7 +85,7 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });
-    res.redirect('http://localhost:4200/auth/callback');
+    res.redirect(`${frontendUrl}/auth/callback`);
   }
 
   @Get('me')

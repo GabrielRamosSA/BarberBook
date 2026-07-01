@@ -68,7 +68,8 @@ export class EmailService {
   }
 
   async sendPasswordResetEmail(to: string, token: string, nome: string): Promise<boolean> {
-    const resetUrl = `http://localhost:4200/redefinir-senha?token=${token}`;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+    const resetUrl = `${frontendUrl}/redefinir-senha?token=${token}`;
     try {
       await this.transporter.sendMail({
         from: `"CortaAí" <${process.env.SMTP_USER}>`,

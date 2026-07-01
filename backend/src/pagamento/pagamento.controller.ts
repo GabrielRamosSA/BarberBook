@@ -10,7 +10,8 @@ export class PagamentoController {
   // Retorno do Mercado Pago → redireciona para o frontend
   @Get('retorno')
   retorno(@Res() res: Response) {
-    res.redirect('http://localhost:4200/dashboard/planos/retorno');
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+    res.redirect(`${frontendUrl}/dashboard/planos/retorno`);
   }
 
   // Criar assinatura recorrente

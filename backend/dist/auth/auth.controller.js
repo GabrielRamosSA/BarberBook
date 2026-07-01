@@ -69,7 +69,7 @@ let AuthController = class AuthController {
             maxAge: 7 * 24 * 60 * 60 * 1000,
             path: '/',
         });
-        res.redirect('http://localhost:4200/auth/callback');
+        res.redirect('https://cortaaibarberbook.pages.dev/auth/callback');
     }
     async getMe(req) {
         return req.user;
