@@ -93,18 +93,20 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   async googleAuth() {}
 
-  @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
-  async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
-    const result = await this.authService.googleLogin(req.user as any);
-    const token = result.access_token;
+ @Get('google/callback')
+@UseGuards(AuthGuard('google'))
+async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
+  const result = await this.authService.googleLogin(req.user as any);
+  const token = result.access_token;
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
 
-    res.cookie('token', token, this.getCookieOptions());
+  res.cookie('token', token, this.getCookieOptions());
 
-    return res.redirect(`${frontendUrl}/auth/callback`);
-  }
+  return res.redirect(
+    `${frontendUrl}/auth/callback?token=${encodeURIComponent(token)}`
+  );
+}
 
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
