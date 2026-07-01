@@ -100,7 +100,7 @@ export class BarbeariaController {
       throw new BadRequestException('Nenhum arquivo enviado');
     }
     const user = req.user as any;
-    const fotoUrl = `http://localhost:3000/uploads/barbearias/${file.filename}`;
+    const fotoUrl = `https://barberbook-awgp.onrender.com/uploads/barbearias/${file.filename}`;
     return this.barbeariaService.updateFoto(id, user.id, fotoUrl);
   }
 
@@ -135,7 +135,7 @@ export class BarbeariaController {
     }
     const user = req.user as any;
     const fotosUrls = files.map(
-      (file) => `http://localhost:3000/uploads/barbearias/${file.filename}`,
+      (file) => `https://barberbook-awgp.onrender.com/uploads/barbearias/${file.filename}`,
     );
     return this.barbeariaService.addFotos(id, user.id, fotosUrls);
   }

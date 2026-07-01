@@ -1,11 +1,11 @@
 {
   "/api": {
-    "target": "http://localhost:3000",
+    "target": "https://barberbook-awgp.onrender.com",
     "secure": false,
     "changeOrigin": true
   },
   "/uploads": {
-    "target": "http://localhost:3000",
+    "target": "https://barberbook-awgp.onrender.com",
     "secure": false,
     "changeOrigin": true
   }

@@ -38,7 +38,7 @@ let UserController = class UserController {
             throw new common_1.BadRequestException('Nenhum arquivo enviado');
         }
         const user = req.user;
-        const avatarUrl = `http://localhost:3000/uploads/avatars/${file.filename}`;
+        const avatarUrl = `https://barberbook-awgp.onrender.com/uploads/avatars/${file.filename}`;
         return this.userService.updateAvatar(user.id, avatarUrl);
     }
     async deleteAvatar(req) {
