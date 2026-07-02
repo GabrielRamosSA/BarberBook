@@ -15,6 +15,7 @@ export interface User {
 
 export interface AuthResponse {
   access_token?: string;
+  verificationToken?: string;
   user?: User;
   message?: string;
   requiresVerification?: boolean;
@@ -26,6 +27,7 @@ export interface AuthResponse {
 })
 export class AuthService {
   private readonly tokenKey = 'token';
+  private readonly pendingVerificationTokenKey = 'pending_verification_token';
   private readonly apiUrl = this.resolveApiUrl();
   private userSubject = new BehaviorSubject<User | null>(null);
 
@@ -60,6 +62,10 @@ export class AuthService {
     if (response?.access_token) {
       this.saveToken(response.access_token);
     }
+
+    if (response?.verificationToken) {
+      this.savePendingVerificationToken(response.verificationToken);
+    }
   }
 
   // ========================
@@ -69,7 +75,7 @@ export class AuthService {
     nome: string;
     email: string;
     senha: string;
-    telefone?: string;
+    telefone: string;
     tipo?: 'CLIENTE' | 'BARBEIRO';
   }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/register`, data, this.buildAuthOptions()).pipe(
@@ -86,9 +92,9 @@ export class AuthService {
   // ========================
   // VERIFICAÇÃO DE E-MAIL
   // ========================
-  verifyEmail(email: string, code: string): Observable<AuthResponse> {
+  verifyEmail(email: string, code: string, verificationToken?: string): Observable<AuthResponse> {
     return this.http
-      .post<AuthResponse>(`${this.apiUrl}/verify-email`, { email, code }, this.buildAuthOptions())
+      .post<AuthResponse>(`${this.apiUrl}/verify-email`, { email, code, verificationToken }, this.buildAuthOptions())
       .pipe(
         tap((res) => {
           this.persistTokenFromResponse(res);
@@ -96,12 +102,19 @@ export class AuthService {
             // Backend pode definir um cookie com o token; atualiza estado do usuário
             this.userSubject.next(res.user);
           }
+          if (res.access_token) {
+            this.clearPendingVerificationToken();
+          }
         }),
       );
   }
 
-  resendCode(email: string): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/resend-code`, { email }, this.buildAuthOptions());
+  resendCode(email: string, verificationToken?: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/resend-code`, { email, verificationToken }, this.buildAuthOptions()).pipe(
+      tap((res) => {
+        this.persistTokenFromResponse(res);
+      }),
+    );
   }
 
   // ========================
@@ -212,6 +225,30 @@ export class AuthService {
     }
 
     localStorage.setItem(this.tokenKey, token);
+  }
+
+  getPendingVerificationToken(): string | null {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    return sessionStorage.getItem(this.pendingVerificationTokenKey);
+  }
+
+  private savePendingVerificationToken(token: string): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    sessionStorage.setItem(this.pendingVerificationTokenKey, token);
+  }
+
+  clearPendingVerificationToken(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    sessionStorage.removeItem(this.pendingVerificationTokenKey);
   }
 
   private clearToken(): void {

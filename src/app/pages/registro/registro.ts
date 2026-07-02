@@ -28,6 +28,7 @@ export class RegistroComponent {
   erroEmail = '';
   verificandoEmail = false;
   emailValido = false;
+  telefoneValido = false;
   private checagemEmail$ = new Subject<string>();
 
   // Password strength
@@ -40,8 +41,6 @@ export class RegistroComponent {
     number: false,
     special: false,
   };
-
-  private readonly urlApi = this.resolveApiUrl();
 
   constructor(
     private servicoAuth: AuthService,
@@ -81,6 +80,8 @@ export class RegistroComponent {
       });
   }
 
+  private readonly urlApi = this.resolveApiUrl();
+
   private resolveApiUrl(): string {
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
@@ -101,6 +102,15 @@ export class RegistroComponent {
     }
 
     this.checagemEmail$.next(this.email);
+  }
+
+  aoAlterarTelefone() {
+    this.telefoneValido = this.validarTelefone(this.telefone);
+  }
+
+  private validarTelefone(telefone: string): boolean {
+    const digitos = telefone.replace(/\D/g, '');
+    return digitos.length >= 10 && digitos.length <= 11;
   }
 
   private emailFormatoValido(email: string): boolean {
@@ -133,6 +143,7 @@ export class RegistroComponent {
     return (
       this.nome.trim().length > 0 &&
       this.emailValido &&
+      this.telefoneValido &&
       this.senhaValida &&
       this.senha === this.confirmarSenha &&
       this.confirmarSenha.length > 0
@@ -151,7 +162,7 @@ export class RegistroComponent {
         nome: this.nome,
         email: this.email,
         senha: this.senha,
-        telefone: this.telefone || undefined,
+        telefone: this.telefone,
         tipo: this.tipo,
       })
       .subscribe({

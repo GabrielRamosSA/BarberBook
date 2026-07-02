@@ -18,6 +18,7 @@ export class VerificarEmailComponent implements OnInit {
   mensagem = '';
   verificando = false;
   reenviando = false;
+  private verificationToken = '';
 
   constructor(
     private servicoAuth: AuthService,
@@ -32,6 +33,8 @@ export class VerificarEmailComponent implements OnInit {
       if (!this.email) {
         this.roteador.navigate(['/registro']);
       }
+
+      this.verificationToken = this.servicoAuth.getPendingVerificationToken() || '';
     });
   }
 
@@ -45,10 +48,11 @@ export class VerificarEmailComponent implements OnInit {
     this.erro = '';
     this.mensagem = '';
 
-    this.servicoAuth.verifyEmail(this.email, this.codigo).subscribe({
+    this.servicoAuth.verifyEmail(this.email, this.codigo, this.verificationToken).subscribe({
       next: (resposta) => {
         this.verificando = false;
         this.zonaNg.run(() => {
+          this.servicoAuth.clearPendingVerificationToken();
           if (resposta.user?.tipo === 'BARBEIRO') {
             this.roteador.navigate(['/dashboard']);
           } else {
@@ -68,10 +72,13 @@ export class VerificarEmailComponent implements OnInit {
     this.erro = '';
     this.mensagem = '';
 
-    this.servicoAuth.resendCode(this.email).subscribe({
+    this.servicoAuth.resendCode(this.email, this.verificationToken).subscribe({
       next: (resposta) => {
         this.reenviando = false;
-        this.mensagem = resposta.message;
+        this.mensagem = resposta.message || 'Novo código enviado para o e-mail.';
+        if (resposta.verificationToken) {
+          this.verificationToken = resposta.verificationToken;
+        }
       },
       error: (erroResposta) => {
         this.reenviando = false;

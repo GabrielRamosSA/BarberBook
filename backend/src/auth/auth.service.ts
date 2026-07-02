@@ -4,6 +4,7 @@ import {
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
@@ -12,12 +13,24 @@ import { randomBytes } from 'crypto';
 import { EmailService } from './email.service';
 import { promises as dns } from 'dns';
 
+type PendingRegistrationPayload = {
+  purpose: 'email-verification';
+  code: string;
+  email: string;
+  nome: string;
+  senhaHash: string;
+  telefone?: string;
+  tipo: 'CLIENTE' | 'BARBEIRO';
+  userId?: string;
+};
+
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     private emailService: EmailService,
+    private configService: ConfigService,
   ) {}
 
   async checkEmailExists(email: string) {
@@ -67,59 +80,97 @@ export class AuthService {
       where: { email: dto.email },
     });
 
-    if (existingUser) {
-
-      if (!existingUser.emailVerified) {
-        const code = this.emailService.generateCode();
-        await this.prisma.user.update({
-          where: { id: existingUser.id },
-          data: {
-            nome: dto.nome,
-            senha: await bcrypt.hash(dto.senha, 10),
-            telefone: dto.telefone,
-            verificationCode: code,
-            verificationExpires: new Date(Date.now() + 15 * 60 * 1000),
-          },
-        });
-
-        await this.emailService.sendVerificationCode(dto.email, code, dto.nome);
-
-        return {
-          message: 'Código de verificação reenviado para o e-mail.',
-          requiresVerification: true,
-          email: dto.email,
-        };
-      }
-
+    if (existingUser?.emailVerified) {
       throw new ConflictException('Email já cadastrado');
     }
 
-    const hashedPassword = await bcrypt.hash(dto.senha, 10);
     const code = this.emailService.generateCode();
-
-    await this.prisma.user.create({
-      data: {
-        nome: dto.nome,
-        email: dto.email,
-        senha: hashedPassword,
-        telefone: dto.telefone,
-        tipo: dto.tipo || 'CLIENTE',
-        emailVerified: false,
-        verificationCode: code,
-        verificationExpires: new Date(Date.now() + 15 * 60 * 1000), // 15 min
-      },
+    const senhaHash = await bcrypt.hash(dto.senha, 10);
+    const verificationToken = this.buildVerificationToken({
+      purpose: 'email-verification',
+      code,
+      email: dto.email,
+      nome: dto.nome,
+      senhaHash,
+      telefone: dto.telefone,
+      tipo: dto.tipo || 'CLIENTE',
+      userId: existingUser?.id,
     });
 
-    await this.emailService.sendVerificationCode(dto.email, code, dto.nome);
+    const enviado = await this.emailService.sendVerificationCode(dto.email, code, dto.nome);
+
+    if (!enviado) {
+      throw new BadRequestException('Não foi possível enviar o código de verificação.');
+    }
 
     return {
-      message: 'Conta criada! Verifique seu e-mail para ativar.',
+      message: 'Verifique seu e-mail para ativar a conta.',
       requiresVerification: true,
       email: dto.email,
+      verificationToken,
     };
   }
 
   async verifyEmail(dto: VerifyEmailDto) {
+    if (dto.verificationToken) {
+      const pending = this.decodeVerificationToken(dto.verificationToken);
+
+      if (pending.email !== dto.email) {
+        throw new BadRequestException('E-mail não confere com o código enviado.');
+      }
+
+      if (pending.code !== dto.code) {
+        throw new BadRequestException('Código incorreto.');
+      }
+
+      const existingUser = pending.userId
+        ? await this.prisma.user.findUnique({ where: { id: pending.userId } })
+        : await this.prisma.user.findUnique({ where: { email: pending.email } });
+
+      const verifiedUser = existingUser
+        ? await this.prisma.user.update({
+            where: { id: existingUser.id },
+            data: {
+              nome: pending.nome,
+              email: pending.email,
+              senha: pending.senhaHash,
+              telefone: pending.telefone,
+              tipo: pending.tipo,
+              emailVerified: true,
+              verificationCode: null,
+              verificationExpires: null,
+            },
+          })
+        : await this.prisma.user.create({
+            data: {
+              nome: pending.nome,
+              email: pending.email,
+              senha: pending.senhaHash,
+              telefone: pending.telefone,
+              tipo: pending.tipo,
+              emailVerified: true,
+              verificationCode: null,
+              verificationExpires: null,
+            },
+          });
+
+      const token = this.generateToken(verifiedUser.id, verifiedUser.email, verifiedUser.tipo);
+
+      return {
+        message: 'E-mail verificado com sucesso!',
+        user: {
+          id: verifiedUser.id,
+          nome: verifiedUser.nome,
+          email: verifiedUser.email,
+          telefone: verifiedUser.telefone,
+          tipo: verifiedUser.tipo,
+          plano: verifiedUser.plano,
+          avatar: verifiedUser.avatar,
+        },
+        access_token: token,
+      };
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -172,6 +223,31 @@ export class AuthService {
   }
 
   async resendCode(dto: ResendCodeDto) {
+    if (dto.verificationToken) {
+      const pending = this.decodeVerificationToken(dto.verificationToken);
+
+      if (pending.email !== dto.email) {
+        throw new BadRequestException('E-mail não confere com o código enviado.');
+      }
+
+      const code = this.emailService.generateCode();
+      const verificationToken = this.buildVerificationToken({
+        ...pending,
+        code,
+      });
+
+      const enviado = await this.emailService.sendVerificationCode(dto.email, code, pending.nome);
+
+      if (!enviado) {
+        throw new BadRequestException('Não foi possível reenviar o código de verificação.');
+      }
+
+      return {
+        message: 'Novo código enviado para o e-mail.',
+        verificationToken,
+      };
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -219,6 +295,17 @@ export class AuthService {
   
     if (!user.emailVerified) {
       const code = this.emailService.generateCode();
+      const verificationToken = this.buildVerificationToken({
+        purpose: 'email-verification',
+        code,
+        email: user.email,
+        nome: user.nome,
+        senhaHash: user.senha || '',
+        telefone: user.telefone || undefined,
+        tipo: user.tipo,
+        userId: user.id,
+      });
+
       await this.prisma.user.update({
         where: { id: user.id },
         data: {
@@ -232,6 +319,7 @@ export class AuthService {
         message: 'E-mail não verificado. Um novo código foi enviado.',
         requiresVerification: true,
         email: dto.email,
+        verificationToken,
       };
     }
 
@@ -337,10 +425,22 @@ export class AuthService {
             email: googleUser.email,
             googleId: googleUser.googleId,
             avatar: googleUser.avatar,
+            emailVerified: true,
             tipo: 'CLIENTE',
           },
         });
       }
+    }
+
+    if (!user.emailVerified) {
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          emailVerified: true,
+          googleId: googleUser.googleId,
+          avatar: googleUser.avatar || user.avatar,
+        },
+      });
     }
 
     const token = this.generateToken(user.id, user.email, user.tipo);
@@ -366,5 +466,30 @@ export class AuthService {
       email,
       tipo,
     });
+  }
+
+  private getVerificationSecret(): string {
+    return this.configService.get<string>('EMAIL_VERIFICATION_JWT_SECRET')
+      || this.configService.get<string>('JWT_SECRET')
+      || 'verification-secret-change-me';
+  }
+
+  private buildVerificationToken(payload: PendingRegistrationPayload): string {
+    return this.jwtService.sign(payload, {
+      secret: this.getVerificationSecret(),
+      expiresIn: '15m',
+    });
+  }
+
+  private decodeVerificationToken(token: string): PendingRegistrationPayload {
+    const payload = this.jwtService.verify(token, {
+      secret: this.getVerificationSecret(),
+    }) as PendingRegistrationPayload;
+
+    if (payload.purpose !== 'email-verification') {
+      throw new BadRequestException('Token de verificação inválido.');
+    }
+
+    return payload;
   }
 }

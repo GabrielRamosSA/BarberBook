@@ -145,7 +145,10 @@ export class AdminDevService {
     }
 
     const contas = await this.prisma.user.findMany({
-      where,
+      where: {
+        ...where,
+        emailVerified: true,
+      },
       select: {
         id: true,
         nome: true,

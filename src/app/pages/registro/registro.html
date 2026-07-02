@@ -80,17 +80,22 @@
       </div>
 
       <div class="campo">
-        <label for="telefone">Telefone (opcional)</label>
+        <label for="telefone">Telefone</label>
         <div class="campo-input">
           <i class="fa-solid fa-phone"></i>
           <input
             type="tel"
             id="telefone"
             [(ngModel)]="telefone"
+            (ngModelChange)="aoAlterarTelefone()"
             name="telefone"
             placeholder="(11) 99999-9999"
+            required
           />
         </div>
+        @if (telefone.length > 0 && !telefoneValido) {
+          <span class="campo-erro">Telefone inválido. Use DDD e número válidos.</span>
+        }
       </div>
 
       <div class="campo">
