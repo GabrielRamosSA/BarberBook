@@ -41,7 +41,7 @@ export class RegistroComponent {
     special: false,
   };
 
-  private urlApi = '/api/auth';
+  private readonly urlApi = this.resolveApiUrl();
 
   constructor(
     private servicoAuth: AuthService,
@@ -79,6 +79,17 @@ export class RegistroComponent {
           this.erroEmail = '';
         },
       });
+  }
+
+  private resolveApiUrl(): string {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return '/api/auth';
+      }
+    }
+
+    return 'https://barberbook-awgp.onrender.com/api/auth';
   }
 
   aoAlterarEmail() {
