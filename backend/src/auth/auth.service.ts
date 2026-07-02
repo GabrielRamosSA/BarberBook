@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto, LoginDto, VerifyEmailDto, ResendCodeDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
+import { UserType } from './dto/auth.dto';
 import { randomBytes } from 'crypto';
 import { EmailService } from './email.service';
 import { promises as dns } from 'dns';
@@ -20,7 +21,7 @@ type PendingRegistrationPayload = {
   nome: string;
   senhaHash: string;
   telefone?: string;
-  tipo: 'CLIENTE' | 'BARBEIRO';
+  tipo: UserType;
   userId?: string;
 };
 
