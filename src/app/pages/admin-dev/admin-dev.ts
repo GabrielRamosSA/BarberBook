@@ -38,7 +38,7 @@ export class AdminDevComponent implements OnInit {
   erro = '';
   sucesso = '';
 
-  private readonly apiUrl = '/api/admin-dev';
+  private readonly apiUrl = this.resolveApiUrl();
   private readonly tokenKey = 'dev_admin_token';
 
   constructor(private http: HttpClient) {}
@@ -49,6 +49,17 @@ export class AdminDevComponent implements OnInit {
     if (this.getToken()) {
       this.logout();
     }
+  }
+
+  private resolveApiUrl(): string {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return '/api/admin-dev';
+      }
+    }
+
+    return 'https://barberbook-awgp.onrender.com/api/admin-dev';
   }
 
   get logado(): boolean {
