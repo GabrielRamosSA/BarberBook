@@ -50,6 +50,11 @@ export class AdminDevService {
 
     const configuredAllowed = this.getEnvList('DEV_ADMIN_ALLOWED_IPS').map((item) => this.normalizeIp(item));
     const defaultAllowed = ['127.0.0.1', '::1', 'localhost'].map((item) => this.normalizeIp(item));
+
+    if (process.env.NODE_ENV === 'production' && configuredAllowed.length === 0) {
+      return;
+    }
+
     const allowed = configuredAllowed.length > 0 ? configuredAllowed : defaultAllowed;
 
     if (!allowed.includes(ip)) {
