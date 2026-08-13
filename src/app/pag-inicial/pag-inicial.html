@@ -1,355 +1,473 @@
 <div class="pagina-inicial">
-  <header class="cabecalho-pagina revelar">
-    <a class="marca" href="#inicio" aria-label="CortaAi Home" (click)="rolarParaSecao('inicio', $event)">
-      <span class="marca-icone"><i class="fa-solid fa-scissors"></i></span>
-      <span class="marca-texto">CortaAi</span>
-    </a>
+  <header class="cabecalho-pagina" [class.navegacao-aberta]="navegacaoAberta">
+    <div class="faixa-cabecalho">
+      <a
+        class="marca"
+        href="#inicio"
+        aria-label="CortaAí — ir para o início"
+        (click)="rolarParaSecao('inicio', $event)"
+      >
+        <span class="marca-icone"><i class="fa-solid fa-scissors"></i></span>
+        <span class="marca-texto">CortaAí</span>
+      </a>
 
-    <nav class="navegacao-principal" aria-label="Navegacao principal">
-      <a href="#beneficios" (click)="rolarParaSecao('beneficios', $event)" [class.ativo]="secaoEstaAtiva('beneficios')">Beneficios</a>
-      <a href="#inovacao" (click)="rolarParaSecao('inovacao', $event)" [class.ativo]="secaoEstaAtiva('inovacao')">Inovacao</a>
-      <a href="#planos" (click)="rolarParaSecao('planos', $event)" [class.ativo]="secaoEstaAtiva('planos')">Planos</a>
-      <a href="#final" (click)="rolarParaSecao('final', $event)" [class.ativo]="secaoEstaAtiva('final')">Comecar</a>
-    </nav>
+      <nav
+        id="navegacao-site"
+        class="navegacao-principal"
+        [class.aberta]="navegacaoAberta"
+        aria-label="Navegação principal"
+      >
+        <a
+          href="#beneficios"
+          (click)="rolarParaSecao('beneficios', $event)"
+          [class.ativo]="secaoEstaAtiva('beneficios')"
+          >Como funciona</a
+        >
+        <a
+          href="#inovacao"
+          (click)="rolarParaSecao('inovacao', $event)"
+          [class.ativo]="secaoEstaAtiva('inovacao')"
+          >Na prática</a
+        >
+        <a
+          href="#planos"
+          (click)="rolarParaSecao('planos', $event)"
+          [class.ativo]="secaoEstaAtiva('planos')"
+          >Planos</a
+        >
+        <a
+          href="#final"
+          (click)="rolarParaSecao('final', $event)"
+          [class.ativo]="secaoEstaAtiva('final')"
+          >Começar</a
+        >
+      </nav>
 
-    @if (usuario) {
-      <div class="menu-usuario">
-        <button class="botao-avatar" (click)="alternarMenu()" aria-label="Abrir menu do usuario">
-          @if (obterUrlAvatar()) {
-            <img [src]="obterUrlAvatar()" alt="Avatar" class="avatar-imagem" />
-          } @else {
-            <div class="avatar-substituto">{{ usuario.nome.charAt(0).toUpperCase() }}</div>
-          }
-        </button>
-
-        @if (menuAberto) {
-          <div class="menu-suspenso">
-            <div class="menu-suspenso-cabecalho">
-              <span class="menu-suspenso-nome">{{ usuario.nome }}</span>
-              <span class="menu-suspenso-email">{{ usuario.email }}</span>
-            </div>
-            <div class="menu-suspenso-divisor"></div>
-            <a routerLink="/perfil" class="menu-suspenso-item" (click)="menuAberto = false">
-              <i class="fa-solid fa-user"></i>
-              Meu Perfil
-            </a>
-            @if (usuario.tipo !== 'BARBEIRO') {
-              <a routerLink="/meus-agendamentos" class="menu-suspenso-item" (click)="menuAberto = false">
-                <i class="fa-solid fa-calendar-check"></i>
-                Meus Agendamentos
-              </a>
-            }
-            @if (usuario.tipo === 'BARBEIRO') {
-              <a routerLink="/dashboard" class="menu-suspenso-item" (click)="menuAberto = false">
-                <i class="fa-solid fa-chart-line"></i>
-                Painel Barbeiro
-              </a>
-            }
-            <div class="menu-suspenso-divisor"></div>
-            <button class="menu-suspenso-item menu-suspenso-sair" (click)="sair()">
-              <i class="fa-solid fa-right-from-bracket"></i>
-              Sair
+      <div class="area-acoes-cabecalho">
+        @if (usuario) {
+          <div class="menu-usuario">
+            <button
+              type="button"
+              class="botao-avatar"
+              (click)="alternarMenu()"
+              aria-label="Abrir menu do usuário"
+              aria-controls="menu-usuario"
+              [attr.aria-expanded]="menuAberto"
+            >
+              @if (obterUrlAvatar()) {
+                <img [src]="obterUrlAvatar()" alt="" class="avatar-imagem" />
+              } @else {
+                <span class="avatar-substituto">{{ usuario.nome.charAt(0).toUpperCase() }}</span>
+              }
             </button>
+
+            @if (menuAberto) {
+              <div id="menu-usuario" class="menu-suspenso">
+                <div class="menu-suspenso-cabecalho">
+                  <span class="menu-suspenso-nome">{{ usuario.nome }}</span>
+                  <span class="menu-suspenso-email">{{ usuario.email }}</span>
+                </div>
+                <div class="menu-suspenso-divisor"></div>
+                <a routerLink="/perfil" class="menu-suspenso-item" (click)="menuAberto = false">
+                  <i class="fa-solid fa-user"></i>
+                  Meu perfil
+                </a>
+                @if (usuario.tipo !== 'BARBEIRO') {
+                  <a
+                    routerLink="/meus-agendamentos"
+                    class="menu-suspenso-item"
+                    (click)="menuAberto = false"
+                  >
+                    <i class="fa-solid fa-calendar-check"></i>
+                    Meus agendamentos
+                  </a>
+                }
+                @if (usuario.tipo === 'BARBEIRO') {
+                  <a
+                    routerLink="/dashboard"
+                    class="menu-suspenso-item"
+                    (click)="menuAberto = false"
+                  >
+                    <i class="fa-solid fa-table-columns"></i>
+                    Painel da barbearia
+                  </a>
+                }
+                <div class="menu-suspenso-divisor"></div>
+                <button
+                  type="button"
+                  class="menu-suspenso-item menu-suspenso-sair"
+                  (click)="sair()"
+                >
+                  <i class="fa-solid fa-right-from-bracket"></i>
+                  Sair
+                </button>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="acoes-cabecalho">
+            <a class="link-entrar" routerLink="/login">Entrar</a>
+            <a class="btn btn-cobre" routerLink="/registro">Criar conta</a>
           </div>
         }
       </div>
-    } @else {
-      <div class="acoes-cabecalho">
-        <a class="btn btn-ghost" routerLink="/login">Entrar</a>
-        <a class="btn btn-primary" routerLink="/registro">Criar conta</a>
-      </div>
-    }
+
+      <button
+        type="button"
+        class="botao-menu"
+        (click)="alternarNavegacao()"
+        aria-label="Abrir navegação"
+        aria-controls="navegacao-site"
+        [attr.aria-expanded]="navegacaoAberta"
+      >
+        <span></span><span></span>
+      </button>
+    </div>
   </header>
 
   <main class="conteudo-principal">
     <section class="destaque" id="inicio">
-      <div class="destaque-texto revelar atraso-1">
-        <span class="chamada-superior">Plataforma premium para barbearias que querem crescer rapido</span>
-        <h1>Transforme sua barbearia em uma maquina de agendamentos.</h1>
-        <p>
-          Organize agenda, clientes, pagamentos e comunicacao em um painel moderno.
-          Menos trabalho manual, mais tempo para o que importa: seu negocio.
+      <div class="destaque-texto revelar">
+        <p class="sobrelinha">AGENDA DIGITAL PARA BARBEARIAS DE VERDADE</p>
+        <h1>Sua agenda não precisa <em>morar no WhatsApp.</em></h1>
+        <p class="texto-apresentacao">
+          O CortaAí coloca horários, clientes e a vitrine da sua barbearia no mesmo lugar — para
+          você atender com mais calma e para o cliente marcar sem pedir favores.
         </p>
 
         <div class="destaque-acoes">
-          <a routerLink="/registro" class="btn btn-primary">Comecar gratis</a>
-          <a routerLink="/barbearias" class="btn btn-dark">Fazer um agendamento</a>
-          <a href="#planos" class="btn btn-soft" (click)="rolarParaSecao('planos', $event)">Ver planos</a>
-
-          @if (usuario && usuario.tipo === 'BARBEIRO') {
-            <a routerLink="/dashboard" class="btn btn-soft">Abrir painel</a>
-          } @else if (usuario && usuario.tipo !== 'BARBEIRO') {
-            <a routerLink="/meus-agendamentos" class="btn btn-soft">Meus agendamentos</a>
+          @if (usuario?.tipo === 'BARBEIRO') {
+            <a routerLink="/dashboard" class="btn btn-cobre">
+              Abrir meu painel <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a>
+            <a routerLink="/barbearias" class="link-acao">
+              Ver barbearias <i class="fa-solid fa-arrow-right"></i>
+            </a>
+          } @else if (usuario) {
+            <a routerLink="/meus-agendamentos" class="btn btn-cobre">
+              Meus agendamentos <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a>
+            <a routerLink="/barbearias" class="link-acao">
+              Encontrar uma barbearia <i class="fa-solid fa-arrow-right"></i>
+            </a>
           } @else {
-            <button type="button" class="btn btn-soft" (click)="abrirModalTelefone()">Consultar agendamento</button>
+            <a routerLink="/registro" class="btn btn-cobre">
+              Criar página da barbearia <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a>
+            <a routerLink="/barbearias" class="link-acao">
+              Encontrar uma barbearia <i class="fa-solid fa-arrow-right"></i>
+            </a>
           }
         </div>
 
-        <div class="destaque-metricas">
-          <article class="cartao-metrica">
-            <strong>+3x</strong>
-            <span>mais controle da agenda</span>
-          </article>
-          <article class="cartao-metrica">
-            <strong>24h</strong>
-            <span>agendamento online ativo</span>
-          </article>
-          <article class="cartao-metrica">
-            <strong>-40%</strong>
-            <span>faltas com lembretes inteligentes</span>
-          </article>
+        @if (!usuario) {
+          <button type="button" class="consulta-hero" (click)="abrirModalTelefone()">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            Já marcou um horário? Consulte pelo telefone
+          </button>
+        }
+
+        <div class="hero-notas" aria-label="O que você encontra no CortaAí">
+          <span><i class="fa-solid fa-circle"></i> Agenda sem vai-e-volta</span>
+          <span><i class="fa-solid fa-circle"></i> Página pública da sua casa</span>
         </div>
       </div>
 
-      <div class="destaque-visual revelar atraso-2">
-        <div class="brilho-destaque"></div>
-        <div class="moldura-imagem">
-          <img src="/barbearias.png" alt="Barbearia moderna utilizando o sistema CortaAi" />
-        </div>
-        <div class="nota-flutuante nota-topo">
-          <i class="fa-solid fa-bolt"></i>
-          <div>
-            <strong>Setup em minutos</strong>
-            <span>sem complicacao tecnica</span>
+      <div class="destaque-visual revelar atraso-1" aria-label="Uma prévia da experiência CortaAí">
+        <figure class="produto-em-cena">
+          <div class="etiqueta-produto">VITRINE PÚBLICA</div>
+          <img src="/barbearias.png" alt="Tela de busca de barbearias do CortaAí" />
+          <figcaption>Seu cliente encontra, escolhe e agenda em poucos passos.</figcaption>
+        </figure>
+
+        <aside class="agenda-amostra" aria-label="Exemplo de uma agenda organizada">
+          <div class="agenda-cabecalho">
+            <div>
+              <span>UMA AGENDA CLARA</span>
+              <strong>Quarta-feira</strong>
+            </div>
+            <span class="agenda-data">14</span>
           </div>
-        </div>
-        <div class="nota-flutuante nota-base">
-          <i class="fa-solid fa-calendar-check"></i>
-          <div>
-            <strong>Agenda inteligente</strong>
-            <span>confirmacao e lembrete automaticos</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="faixa-provas revelar atraso-3" aria-label="Diferenciais rapidos">
-      <div class="item-prova"><i class="fa-solid fa-mobile-screen"></i> Painel responsivo em qualquer dispositivo</div>
-      <div class="item-prova"><i class="fa-solid fa-location-dot"></i> Pagina publica para captar clientes locais</div>
-      <div class="item-prova"><i class="fa-solid fa-whatsapp"></i> Lembretes para reduzir ausencias</div>
-      <div class="item-prova"><i class="fa-solid fa-shield-halved"></i> Estrutura segura e pronta para escalar</div>
-    </section>
-
-    <section class="secao-conteudo" id="beneficios">
-      <div class="cabecalho-secao revelar">
-        <span class="etiqueta-secao">Beneficios reais</span>
-        <h2>Por que assinar o CortaAi hoje?</h2>
-        <p>Voce ganha tempo, previsibilidade e um atendimento profissional do primeiro ao ultimo agendamento.</p>
-      </div>
-
-      <div class="grade-beneficios">
-        <article class="cartao-beneficio revelar atraso-1">
-          <i class="fa-solid fa-calendar-days"></i>
-          <h3>Agenda centralizada</h3>
-          <p>Visualize o dia inteiro em segundos, altere horarios e confirme atendimentos sem dor de cabeca.</p>
-        </article>
-
-        <article class="cartao-beneficio revelar atraso-2">
-          <i class="fa-solid fa-users"></i>
-          <h3>Gestao de clientes</h3>
-          <p>Historico, preferencias e contato reunidos para voce vender melhor e fidelizar mais.</p>
-        </article>
-
-        <article class="cartao-beneficio revelar atraso-3">
-          <i class="fa-solid fa-shop"></i>
-          <h3>Pagina da barbearia</h3>
-          <p>Mostre fotos, servicos, barbeiros e localizacao para atrair novos clientes todos os dias.</p>
-        </article>
-
-        <article class="cartao-beneficio revelar atraso-1">
-          <i class="fa-solid fa-bell"></i>
-          <h3>Lembretes automaticos</h3>
-          <p>Envie avisos e reduza faltas com comunicacao inteligente antes de cada horario.</p>
-        </article>
-
-        <article class="cartao-beneficio revelar atraso-2">
-          <i class="fa-solid fa-chart-column"></i>
-          <h3>Visao do crescimento</h3>
-          <p>Acompanhe resultados e identifique o que gera mais retorno para sua equipe.</p>
-        </article>
-
-        <article class="cartao-beneficio revelar atraso-3">
-          <i class="fa-solid fa-scissors"></i>
-          <h3>Foco no atendimento</h3>
-          <p>Menos processos manuais e mais tempo para entregar uma experiencia memoravel ao cliente.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="secao-inovacao" id="inovacao">
-      <div class="midia-inovacao revelar">
-        <div class="janela-mockup">
-          <div class="cabecalho-mockup">
-            <span></span><span></span><span></span>
-          </div>
-          <div class="conteudo-mockup">
-            <div class="linha-mockup ativo"></div>
-            <div class="linha-mockup"></div>
-            <div class="linha-mockup"></div>
-            <div class="cartoes-mockup">
-              <div></div>
-              <div></div>
-              <div></div>
+          <div class="agenda-lista">
+            <div class="agenda-item confirmado">
+              <time>09:00</time>
+              <span><strong>Corte + barba</strong><small>Confirmado</small></span>
+            </div>
+            <div class="agenda-item livre">
+              <time>10:30</time>
+              <span><strong>Horário disponível</strong><small>Pronto para reservar</small></span>
+            </div>
+            <div class="agenda-item confirmado">
+              <time>13:00</time>
+              <span><strong>Corte</strong><small>Confirmado</small></span>
             </div>
           </div>
-        </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="faixa-operacao" aria-label="Recursos da plataforma">
+      <div class="faixa-trilho">
+        <span>AGENDA</span><i></i><span>CLIENTES</span><i></i><span>PÁGINA PÚBLICA</span><i></i
+        ><span>LEMBRETES</span><i></i><span>AGENDA</span><i></i><span>CLIENTES</span><i></i
+        ><span>PÁGINA PÚBLICA</span><i></i><span>LEMBRETES</span><i></i>
+      </div>
+    </section>
+
+    <section class="secao-ritmo" id="beneficios">
+      <div class="cabecalho-ritmo revelar">
+        <p class="sobrelinha">DO PRIMEIRO CORTE AO RETORNO</p>
+        <h2>Menos improviso. Mais cadeira ocupada.</h2>
+        <p>Não é uma coleção de ferramentas: é um fluxo simples para a rotina da sua barbearia.</p>
       </div>
 
-      <div class="texto-inovacao revelar atraso-2">
-        <span class="etiqueta-secao">Inovacao de verdade</span>
-        <h2>O que existe de inovador no site?</h2>
+      <ol class="passos-operacao">
+        <li class="passo revelar atraso-1">
+          <span class="numero-passo">01</span>
+          <div>
+            <p class="titulo-passo">Monte sua casa</p>
+            <h3>Cadastre a barbearia, sua equipe e o que cada pessoa faz melhor.</h3>
+          </div>
+          <p>
+            Serviços, horários e profissionais organizados de um jeito que faz sentido no dia a dia.
+          </p>
+        </li>
+        <li class="passo revelar atraso-2">
+          <span class="numero-passo">02</span>
+          <div>
+            <p class="titulo-passo">Deixe a porta aberta</p>
+            <h3>
+              Compartilhe uma página que explica sua barbearia antes mesmo do primeiro contato.
+            </h3>
+          </div>
+          <p>O cliente vê os detalhes, escolhe um horário e chega sabendo onde está pisando.</p>
+        </li>
+        <li class="passo revelar atraso-3">
+          <span class="numero-passo">03</span>
+          <div>
+            <p class="titulo-passo">Atenda no seu ritmo</p>
+            <h3>Acompanhe a agenda sem alternar entre conversa, papel e planilha.</h3>
+          </div>
+          <p>O próximo horário fica visível. O foco volta para a cadeira e para a conversa.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section class="secao-pratica" id="inovacao">
+      <div class="pratica-introducao revelar">
+        <p class="sobrelinha">O QUE MUDA NA ROTINA</p>
+        <h2>Um lugar para cada etapa do atendimento.</h2>
         <p>
-          O CortaAi conecta operacao, marketing e atendimento em uma experiencia unica.
-          Tudo pensado para barbearias que querem parecer grandes, mesmo com equipe enxuta.
+          A experiência foi pensada para funcionar tanto do balcão quanto do celular. Sem um painel
+          cheio de enfeite para descobrir onde clicar.
         </p>
+      </div>
 
-        <ul class="lista-inovacao">
-          <li>
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
+      <div class="pratica-corpo">
+        <div class="painel-operacao revelar atraso-1" aria-label="Organização de um atendimento">
+          <div class="painel-operacao-topo">
+            <span>HOJE NA BARBEARIA</span>
+            <span class="status-operacao"><i class="fa-solid fa-circle"></i> Em ordem</span>
+          </div>
+          <div class="linha-operacao linha-operacao-ativa">
+            <span class="horario-operacao">09:00</span>
             <div>
-              <strong>Fluxo inteligente de agendamento</strong>
-              <span>Cliente agenda com poucos cliques e voce recebe tudo organizado.</span>
+              <strong>Corte + barba</strong>
+              <small>Atendimento confirmado</small>
             </div>
-          </li>
-          <li>
-            <i class="fa-solid fa-image"></i>
+            <i class="fa-solid fa-check"></i>
+          </div>
+          <div class="linha-operacao">
+            <span class="horario-operacao">10:30</span>
             <div>
-              <strong>Vitrine visual da sua marca</strong>
-              <span>Fotos da barbearia e dos profissionais em destaque para converter mais.</span>
+              <strong>Disponível</strong>
+              <small>Aguardando reserva</small>
             </div>
-          </li>
-          <li>
-            <i class="fa-solid fa-layer-group"></i>
+            <i class="fa-solid fa-plus"></i>
+          </div>
+          <div class="linha-operacao">
+            <span class="horario-operacao">13:00</span>
             <div>
-              <strong>Escala por plano</strong>
-              <span>Comece no basico e evolua sem migracoes ou retrabalho.</span>
+              <strong>Corte</strong>
+              <small>Atendimento confirmado</small>
             </div>
-          </li>
-          <li>
-            <i class="fa-solid fa-gauge-high"></i>
+            <i class="fa-solid fa-check"></i>
+          </div>
+          <div class="rodape-operacao">
+            <span><i class="fa-solid fa-clock"></i> Próximo horário às 10:30</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </div>
+        </div>
+
+        <div class="lista-pratica">
+          <article class="ponto-pratico revelar atraso-1">
+            <span class="icone-pratico"><i class="fa-regular fa-calendar"></i></span>
             <div>
-              <strong>Performance e responsividade</strong>
-              <span>Painel rapido no celular, tablet e desktop para voce gerenciar de qualquer lugar.</span>
+              <h3>A agenda mostra o que importa agora.</h3>
+              <p>Visualize o dia, confirme horários e altere o necessário sem perder a conversa.</p>
             </div>
-          </li>
-        </ul>
+          </article>
+          <article class="ponto-pratico revelar atraso-2">
+            <span class="icone-pratico"><i class="fa-solid fa-store"></i></span>
+            <div>
+              <h3>Sua barbearia ganha endereço próprio.</h3>
+              <p>
+                Fotos, serviços, profissionais e localização reunidos para quem está procurando.
+              </p>
+            </div>
+          </article>
+          <article class="ponto-pratico revelar atraso-3">
+            <span class="icone-pratico"><i class="fa-regular fa-bell"></i></span>
+            <div>
+              <h3>Os lembretes não dependem da memória.</h3>
+              <p>
+                Use a operação organizada para reduzir tarefas repetidas antes de cada atendimento.
+              </p>
+            </div>
+          </article>
+        </div>
       </div>
     </section>
 
     <section class="secao-planos" id="planos">
-      <div class="cabecalho-secao revelar">
-        <span class="etiqueta-secao">Planos transparentes</span>
-        <h2>Escolha o plano ideal para o momento da sua barbearia</h2>
-        <p>Sem taxas escondidas. Comece gratis e evolua conforme o negocio cresce.</p>
+      <div class="cabecalho-planos revelar">
+        <p class="sobrelinha">PLANOS PARA CRESCER SEM PRESSA</p>
+        <h2>Comece simples. Mude de plano quando a casa pedir.</h2>
+        <p>O plano Básico é gratuito; os outros entram quando a operação ganha ritmo.</p>
       </div>
 
       <div class="grade-planos">
-        <article class="cartao-plano revelar atraso-1">
-          <div class="topo-plano">
-            <h3>Basico</h3>
-            <p>Para comecar organizado</p>
-          </div>
-          <div class="preco-plano">
-            <strong>Gratis</strong>
+        <article class="plano revelar atraso-1">
+          <div class="plano-topo">
+            <div>
+              <p class="tipo-plano">BÁSICO</p>
+              <h3>Para começar organizado</h3>
+            </div>
+            <strong class="preco-plano">Grátis</strong>
           </div>
           <ul>
-            <li><i class="fa-solid fa-check"></i> 1 barbearia</li>
-            <li><i class="fa-solid fa-check"></i> 2 barbeiros por barbearia</li>
-            <li><i class="fa-solid fa-check"></i> 3 servicos por barbeiro</li>
-            <li><i class="fa-solid fa-check"></i> 30 agendamentos por mes</li>
+            <li>1 barbearia</li>
+            <li>Até 2 barbeiros por barbearia</li>
+            <li>30 agendamentos por mês</li>
           </ul>
-          <a routerLink="/registro" class="btn btn-dark">Criar conta gratis</a>
+          <a routerLink="/registro" class="link-plano"
+            >Criar conta grátis <i class="fa-solid fa-arrow-right"></i
+          ></a>
         </article>
 
-        <article class="cartao-plano destaque revelar atraso-2">
-          <span class="selo-plano">Mais escolhido</span>
-          <div class="topo-plano">
-            <h3>Profissional</h3>
-            <p>Para crescer com consistencia</p>
-          </div>
-          <div class="preco-plano">
-            <strong>R$ 29,90</strong>
-            <span>/mes</span>
+        <article class="plano plano-em-foco revelar atraso-2">
+          <div class="plano-topo">
+            <div>
+              <p class="tipo-plano">PROFISSIONAL</p>
+              <h3>Para uma equipe em crescimento</h3>
+            </div>
+            <strong class="preco-plano">R$ 29,90<small>/mês</small></strong>
           </div>
           <ul>
-            <li><i class="fa-solid fa-check"></i> 3 barbearias</li>
-            <li><i class="fa-solid fa-check"></i> 5 barbeiros por barbearia</li>
-            <li><i class="fa-solid fa-check"></i> Agendamentos ilimitados</li>
-            <li><i class="fa-solid fa-check"></i> Gestao de clientes e lembretes</li>
+            <li>Até 3 barbearias</li>
+            <li>Agendamentos ilimitados</li>
+            <li>Clientes, lembretes e fotos da equipe</li>
           </ul>
-          <a routerLink="/registro" class="btn btn-primary">Quero evoluir</a>
+          <a routerLink="/registro" class="link-plano"
+            >Conhecer o profissional <i class="fa-solid fa-arrow-right"></i
+          ></a>
         </article>
 
-        <article class="cartao-plano revelar atraso-3">
-          <div class="topo-plano">
-            <h3>Premium</h3>
-            <p>Para operar no maximo nivel</p>
-          </div>
-          <div class="preco-plano">
-            <strong>R$ 59,90</strong>
-            <span>/mes</span>
+        <article class="plano revelar atraso-3">
+          <div class="plano-topo">
+            <div>
+              <p class="tipo-plano">PREMIUM</p>
+              <h3>Para operar sem limite de escala</h3>
+            </div>
+            <strong class="preco-plano">R$ 59,90<small>/mês</small></strong>
           </div>
           <ul>
-            <li><i class="fa-solid fa-check"></i> Barbearias ilimitadas</li>
-            <li><i class="fa-solid fa-check"></i> Equipe e servicos ilimitados</li>
-            <li><i class="fa-solid fa-check"></i> Relatorios de receita</li>
-            <li><i class="fa-solid fa-check"></i> Toda a stack do CortaAi liberada</li>
+            <li>Barbearias, equipe e serviços ilimitados</li>
+            <li>Histórico completo</li>
+            <li>Relatórios de receita</li>
           </ul>
-          <a routerLink="/registro" class="btn btn-dark">Entrar no premium</a>
+          <a routerLink="/registro" class="link-plano"
+            >Ir para o premium <i class="fa-solid fa-arrow-right"></i
+          ></a>
         </article>
       </div>
     </section>
 
-    <section class="chamada-final revelar" id="final">
+    <section class="convite-final revelar" id="final">
+      <div class="convite-marca"><i class="fa-solid fa-scissors"></i></div>
       <div>
-        <span class="etiqueta-secao">Pronto para lotar sua agenda?</span>
-        <h2>Deixe o CortaAi cuidar da operacao enquanto voce foca no corte perfeito.</h2>
-        <p>Crie sua conta agora e leve sua barbearia para o proximo nivel ainda hoje.</p>
+        <p class="sobrelinha">A AGENDA COMEÇA AQUI</p>
+        <h2>Faça caber mais tempo para o corte certo.</h2>
+        <p>Crie sua conta e monte a presença digital da sua barbearia no seu próprio ritmo.</p>
       </div>
-      <div class="acoes-chamada-final">
-        <a class="btn btn-primary" routerLink="/registro">Criar minha conta</a>
-        <a class="btn btn-ghost" routerLink="/login">Ja tenho conta</a>
+      <div class="acoes-convite">
+        <a class="btn btn-cobre" routerLink="/registro"
+          >Criar minha conta <i class="fa-solid fa-arrow-right"></i
+        ></a>
+        <a class="link-convite" routerLink="/login">Já tenho conta</a>
       </div>
     </section>
   </main>
 
   <footer class="rodape-pagina">
-    <p>(c) 2026 CortaAi. Tecnologia para barbearias que pensam grande.</p>
+    <a href="#inicio" (click)="rolarParaSecao('inicio', $event)" class="marca-rodape">
+      <i class="fa-solid fa-scissors"></i> CortaAí
+    </a>
+    <p>Ferramentas simples para a rotina de uma boa barbearia.</p>
+    <span>© 2026 CortaAí</span>
   </footer>
 
   @if (modalTelefoneAberto) {
     <div class="modal-fundo" (click)="fecharModalTelefone()">
-      <div class="modal-telefone" (click)="$event.stopPropagation()">
-        <button class="modal-fechar" (click)="fecharModalTelefone()" aria-label="Fechar modal">
+      <div
+        class="modal-telefone"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-telefone-titulo"
+        aria-describedby="modal-telefone-descricao"
+        (click)="$event.stopPropagation()"
+      >
+        <button
+          type="button"
+          class="modal-fechar"
+          (click)="fecharModalTelefone()"
+          aria-label="Fechar"
+        >
           <i class="fa-solid fa-xmark"></i>
         </button>
-        <div class="modal-icone">
-          <i class="fa-solid fa-phone"></i>
-        </div>
-        <h3>Consultar Agendamentos</h3>
-        <p>Digite o telefone usado no momento do agendamento.</p>
+        <span class="modal-sobrelinha">CONSULTAR AGENDAMENTO</span>
+        <h2 id="modal-telefone-titulo">Seu horário está por aqui.</h2>
+        <p id="modal-telefone-descricao">Digite o telefone usado no momento do agendamento.</p>
         <div class="modal-grupo-input">
+          <label for="telefone-consulta">Telefone com DDD</label>
           <input
+            #telefoneInput
+            id="telefone-consulta"
             type="tel"
             [(ngModel)]="telefoneConsulta"
             placeholder="(00) 00000-0000"
             maxlength="15"
+            autocomplete="tel"
             (input)="aoDigitarTelefoneConsulta($event)"
             (keyup.enter)="consultarAgendamentos()"
           />
         </div>
         @if (erroConsulta) {
-          <p class="modal-erro">{{ erroConsulta }}</p>
+          <p class="modal-erro" role="alert">{{ erroConsulta }}</p>
         }
-        <button class="modal-botao" (click)="consultarAgendamentos()" [disabled]="consultandoTelefone">
+        <button
+          type="button"
+          class="modal-botao"
+          (click)="consultarAgendamentos()"
+          [disabled]="consultandoTelefone"
+        >
           @if (consultandoTelefone) {
             <i class="fa-solid fa-spinner fa-spin"></i> Consultando...
           } @else {
-            <i class="fa-solid fa-search"></i> Consultar agora
+            <i class="fa-solid fa-arrow-right"></i> Ver meus agendamentos
           }
         </button>
       </div>
     </div>
   }
 </div>
-

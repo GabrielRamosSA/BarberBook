@@ -1,8 +1,20 @@
-import { Component, HostListener, OnInit, ViewEncapsulation } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  HostListener,
+  Inject,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  PLATFORM_ID,
+  ViewChild,
+  ViewEncapsulation,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { AuthService, User } from '../auth/auth.service';
 
 @Component({
@@ -12,12 +24,13 @@ import { AuthService, User } from '../auth/auth.service';
   styleUrl: './pag-inicial.scss',
   encapsulation: ViewEncapsulation.None,
 })
-export class PaginaInicial implements OnInit {
+export class PaginaInicial implements OnInit, AfterViewInit, OnDestroy {
   private readonly CHAVE_STORAGE_ULTIMO_TELEFONE = 'barberbook:last-phone';
   private readonly SECOES_MENU = ['inicio', 'beneficios', 'inovacao', 'planos', 'final'];
 
   usuario: User | null = null;
   menuAberto = false;
+  navegacaoAberta = false;
   secaoAtiva = 'inicio';
 
   modalTelefoneAberto = false;
@@ -25,11 +38,23 @@ export class PaginaInicial implements OnInit {
   consultandoTelefone = false;
   erroConsulta = '';
 
+  @ViewChild('telefoneInput') telefoneInput?: ElementRef<HTMLInputElement>;
+
+  private observadorRevelacao?: IntersectionObserver;
+  private observadorSecoes?: IntersectionObserver;
+  private ultimoElementoFocado: HTMLElement | null = null;
+  private readonly estaNoNavegador: boolean;
+
   constructor(
+    @Inject(PLATFORM_ID) platformId: object,
+    private elemento: ElementRef<HTMLElement>,
+    private zona: NgZone,
     private clienteHttp: HttpClient,
     private servicoAuth: AuthService,
     private roteador: Router,
-  ) {}
+  ) {
+    this.estaNoNavegador = isPlatformBrowser(platformId);
+  }
 
   ngOnInit() {
     this.servicoAuth.user$.subscribe((usuario) => {
@@ -39,16 +64,25 @@ export class PaginaInicial implements OnInit {
     if (this.servicoAuth.isLoggedIn() && !this.usuario) {
       this.servicoAuth.loadUser();
     }
+  }
 
-    if (typeof window !== 'undefined') {
-      setTimeout(() => this.atualizarSecaoAtiva(), 0);
-    }
+  ngAfterViewInit() {
+    if (!this.estaNoNavegador) return;
+
+    this.configurarAnimacoesDeEntrada();
+    this.configurarObservadorDeSecoes();
+  }
+
+  ngOnDestroy() {
+    this.observadorRevelacao?.disconnect();
+    this.observadorSecoes?.disconnect();
   }
 
   rolarParaSecao(idSecao: string, event?: Event) {
     event?.preventDefault();
+    this.navegacaoAberta = false;
 
-    if (typeof document === 'undefined' || typeof window === 'undefined') return;
+    if (!this.estaNoNavegador) return;
 
     const alvo = document.getElementById(idSecao);
     if (!alvo) return;
@@ -60,7 +94,7 @@ export class PaginaInicial implements OnInit {
 
     window.scrollTo({
       top: Math.max(topo, 0),
-      behavior: 'smooth',
+      behavior: this.prefereMovimentoReduzido() ? 'auto' : 'smooth',
     });
 
     this.secaoAtiva = idSecao;
@@ -70,42 +104,39 @@ export class PaginaInicial implements OnInit {
     return this.secaoAtiva === idSecao;
   }
 
-  @HostListener('window:scroll')
-  aoRolarJanela() {
-    this.atualizarSecaoAtiva();
-  }
-
-  private atualizarSecaoAtiva() {
-    if (typeof document === 'undefined' || typeof window === 'undefined') return;
-
-    const cabecalho = document.querySelector('.cabecalho-pagina') as HTMLElement | null;
-    const alturaCabecalho = cabecalho?.offsetHeight ?? 0;
-    const posicaoCursor = window.scrollY + alturaCabecalho + 40;
-
-    let secaoAtual = this.SECOES_MENU[0];
-
-    for (const idSecao of this.SECOES_MENU) {
-      const secao = document.getElementById(idSecao);
-      if (!secao) continue;
-
-      if (secao.offsetTop <= posicaoCursor) {
-        secaoAtual = idSecao;
-      }
-    }
-
-    this.secaoAtiva = secaoAtual;
+  alternarNavegacao() {
+    this.navegacaoAberta = !this.navegacaoAberta;
+    this.menuAberto = false;
   }
 
   alternarMenu() {
     this.menuAberto = !this.menuAberto;
+    this.navegacaoAberta = false;
   }
 
   @HostListener('document:click', ['$event'])
   aoClicarDocumento(event: Event) {
-    const target = event.target as HTMLElement;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+
     if (!target.closest('.menu-usuario')) {
       this.menuAberto = false;
     }
+
+    if (!target.closest('.cabecalho-pagina')) {
+      this.navegacaoAberta = false;
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  aoPressionarEscape() {
+    if (this.modalTelefoneAberto) {
+      this.fecharModalTelefone();
+      return;
+    }
+
+    this.menuAberto = false;
+    this.navegacaoAberta = false;
   }
 
   sair() {
@@ -122,13 +153,25 @@ export class PaginaInicial implements OnInit {
   }
 
   abrirModalTelefone() {
+    if (this.estaNoNavegador && document.activeElement instanceof HTMLElement) {
+      this.ultimoElementoFocado = document.activeElement;
+    }
+
     this.modalTelefoneAberto = true;
     this.telefoneConsulta = this.obterTelefoneSalvo();
     this.erroConsulta = '';
+
+    setTimeout(() => this.telefoneInput?.nativeElement.focus());
   }
 
   fecharModalTelefone() {
     this.modalTelefoneAberto = false;
+
+    if (this.estaNoNavegador && this.ultimoElementoFocado) {
+      const elementoParaFocar = this.ultimoElementoFocado;
+      this.ultimoElementoFocado = null;
+      setTimeout(() => elementoParaFocar.focus());
+    }
   }
 
   consultarAgendamentos() {
@@ -150,7 +193,9 @@ export class PaginaInicial implements OnInit {
           return;
         }
         this.fecharModalTelefone();
-        this.roteador.navigate(['/meus-agendamentos'], { queryParams: { telefone: telefoneLimpo } });
+        this.roteador.navigate(['/meus-agendamentos'], {
+          queryParams: { telefone: telefoneLimpo },
+        });
       },
       error: () => {
         this.consultandoTelefone = false;
@@ -196,5 +241,62 @@ export class PaginaInicial implements OnInit {
 
     const salvo = localStorage.getItem(this.CHAVE_STORAGE_ULTIMO_TELEFONE) || '';
     return this.mascararTelefone(salvo);
+  }
+
+  private configurarAnimacoesDeEntrada() {
+    if (this.prefereMovimentoReduzido() || !('IntersectionObserver' in window)) return;
+
+    const raiz = this.elemento.nativeElement.querySelector<HTMLElement>('.pagina-inicial');
+    if (!raiz) return;
+
+    const elementosParaRevelar = Array.from(raiz.querySelectorAll<HTMLElement>('.revelar'));
+    if (!elementosParaRevelar.length) return;
+
+    requestAnimationFrame(() => {
+      raiz.classList.add('motion-ready');
+
+      this.observadorRevelacao = new IntersectionObserver(
+        (entradas) => {
+          entradas.forEach((entrada) => {
+            if (!entrada.isIntersecting) return;
+
+            (entrada.target as HTMLElement).classList.add('esta-visivel');
+            this.observadorRevelacao?.unobserve(entrada.target);
+          });
+        },
+        { rootMargin: '0px 0px -10%', threshold: 0.12 },
+      );
+
+      elementosParaRevelar.forEach((elemento) => this.observadorRevelacao?.observe(elemento));
+    });
+  }
+
+  private configurarObservadorDeSecoes() {
+    if (!('IntersectionObserver' in window)) return;
+
+    const secoes = this.SECOES_MENU.map((id) => document.getElementById(id)).filter(
+      (secao): secao is HTMLElement => Boolean(secao),
+    );
+
+    this.observadorSecoes = new IntersectionObserver(
+      (entradas) => {
+        const secaoVisivel = entradas
+          .filter((entrada) => entrada.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        if (!secaoVisivel?.target.id) return;
+
+        this.zona.run(() => {
+          this.secaoAtiva = secaoVisivel.target.id;
+        });
+      },
+      { rootMargin: '-18% 0px -62%', threshold: [0.08, 0.25, 0.5] },
+    );
+
+    secoes.forEach((secao) => this.observadorSecoes?.observe(secao));
+  }
+
+  private prefereMovimentoReduzido(): boolean {
+    return this.estaNoNavegador && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 }
