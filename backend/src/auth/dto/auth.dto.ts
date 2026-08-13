@@ -56,6 +56,7 @@ export class VerifyEmailDto {
 
   @IsString()
   @Length(6, 6, { message: 'Código deve ter 6 dígitos' })
+  @Matches(/^\d{6}$/, { message: 'Código deve conter apenas 6 dígitos' })
   code: string;
 
   @IsOptional()

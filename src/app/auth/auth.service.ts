@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap, firstValueFrom } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom, tap, timeout } from 'rxjs';
 
 export interface User {
   id: string;
@@ -22,12 +22,21 @@ export interface AuthResponse {
   email?: string;
 }
 
+export interface EmailCheckResponse {
+  exists: boolean;
+  valid: boolean;
+  reason: string | null;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private readonly tokenKey = 'token';
   private readonly pendingVerificationTokenKey = 'pending_verification_token';
+  // Render's free instances can take close to a minute to wake up. Requests must
+  // still be bounded so a failed upstream service never leaves the UI loading forever.
+  private readonly requestTimeoutMs = 60_000;
   private readonly apiUrl = this.resolveApiUrl();
   private userSubject = new BehaviorSubject<User | null>(null);
 
@@ -58,6 +67,10 @@ export class AuthService {
     };
   }
 
+  private withTimeout<T>(request: Observable<T>): Observable<T> {
+    return request.pipe(timeout({ first: this.requestTimeoutMs }));
+  }
+
   private persistTokenFromResponse(response: AuthResponse | null | undefined): void {
     if (response?.access_token) {
       this.saveToken(response.access_token);
@@ -78,7 +91,9 @@ export class AuthService {
     telefone: string;
     tipo?: 'CLIENTE' | 'BARBEIRO';
   }): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, data, this.buildAuthOptions()).pipe(
+    return this.withTimeout(
+      this.http.post<AuthResponse>(`${this.apiUrl}/register`, data, this.buildAuthOptions()),
+    ).pipe(
       tap((res) => {
         this.persistTokenFromResponse(res);
         if (res.user) {
@@ -89,12 +104,26 @@ export class AuthService {
     );
   }
 
+  checkEmail(email: string): Observable<EmailCheckResponse> {
+    return this.withTimeout(
+      this.http.get<EmailCheckResponse>(`${this.apiUrl}/check-email`, {
+        ...this.buildAuthOptions(),
+        params: { email },
+      }),
+    );
+  }
+
   // ========================
   // VERIFICAÇÃO DE E-MAIL
   // ========================
   verifyEmail(email: string, code: string, verificationToken?: string): Observable<AuthResponse> {
-    return this.http
-      .post<AuthResponse>(`${this.apiUrl}/verify-email`, { email, code, verificationToken }, this.buildAuthOptions())
+    return this.withTimeout(
+      this.http.post<AuthResponse>(
+        `${this.apiUrl}/verify-email`,
+        { email, code, verificationToken },
+        this.buildAuthOptions(),
+      ),
+    )
       .pipe(
         tap((res) => {
           this.persistTokenFromResponse(res);
@@ -110,7 +139,13 @@ export class AuthService {
   }
 
   resendCode(email: string, verificationToken?: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/resend-code`, { email, verificationToken }, this.buildAuthOptions()).pipe(
+    return this.withTimeout(
+      this.http.post<AuthResponse>(
+        `${this.apiUrl}/resend-code`,
+        { email, verificationToken },
+        this.buildAuthOptions(),
+      ),
+    ).pipe(
       tap((res) => {
         this.persistTokenFromResponse(res);
       }),
@@ -121,8 +156,9 @@ export class AuthService {
   // LOGIN COM EMAIL E SENHA
   // ========================
   login(email: string, senha: string): Observable<AuthResponse> {
-    return this.http
-      .post<AuthResponse>(`${this.apiUrl}/login`, { email, senha }, this.buildAuthOptions())
+    return this.withTimeout(
+      this.http.post<AuthResponse>(`${this.apiUrl}/login`, { email, senha }, this.buildAuthOptions()),
+    )
       .pipe(
         tap((res) => {
           this.persistTokenFromResponse(res);
@@ -148,14 +184,22 @@ export class AuthService {
   // ESQUECEU A SENHA
   // ========================
   forgotPassword(email: string): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/forgot-password`, { email }, this.buildAuthOptions());
+    return this.withTimeout(
+      this.http.post<{ message: string }>(`${this.apiUrl}/forgot-password`, { email }, this.buildAuthOptions()),
+    );
   }
 
   // ========================
   // REDEFINIR SENHA
   // ========================
   resetPassword(token: string, novaSenha: string): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${this.apiUrl}/reset-password`, { token, novaSenha }, this.buildAuthOptions());
+    return this.withTimeout(
+      this.http.post<{ message: string }>(
+        `${this.apiUrl}/reset-password`,
+        { token, novaSenha },
+        this.buildAuthOptions(),
+      ),
+    );
   }
 
   // ========================
@@ -174,7 +218,7 @@ export class AuthService {
   // ========================
   loadUser(): Promise<User | null> {
     return firstValueFrom(
-      this.http.get<User>(`${this.apiUrl}/me`, this.buildAuthOptions())
+      this.withTimeout(this.http.get<User>(`${this.apiUrl}/me`, this.buildAuthOptions())),
     ).then((user) => {
       this.userSubject.next(user);
       return user;
@@ -194,7 +238,7 @@ export class AuthService {
   // ========================
   logout(): void {
     // Chama backend pra limpar cookie HttpOnly
-    this.http.post(`${this.apiUrl}/logout`, {}, this.buildAuthOptions()).subscribe({
+    this.withTimeout(this.http.post(`${this.apiUrl}/logout`, {}, this.buildAuthOptions())).subscribe({
       next: () => {
         this.userSubject.next(null);
         this.clearToken();

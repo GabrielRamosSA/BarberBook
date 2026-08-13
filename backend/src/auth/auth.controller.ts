@@ -67,16 +67,20 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const result = await this.authService.login(dto);
-    const token = result.access_token;
+    const { access_token: token, ...response } = result;
 
-    res.cookie('token', token, this.getCookieOptions());
+    if (token) {
+      res.cookie('token', token, this.getCookieOptions());
+    }
 
-    return {
-      message: result.message,
-      user: result.user,
-    };
+    // Keep verification fields in the response. Without these, an unverified
+    // user cannot be redirected to the code-confirmation page after login.
+    return response;
   }
 
   @Post('forgot-password')
@@ -93,20 +97,20 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   async googleAuth() {}
 
- @Get('google/callback')
-@UseGuards(AuthGuard('google'))
-async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
-  const result = await this.authService.googleLogin(req.user as any);
-  const token = result.access_token;
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
+    const result = await this.authService.googleLogin(req.user as any);
+    const token = result.access_token;
 
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
 
-  res.cookie('token', token, this.getCookieOptions());
+    res.cookie('token', token, this.getCookieOptions());
 
-  return res.redirect(
-    `${frontendUrl}/auth/callback?token=${encodeURIComponent(token)}`
-  );
-}
+    return res.redirect(
+      `${frontendUrl}/auth/callback?token=${encodeURIComponent(token)}`,
+    );
+  }
 
   @Get('me')
   @UseGuards(AuthGuard('jwt'))

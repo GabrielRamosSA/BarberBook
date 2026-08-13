@@ -1,11 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../auth/auth.service';
-import { HttpClient } from '@angular/common/http';
-import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject, catchError, finalize, map, of, switchMap, timer } from 'rxjs';
+import { AuthResponse, AuthService, EmailCheckResponse } from '../../auth/auth.service';
+import { getAuthRequestErrorMessage } from '../../auth/auth-request-error';
+
+type EmailCheckResult =
+  | { email: string; resposta: EmailCheckResponse }
+  | { email: string; erro: unknown }
+  | null;
 
 @Component({
   selector: 'app-registro',
@@ -24,7 +29,7 @@ export class RegistroComponent {
   erro = '';
   carregando = false;
 
-  // Verificacao de e-mail
+  // Verificação de e-mail
   erroEmail = '';
   verificandoEmail = false;
   emailValido = false;
@@ -44,68 +49,81 @@ export class RegistroComponent {
 
   constructor(
     private servicoAuth: AuthService,
-    private clienteHttp: HttpClient,
     private roteador: Router,
+    private zonaNg: NgZone,
+    private destroyRef: DestroyRef,
   ) {
-    // Debounce da checagem de e-mail
+    // A troca do valor cancela imediatamente a checagem anterior. Só o valor que
+    // permaneceu por 500 ms é enviado, impedindo respostas antigas de alterar o form.
     this.checagemEmail$
       .pipe(
-        debounceTime(500),
-        distinctUntilChanged(),
         switchMap((email) => {
-          this.verificandoEmail = true;
-          return this.clienteHttp.get<{ exists: boolean; valid: boolean; reason: string | null }>(
-            `${this.urlApi}/check-email?email=${encodeURIComponent(email)}`,
+          if (!this.emailFormatoValido(email)) {
+            return of<EmailCheckResult>(null);
+          }
+
+          return timer(500).pipe(
+            switchMap(() => {
+              if (this.normalizarEmail(this.email) === email) {
+                this.verificandoEmail = true;
+              }
+
+              return this.servicoAuth.checkEmail(email).pipe(
+                map((resposta): EmailCheckResult => ({ email, resposta })),
+                catchError((erro: unknown) => of<EmailCheckResult>({ email, erro })),
+                finalize(() => {
+                  if (this.normalizarEmail(this.email) === email) {
+                    this.verificandoEmail = false;
+                  }
+                }),
+              );
+            }),
           );
         }),
+        takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe({
-        next: (resposta) => {
-          this.verificandoEmail = false;
-          if (!resposta.valid) {
-            this.erroEmail = resposta.reason || 'Este domínio de e-mail não existe.';
-            this.emailValido = false;
-          } else if (resposta.exists) {
-            this.erroEmail = resposta.reason || 'Este e-mail já está cadastrado.';
-            this.emailValido = false;
-          } else {
-            this.erroEmail = '';
-            this.emailValido = true;
-          }
-        },
-        error: () => {
-          this.verificandoEmail = false;
+      .subscribe((resultado) => {
+        if (!resultado || resultado.email !== this.normalizarEmail(this.email)) {
+          return;
+        }
+
+        if ('erro' in resultado) {
+          this.emailValido = false;
+          this.erroEmail = getAuthRequestErrorMessage(
+            resultado.erro,
+            'Não foi possível verificar este e-mail. Tente novamente.',
+            'A verificação do e-mail demorou demais. Tente novamente.',
+          );
+          return;
+        }
+
+        const resposta = resultado.resposta;
+        if (!resposta.valid) {
+          this.erroEmail = resposta.reason || 'Este domínio de e-mail não existe.';
+          this.emailValido = false;
+        } else if (resposta.exists) {
+          this.erroEmail = resposta.reason || 'Este e-mail já está cadastrado.';
+          this.emailValido = false;
+        } else {
           this.erroEmail = '';
-        },
+          this.emailValido = true;
+        }
       });
-  }
-
-  private readonly urlApi = this.resolveApiUrl();
-
-  private resolveApiUrl(): string {
-    if (typeof window !== 'undefined') {
-      const hostname = window.location.hostname;
-      if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return '/api/auth';
-      }
-    }
-
-    return 'https://barberbook-awgp.onrender.com/api/auth';
   }
 
   aoAlterarEmail() {
     this.emailValido = false;
     this.erroEmail = '';
-
-    if (!this.email || !this.emailFormatoValido(this.email)) {
-      return;
-    }
-
-    this.checagemEmail$.next(this.email);
+    this.verificandoEmail = false;
+    this.checagemEmail$.next(this.normalizarEmail(this.email));
   }
 
   aoAlterarTelefone() {
     this.telefoneValido = this.validarTelefone(this.telefone);
+  }
+
+  private normalizarEmail(email: string): string {
+    return email.trim().toLowerCase();
   }
 
   private validarTelefone(telefone: string): boolean {
@@ -153,35 +171,62 @@ export class RegistroComponent {
   aoEnviar() {
     this.erro = '';
 
-    if (!this.formValido) return;
+    if (!this.formValido || this.carregando) return;
 
     this.carregando = true;
 
     this.servicoAuth
       .register({
         nome: this.nome,
-        email: this.email,
+        email: this.normalizarEmail(this.email),
         senha: this.senha,
         telefone: this.telefone,
         tipo: this.tipo,
       })
+      .pipe(finalize(() => (this.carregando = false)))
       .subscribe({
         next: (resposta) => {
-          this.carregando = false;
-          if (resposta.requiresVerification) {
-            // Redireciona para a página de verificação
-            this.roteador.navigate(['/verificar-email'], {
-              queryParams: { email: resposta.email || this.email },
-            });
-          } else {
-            this.roteador.navigate(['/perfil']);
-          }
+          void this.navegarAposRegistro(resposta);
         },
         error: (erroResposta) => {
-          this.carregando = false;
-          this.erro = erroResposta.error?.message || 'Erro ao criar conta. Tente novamente.';
+          this.erro = getAuthRequestErrorMessage(
+            erroResposta,
+            'Erro ao criar conta. Tente novamente.',
+            'A criação da conta demorou mais de um minuto. Tente novamente; se o problema continuar, verifique o serviço de e-mail.',
+          );
         },
       });
+  }
+
+  private async navegarAposRegistro(resposta: AuthResponse): Promise<void> {
+    try {
+      await this.zonaNg.run(async () => {
+        // Cadastro com e-mail/senha deve passar pela confirmação. O padrão seguro
+        // também impede que uma resposta antiga sem este campo pule essa etapa.
+        if (resposta.requiresVerification !== false) {
+          const navegou = await this.roteador.navigate(['/verificar-email'], {
+            queryParams: { email: resposta.email || this.normalizarEmail(this.email) },
+          });
+
+          if (!navegou) {
+            this.erro = 'Não foi possível abrir a confirmação de e-mail. Tente novamente.';
+          }
+          return;
+        }
+
+        const navegou = await this.roteador.navigate([
+          resposta.user?.tipo === 'BARBEIRO' || resposta.user?.tipo === 'ADMIN'
+            ? '/dashboard'
+            : '/perfil',
+        ]);
+
+        if (!navegou) {
+          this.erro = 'A conta foi criada, mas não foi possível abrir a próxima página.';
+        }
+      });
+    } catch {
+      this.erro = 'A conta foi criada, mas não foi possível abrir a próxima página.';
+    }
   }
 
   entrarComGoogle() {

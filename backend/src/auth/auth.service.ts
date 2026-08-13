@@ -3,13 +3,22 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  Logger,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserType as PrismaUserType } from '@prisma/client';
-import { RegisterDto, LoginDto, VerifyEmailDto, ResendCodeDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
+import {
+  RegisterDto,
+  LoginDto,
+  VerifyEmailDto,
+  ResendCodeDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from './dto/auth.dto';
 import { UserType } from './dto/auth.dto';
 import { randomBytes } from 'crypto';
 import { EmailService } from './email.service';
@@ -26,60 +35,73 @@ type PendingRegistrationPayload = {
   userId?: string;
 };
 
+type EmailDomainStatus = 'valid' | 'invalid' | 'unavailable';
+
+const DEFAULT_EMAIL_DOMAIN_LOOKUP_TIMEOUT_MS = 3_500;
+
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+  private readonly emailDomainLookupTimeoutMs: number;
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     private emailService: EmailService,
     private configService: ConfigService,
-  ) {}
+  ) {
+    this.emailDomainLookupTimeoutMs = this.getPositiveInteger(
+      'EMAIL_DOMAIN_LOOKUP_TIMEOUT_MS',
+      DEFAULT_EMAIL_DOMAIN_LOOKUP_TIMEOUT_MS,
+    );
+  }
 
   async checkEmailExists(email: string) {
-  
-    const domain = email.split('@')[1];
+    const normalizedEmail = this.normalizeEmail(email);
+    const domain = normalizedEmail.split('@')[1];
     if (!domain) {
       return { exists: false, valid: false, reason: 'E-mail inválido.' };
     }
 
-    try {
-      const mxRecords = await dns.resolveMx(domain);
-      if (!mxRecords || mxRecords.length === 0) {
-        return { exists: false, valid: false, reason: 'Este domínio de e-mail não existe.' };
-      }
-    } catch {
-      return { exists: false, valid: false, reason: 'Este domínio de e-mail não existe.' };
-    }
-
-
     const user = await this.prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (user && user.emailVerified) {
-      return { exists: true, valid: true, reason: 'Este e-mail já está cadastrado.' };
+      return {
+        exists: true,
+        valid: true,
+        reason: 'Este e-mail já está cadastrado.',
+      };
+    }
+
+    const domainStatus = await this.getEmailDomainStatus(domain);
+    if (domainStatus === 'invalid') {
+      return {
+        exists: false,
+        valid: false,
+        reason: 'Este domínio de e-mail não existe.',
+      };
     }
 
     return { exists: false, valid: true, reason: null };
   }
 
   async register(dto: RegisterDto) {
+    const email = this.normalizeEmail(dto.email);
+    const domain = email.split('@')[1];
 
-    const domain = dto.email.split('@')[1];
-    if (domain) {
-      try {
-        const mxRecords = await dns.resolveMx(domain);
-        if (!mxRecords || mxRecords.length === 0) {
-          throw new ConflictException('Este domínio de e-mail não existe.');
-        }
-      } catch (err) {
-        if (err instanceof ConflictException) throw err;
-        throw new ConflictException('Este domínio de e-mail não existe.');
-      }
+    if (!domain) {
+      throw new BadRequestException('E-mail inválido.');
+    }
+
+    const domainStatus = await this.getEmailDomainStatus(domain);
+    if (domainStatus === 'invalid') {
+      throw new ConflictException('Este domínio de e-mail não existe.');
     }
 
     const existingUser = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email },
     });
 
     if (existingUser?.emailVerified) {
@@ -91,34 +113,47 @@ export class AuthService {
     const verificationToken = this.buildVerificationToken({
       purpose: 'email-verification',
       code,
-      email: dto.email,
-      nome: dto.nome,
+      email,
+      nome: dto.nome.trim(),
       senhaHash,
       telefone: dto.telefone,
-      tipo: dto.tipo === UserType.BARBEIRO ? PrismaUserType.BARBEIRO : PrismaUserType.CLIENTE,
+      tipo:
+        dto.tipo === UserType.BARBEIRO
+          ? PrismaUserType.BARBEIRO
+          : PrismaUserType.CLIENTE,
       userId: existingUser?.id,
     });
 
-    const enviado = await this.emailService.sendVerificationCode(dto.email, code, dto.nome);
+    const enviado = await this.emailService.sendVerificationCode(
+      email,
+      code,
+      dto.nome.trim(),
+    );
 
     if (!enviado) {
-      throw new BadRequestException('Não foi possível enviar o código de verificação.');
+      throw new ServiceUnavailableException(
+        'Não foi possível enviar o código de verificação agora. Tente novamente em alguns instantes.',
+      );
     }
 
     return {
       message: 'Verifique seu e-mail para ativar a conta.',
       requiresVerification: true,
-      email: dto.email,
+      email,
       verificationToken,
     };
   }
 
   async verifyEmail(dto: VerifyEmailDto) {
+    const email = this.normalizeEmail(dto.email);
+
     if (dto.verificationToken) {
       const pending = this.decodeVerificationToken(dto.verificationToken);
 
-      if (pending.email !== dto.email) {
-        throw new BadRequestException('E-mail não confere com o código enviado.');
+      if (this.normalizeEmail(pending.email) !== email) {
+        throw new BadRequestException(
+          'E-mail não confere com o código enviado.',
+        );
       }
 
       if (pending.code !== dto.code) {
@@ -127,7 +162,9 @@ export class AuthService {
 
       const existingUser = pending.userId
         ? await this.prisma.user.findUnique({ where: { id: pending.userId } })
-        : await this.prisma.user.findUnique({ where: { email: pending.email } });
+        : await this.prisma.user.findUnique({
+            where: { email: pending.email },
+          });
 
       const verifiedUser = existingUser
         ? await this.prisma.user.update({
@@ -156,7 +193,11 @@ export class AuthService {
             },
           });
 
-      const token = this.generateToken(verifiedUser.id, verifiedUser.email, verifiedUser.tipo);
+      const token = this.generateToken(
+        verifiedUser.id,
+        verifiedUser.email,
+        verifiedUser.tipo,
+      );
 
       return {
         message: 'E-mail verificado com sucesso!',
@@ -174,7 +215,7 @@ export class AuthService {
     }
 
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email },
     });
 
     if (!user) {
@@ -186,7 +227,9 @@ export class AuthService {
     }
 
     if (!user.verificationCode || !user.verificationExpires) {
-      throw new BadRequestException('Nenhum código de verificação encontrado. Solicite um novo.');
+      throw new BadRequestException(
+        'Nenhum código de verificação encontrado. Solicite um novo.',
+      );
     }
 
     if (new Date() > user.verificationExpires) {
@@ -197,7 +240,6 @@ export class AuthService {
       throw new BadRequestException('Código incorreto.');
     }
 
-
     const verifiedUser = await this.prisma.user.update({
       where: { id: user.id },
       data: {
@@ -207,7 +249,11 @@ export class AuthService {
       },
     });
 
-    const token = this.generateToken(verifiedUser.id, verifiedUser.email, verifiedUser.tipo);
+    const token = this.generateToken(
+      verifiedUser.id,
+      verifiedUser.email,
+      verifiedUser.tipo,
+    );
 
     return {
       message: 'E-mail verificado com sucesso!',
@@ -225,11 +271,15 @@ export class AuthService {
   }
 
   async resendCode(dto: ResendCodeDto) {
+    const email = this.normalizeEmail(dto.email);
+
     if (dto.verificationToken) {
       const pending = this.decodeVerificationToken(dto.verificationToken);
 
-      if (pending.email !== dto.email) {
-        throw new BadRequestException('E-mail não confere com o código enviado.');
+      if (this.normalizeEmail(pending.email) !== email) {
+        throw new BadRequestException(
+          'E-mail não confere com o código enviado.',
+        );
       }
 
       const code = this.emailService.generateCode();
@@ -238,10 +288,16 @@ export class AuthService {
         code,
       });
 
-      const enviado = await this.emailService.sendVerificationCode(dto.email, code, pending.nome);
+      const enviado = await this.emailService.sendVerificationCode(
+        email,
+        code,
+        pending.nome,
+      );
 
       if (!enviado) {
-        throw new BadRequestException('Não foi possível reenviar o código de verificação.');
+        throw new ServiceUnavailableException(
+          'Não foi possível reenviar o código de verificação agora. Tente novamente em alguns instantes.',
+        );
       }
 
       return {
@@ -251,7 +307,7 @@ export class AuthService {
     }
 
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email },
     });
 
     if (!user) {
@@ -272,7 +328,17 @@ export class AuthService {
       },
     });
 
-    await this.emailService.sendVerificationCode(dto.email, code, user.nome);
+    const enviado = await this.emailService.sendVerificationCode(
+      email,
+      code,
+      user.nome,
+    );
+
+    if (!enviado) {
+      throw new ServiceUnavailableException(
+        'Não foi possível reenviar o código de verificação agora. Tente novamente em alguns instantes.',
+      );
+    }
 
     return {
       message: 'Novo código enviado para o e-mail.',
@@ -280,8 +346,9 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
+    const email = this.normalizeEmail(dto.email);
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email },
     });
 
     if (!user || !user.senha) {
@@ -294,7 +361,6 @@ export class AuthService {
       throw new UnauthorizedException('Email ou senha incorretos');
     }
 
-  
     if (!user.emailVerified) {
       const code = this.emailService.generateCode();
       const verificationToken = this.buildVerificationToken({
@@ -315,12 +381,22 @@ export class AuthService {
           verificationExpires: new Date(Date.now() + 15 * 60 * 1000),
         },
       });
-      await this.emailService.sendVerificationCode(dto.email, code, user.nome);
+      const enviado = await this.emailService.sendVerificationCode(
+        email,
+        code,
+        user.nome,
+      );
+
+      if (!enviado) {
+        throw new ServiceUnavailableException(
+          'Não foi possível enviar o código de verificação agora. Tente novamente em alguns instantes.',
+        );
+      }
 
       return {
         message: 'E-mail não verificado. Um novo código foi enviado.',
         requiresVerification: true,
-        email: dto.email,
+        email,
         verificationToken,
       };
     }
@@ -343,13 +419,16 @@ export class AuthService {
   }
 
   async forgotPassword(dto: ForgotPasswordDto) {
+    const email = this.normalizeEmail(dto.email);
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email },
     });
 
-
     if (!user || !user.emailVerified) {
-      return { message: 'Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.' };
+      return {
+        message:
+          'Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.',
+      };
     }
 
     const token = randomBytes(32).toString('hex');
@@ -362,13 +441,20 @@ export class AuthService {
       },
     });
 
-    const enviado = await this.emailService.sendPasswordResetEmail(dto.email, token, user.nome);
-    
+    const enviado = await this.emailService.sendPasswordResetEmail(
+      email,
+      token,
+      user.nome,
+    );
+
     if (!enviado) {
-      console.error(`❌ Falha ao enviar e-mail de redefinição para: ${dto.email}`);
+      this.logger.error('Falha ao enviar e-mail de redefinição de senha.');
     }
 
-    return { message: 'Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.' };
+    return {
+      message:
+        'Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.',
+    };
   }
 
   async resetPassword(dto: ResetPasswordDto) {
@@ -380,7 +466,9 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new BadRequestException('Token inválido ou expirado. Solicite um novo link.');
+      throw new BadRequestException(
+        'Token inválido ou expirado. Solicite um novo link.',
+      );
     }
 
     const hashedPassword = await bcrypt.hash(dto.novaSenha, 10);
@@ -394,7 +482,9 @@ export class AuthService {
       },
     });
 
-    return { message: 'Senha redefinida com sucesso! Faça login com sua nova senha.' };
+    return {
+      message: 'Senha redefinida com sucesso! Faça login com sua nova senha.',
+    };
   }
 
   async googleLogin(googleUser: {
@@ -471,9 +561,11 @@ export class AuthService {
   }
 
   private getVerificationSecret(): string {
-    return this.configService.get<string>('EMAIL_VERIFICATION_JWT_SECRET')
-      || this.configService.get<string>('JWT_SECRET')
-      || 'verification-secret-change-me';
+    return (
+      this.configService.get<string>('EMAIL_VERIFICATION_JWT_SECRET') ||
+      this.configService.get<string>('JWT_SECRET') ||
+      'verification-secret-change-me'
+    );
   }
 
   private buildVerificationToken(payload: PendingRegistrationPayload): string {
@@ -484,14 +576,93 @@ export class AuthService {
   }
 
   private decodeVerificationToken(token: string): PendingRegistrationPayload {
-    const payload = this.jwtService.verify(token, {
-      secret: this.getVerificationSecret(),
-    }) as PendingRegistrationPayload;
+    try {
+      const payload = this.jwtService.verify<PendingRegistrationPayload>(
+        token,
+        {
+          secret: this.getVerificationSecret(),
+        },
+      );
 
-    if (payload.purpose !== 'email-verification') {
-      throw new BadRequestException('Token de verificação inválido.');
+      if (payload.purpose !== 'email-verification') {
+        throw new BadRequestException('Token de verificação inválido.');
+      }
+
+      return payload;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      throw new BadRequestException(
+        'O código de verificação expirou ou é inválido. Solicite um novo.',
+      );
+    }
+  }
+
+  private async getEmailDomainStatus(
+    domain: string,
+  ): Promise<EmailDomainStatus> {
+    try {
+      const mxRecords = await this.resolveMxWithTimeout(domain);
+      return mxRecords.length > 0 ? 'valid' : 'invalid';
+    } catch (error) {
+      const code = this.getErrorCode(error);
+
+      // These errors are definitive: the DNS server found no such domain or no
+      // mail exchanger records. Other failures (for example a temporary DNS
+      // outage on Render) must not block an otherwise valid registration.
+      if (code === 'ENOTFOUND' || code === 'ENODATA') {
+        return 'invalid';
+      }
+
+      this.logger.warn(
+        `Não foi possível validar o domínio de e-mail agora${code ? ` (${code})` : ''}; continuando o cadastro.`,
+      );
+      return 'unavailable';
+    }
+  }
+
+  private async resolveMxWithTimeout(domain: string) {
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+
+    try {
+      return await Promise.race([
+        dns.resolveMx(domain),
+        new Promise<never>((_, reject) => {
+          timeout = setTimeout(() => {
+            const error = new Error(
+              'Tempo limite ao consultar o domínio de e-mail.',
+            ) as Error & {
+              code?: string;
+            };
+            error.code = 'ETIMEDOUT';
+            reject(error);
+          }, this.emailDomainLookupTimeoutMs);
+        }),
+      ]);
+    } finally {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+    }
+  }
+
+  private normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
+  }
+
+  private getPositiveInteger(key: string, fallback: number): number {
+    const value = Number(this.configService.get<string>(key));
+    return Number.isFinite(value) && value > 0 ? Math.floor(value) : fallback;
+  }
+
+  private getErrorCode(error: unknown): string | undefined {
+    if (typeof error === 'object' && error !== null && 'code' in error) {
+      const code = (error as { code?: unknown }).code;
+      return typeof code === 'string' ? code : undefined;
     }
 
-    return payload;
+    return undefined;
   }
 }
