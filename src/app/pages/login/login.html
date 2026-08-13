@@ -1,73 +1,102 @@
-<div class="conteiner-login">
-  <div class="cartao-login">
-    <div class="cabecalho-login">
-      <i class="fa-solid fa-scissors icone-login"></i>
-      <h1>CortaAí</h1>
-      <p>Entre na sua conta</p>
-    </div>
+<main class="auth-layout auth-layout-login">
+  <div class="auth-shell">
+    <aside class="marca-auth" aria-label="CortaAí">
+      <a class="marca-topo" routerLink="/" aria-label="Ir para a página inicial do CortaAí">
+        <span class="marca-selo"><i class="fa-solid fa-scissors"></i></span>
+        <span>CortaAí</span>
+      </a>
 
-    <form (ngSubmit)="aoEnviar()" class="formulario-login">
-      @if (erro) {
-        <div class="mensagem-erro">
-          <i class="fa-solid fa-circle-exclamation"></i>
-          {{ erro }}
-        </div>
-      }
-
-      <div class="campo">
-        <label for="email">E-mail</label>
-        <div class="campo-input">
-          <i class="fa-solid fa-envelope"></i>
-          <input
-            type="email"
-            id="email"
-            [(ngModel)]="email"
-            name="email"
-            placeholder="seu@email.com"
-            required
-          />
-        </div>
+      <div class="marca-corpo">
+        <p class="marca-sobrelinha">AGENDE O SEU MOMENTO</p>
+        <h1>Seu corte, no ritmo da sua rotina.</h1>
+        <p>
+          Descubra profissionais, organize seus horários e mantenha o próximo visual sempre por
+          perto.
+        </p>
       </div>
 
-      <div class="campo">
-        <label for="senha">Senha</label>
-        <div class="campo-input">
-          <i class="fa-solid fa-lock"></i>
-          <input
-            type="password"
-            id="senha"
-            [(ngModel)]="senha"
-            name="senha"
-            placeholder="Sua senha"
-            required
-          />
-        </div>
+      <ul class="marca-pontos" aria-label="Benefícios do CortaAí">
+        <li><i class="fa-solid fa-check"></i> Horários que cabem no seu dia</li>
+        <li><i class="fa-solid fa-check"></i> Barbearias em um só lugar</li>
+      </ul>
+    </aside>
+
+    <section class="painel-auth" aria-labelledby="titulo-login">
+      <a class="voltar-inicio" routerLink="/">
+        <i class="fa-solid fa-arrow-left"></i>
+        Voltar ao início
+      </a>
+
+      <div class="cartao-login">
+        <header class="cabecalho-login">
+          <p class="sobrelinha">ACESSO</p>
+          <h2 id="titulo-login">Bom te ver de novo.</h2>
+          <p>Entre para acompanhar sua agenda e seus próximos cortes.</p>
+        </header>
+
+        <form (ngSubmit)="aoEnviar()" class="formulario-login">
+          @if (erro) {
+            <div class="mensagem-erro" role="alert">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              {{ erro }}
+            </div>
+          }
+
+          <div class="campo">
+            <label for="email">E-mail</label>
+            <div class="campo-input">
+              <i class="fa-solid fa-envelope"></i>
+              <input
+                type="email"
+                id="email"
+                [(ngModel)]="email"
+                name="email"
+                placeholder="seu@email.com"
+                autocomplete="email"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="campo">
+            <div class="linha-label">
+              <label for="senha">Senha</label>
+              <a routerLink="/esqueceu-senha">Esqueceu a senha?</a>
+            </div>
+            <div class="campo-input">
+              <i class="fa-solid fa-lock"></i>
+              <input
+                type="password"
+                id="senha"
+                [(ngModel)]="senha"
+                name="senha"
+                placeholder="Digite sua senha"
+                autocomplete="current-password"
+                required
+              />
+            </div>
+          </div>
+
+          <button type="submit" class="botao-login" [disabled]="carregando">
+            @if (carregando) {
+              <i class="fa-solid fa-spinner fa-spin"></i> Entrando...
+            } @else {
+              Entrar <i class="fa-solid fa-arrow-right"></i>
+            }
+          </button>
+        </form>
+
+        <div class="divisor"><span>ou continue com</span></div>
+
+        <button type="button" class="botao-google" (click)="entrarComGoogle()">
+          <i class="fa-brands fa-google"></i>
+          Entrar com Google
+        </button>
+
+        <p class="link-registro">
+          Ainda não tem acesso? <a routerLink="/registro">Criar minha conta</a>
+        </p>
       </div>
-
-      <div class="esqueceu-senha">
-        <a routerLink="/esqueceu-senha">Esqueceu sua senha?</a>
-      </div>
-
-      <button type="submit" class="botao-login" [disabled]="carregando">
-        @if (carregando) {
-          <i class="fa-solid fa-spinner fa-spin"></i> Entrando...
-        } @else {
-          Entrar
-        }
-      </button>
-    </form>
-
-    <div class="divisor">
-      <span>ou</span>
-    </div>
-
-    <button class="botao-google" (click)="entrarComGoogle()">
-      <i class="fa-brands fa-google"></i>
-      Entrar com Google
-    </button>
-
-    <p class="link-registro">
-      Não tem conta? <a routerLink="/registro">Criar conta</a>
-    </p>
+    </section>
   </div>
-</div>
+</main>

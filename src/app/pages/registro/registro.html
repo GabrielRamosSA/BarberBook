@@ -1,205 +1,276 @@
-<div class="conteiner-registro">
-  <div class="cartao-registro">
-    <div class="cabecalho-registro">
-      <i class="fa-solid fa-scissors icone-registro"></i>
-      <h1>CortaAí</h1>
-      <p>Crie sua conta</p>
-    </div>
+<main class="auth-layout auth-layout-registro">
+  <div class="auth-shell">
+    <aside class="marca-auth" aria-label="CortaAí">
+      <a class="marca-topo" routerLink="/" aria-label="Ir para a página inicial do CortaAí">
+        <span class="marca-selo"><i class="fa-solid fa-scissors"></i></span>
+        <span>CortaAí</span>
+      </a>
 
-    <!-- Seletor de tipo de conta -->
-    <div class="seletor-tipo">
-      <button
-        type="button"
-        class="opcao-tipo"
-        [class.ativo]="tipo === 'CLIENTE'"
-        (click)="tipo = 'CLIENTE'"
-      >
-        <i class="fa-solid fa-user"></i>
-        <span>Cliente</span>
-        <small>Agendar cortes</small>
-      </button>
-      <button
-        type="button"
-        class="opcao-tipo"
-        [class.ativo]="tipo === 'BARBEIRO'"
-        (click)="tipo = 'BARBEIRO'"
-      >
-        <i class="fa-solid fa-scissors"></i>
-        <span>Barbeiro</span>
-        <small>Gerenciar barbearia</small>
-      </button>
-    </div>
-
-    <form (ngSubmit)="aoEnviar()" class="formulario-registro">
-      @if (erro) {
-        <div class="mensagem-erro">
-          <i class="fa-solid fa-circle-exclamation"></i>
-          {{ erro }}
-        </div>
-      }
-
-      <div class="campo">
-        <label for="nome">Nome completo</label>
-        <div class="campo-input">
-          <i class="fa-solid fa-user"></i>
-          <input
-            type="text"
-            id="nome"
-            [(ngModel)]="nome"
-            name="nome"
-            placeholder="Seu nome completo"
-            required
-          />
-        </div>
+      <div class="marca-corpo">
+        <p class="marca-sobrelinha">SUA AGENDA, DO SEU JEITO</p>
+        <h1>Comece por um horário que é realmente seu.</h1>
+        <p>Para quem marca um corte ou para quem faz da barbearia o próprio negócio.</p>
       </div>
 
-      <div class="campo">
-        <label for="email">E-mail</label>
-        <div class="campo-input">
-          <i class="fa-solid fa-envelope"></i>
-          <input
-            type="email"
-            id="email"
-            [(ngModel)]="email"
-            (ngModelChange)="aoAlterarEmail()"
-            name="email"
-            placeholder="seu@email.com"
-            required
-          />
-          @if (verificandoEmail) {
-            <i class="fa-solid fa-spinner fa-spin status-input"></i>
-          } @else if (emailValido) {
-            <i class="fa-solid fa-circle-check status-input status-input-ok"></i>
-          } @else if (erroEmail) {
-            <i class="fa-solid fa-circle-xmark status-input status-input-erro"></i>
-          }
-        </div>
-        @if (erroEmail) {
-          <span class="campo-erro">{{ erroEmail }}</span>
-        }
-      </div>
+      <ul class="marca-pontos" aria-label="Possibilidades no CortaAí">
+        <li><i class="fa-solid fa-check"></i> Clientes encontram bons horários</li>
+        <li><i class="fa-solid fa-check"></i> Barbeiros organizam a operação</li>
+      </ul>
+    </aside>
 
-      <div class="campo">
-        <label for="telefone">Telefone</label>
-        <div class="campo-input">
-          <i class="fa-solid fa-phone"></i>
-          <input
-            type="tel"
-            id="telefone"
-            [(ngModel)]="telefone"
-            (ngModelChange)="aoAlterarTelefone()"
-            name="telefone"
-            placeholder="(11) 99999-9999"
-            required
-          />
-        </div>
-        @if (telefone.length > 0 && !telefoneValido) {
-          <span class="campo-erro">Telefone inválido. Use DDD e número válidos.</span>
-        }
-      </div>
+    <section class="painel-auth" aria-labelledby="titulo-registro">
+      <a class="voltar-inicio" routerLink="/">
+        <i class="fa-solid fa-arrow-left"></i>
+        Voltar ao início
+      </a>
 
-      <div class="campo">
-        <label for="senha">Senha</label>
-        <div class="campo-input">
-          <i class="fa-solid fa-lock"></i>
-          <input
-            type="password"
-            id="senha"
-            [(ngModel)]="senha"
-            (ngModelChange)="aoAlterarSenha()"
-            name="senha"
-            placeholder="Crie uma senha forte"
-            required
-          />
-        </div>
+      <div class="cartao-registro">
+        <header class="cabecalho-registro">
+          <p class="sobrelinha">PRIMEIRO ACESSO</p>
+          <h2 id="titulo-registro">Vamos criar sua conta.</h2>
+          <p>Leva poucos instantes. Depois, confirmamos seu e-mail com um código.</p>
+        </header>
 
-        <!-- Barra de força da senha -->
-        @if (senha.length > 0) {
-          <div class="forca-senha">
-            <div class="barra-senha">
-              <div
-                class="barra-senha-preenchida"
-                [class.forca-1]="senhaForca === 1"
-                [class.forca-2]="senhaForca === 2"
-                [class.forca-3]="senhaForca === 3"
-                [class.forca-4]="senhaForca === 4"
-                [class.forca-5]="senhaForca === 5"
-                [style.width.%]="senhaForca * 20"
-              ></div>
+        <form (ngSubmit)="aoEnviar()" class="formulario-registro">
+          @if (erro) {
+            <div class="mensagem-erro" role="alert">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              {{ erro }}
             </div>
-            <span
-              class="rotulo-forca-senha"
-              [class.forca-1]="senhaForca === 1"
-              [class.forca-2]="senhaForca === 2"
-              [class.forca-3]="senhaForca === 3"
-              [class.forca-4]="senhaForca === 4"
-              [class.forca-5]="senhaForca === 5"
-            >{{ senhaForcaLabel }}</span>
-          </div>
+          }
 
-          <ul class="requisitos-senha">
-            <li [class.ok]="senhaRequisitos.minLength">
-              <i [class]="senhaRequisitos.minLength ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'"></i>
-              Mínimo 6 caracteres
-            </li>
-            <li [class.ok]="senhaRequisitos.uppercase">
-              <i [class]="senhaRequisitos.uppercase ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'"></i>
-              Uma letra maiúscula
-            </li>
-            <li [class.ok]="senhaRequisitos.lowercase">
-              <i [class]="senhaRequisitos.lowercase ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'"></i>
-              Uma letra minúscula
-            </li>
-            <li [class.ok]="senhaRequisitos.number">
-              <i [class]="senhaRequisitos.number ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'"></i>
-              Um número
-            </li>
-            <li [class.ok]="senhaRequisitos.special">
-              <i [class]="senhaRequisitos.special ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'"></i>
-              Um caractere especial
-            </li>
-          </ul>
-        }
+          <section class="bloco-formulario" aria-labelledby="secao-perfil">
+            <div class="titulo-secao">
+              <span>01</span>
+              <div>
+                <p id="secao-perfil">Como você vai usar o CortaAí?</p>
+                <small>Você pode completar os dados do perfil depois.</small>
+              </div>
+            </div>
+
+            <div class="seletor-tipo" role="group" aria-label="Tipo de conta">
+              <button
+                type="button"
+                class="opcao-tipo"
+                [class.ativo]="tipo === 'CLIENTE'"
+                [attr.aria-pressed]="tipo === 'CLIENTE'"
+                (click)="tipo = 'CLIENTE'"
+              >
+                <i class="fa-solid fa-user"></i>
+                <span>Cliente</span>
+                <small>Agendar cortes</small>
+              </button>
+              <button
+                type="button"
+                class="opcao-tipo"
+                [class.ativo]="tipo === 'BARBEIRO'"
+                [attr.aria-pressed]="tipo === 'BARBEIRO'"
+                (click)="tipo = 'BARBEIRO'"
+              >
+                <i class="fa-solid fa-scissors"></i>
+                <span>Barbeiro</span>
+                <small>Gerenciar barbearia</small>
+              </button>
+            </div>
+          </section>
+
+          <section class="bloco-formulario" aria-labelledby="secao-dados">
+            <div class="titulo-secao">
+              <span>02</span>
+              <div>
+                <p id="secao-dados">Seus dados</p>
+                <small>Usaremos seu e-mail apenas para confirmar o acesso.</small>
+              </div>
+            </div>
+
+            <div class="campos-grid">
+              <div class="campo campo-nome">
+                <label for="nome">Nome completo</label>
+                <div class="campo-input">
+                  <i class="fa-solid fa-user"></i>
+                  <input
+                    type="text"
+                    id="nome"
+                    [(ngModel)]="nome"
+                    name="nome"
+                    placeholder="Seu nome completo"
+                    autocomplete="name"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="campo campo-email">
+                <label for="email">E-mail</label>
+                <div class="campo-input">
+                  <i class="fa-solid fa-envelope"></i>
+                  <input
+                    type="email"
+                    id="email"
+                    [(ngModel)]="email"
+                    (ngModelChange)="aoAlterarEmail()"
+                    name="email"
+                    placeholder="seu@email.com"
+                    autocomplete="email"
+                    required
+                  />
+                  @if (verificandoEmail) {
+                    <i class="fa-solid fa-spinner fa-spin status-input"></i>
+                  } @else if (emailValido) {
+                    <i class="fa-solid fa-circle-check status-input status-input-ok"></i>
+                  } @else if (erroEmail) {
+                    <i class="fa-solid fa-circle-xmark status-input status-input-erro"></i>
+                  }
+                </div>
+                @if (erroEmail) {
+                  <span class="campo-erro">{{ erroEmail }}</span>
+                }
+              </div>
+
+              <div class="campo campo-telefone">
+                <label for="telefone">Telefone</label>
+                <div class="campo-input">
+                  <i class="fa-solid fa-phone"></i>
+                  <input
+                    type="tel"
+                    id="telefone"
+                    [(ngModel)]="telefone"
+                    (ngModelChange)="aoAlterarTelefone()"
+                    name="telefone"
+                    placeholder="(11) 99999-9999"
+                    autocomplete="tel"
+                    required
+                  />
+                </div>
+                @if (telefone.length > 0 && !telefoneValido) {
+                  <span class="campo-erro">Telefone inválido. Use DDD e número válidos.</span>
+                }
+              </div>
+            </div>
+          </section>
+
+          <section class="bloco-formulario bloco-seguranca" aria-labelledby="secao-seguranca">
+            <div class="titulo-secao">
+              <span>03</span>
+              <div>
+                <p id="secao-seguranca">Proteja seu acesso</p>
+                <small>Uma senha forte mantém sua agenda segura.</small>
+              </div>
+            </div>
+
+            <div class="campos-grid campos-senha">
+              <div class="campo campo-senha">
+                <label for="senha">Senha</label>
+                <div class="campo-input">
+                  <i class="fa-solid fa-lock"></i>
+                  <input
+                    type="password"
+                    id="senha"
+                    [(ngModel)]="senha"
+                    (ngModelChange)="aoAlterarSenha()"
+                    name="senha"
+                    placeholder="Crie uma senha forte"
+                    autocomplete="new-password"
+                    required
+                  />
+                </div>
+
+                @if (senha.length > 0) {
+                  <div class="forca-senha">
+                    <div class="barra-senha">
+                      <div
+                        class="barra-senha-preenchida"
+                        [class.forca-1]="senhaForca === 1"
+                        [class.forca-2]="senhaForca === 2"
+                        [class.forca-3]="senhaForca === 3"
+                        [class.forca-4]="senhaForca === 4"
+                        [class.forca-5]="senhaForca === 5"
+                        [style.width.%]="senhaForca * 20"
+                      ></div>
+                    </div>
+                    <span
+                      class="rotulo-forca-senha"
+                      [class.forca-1]="senhaForca === 1"
+                      [class.forca-2]="senhaForca === 2"
+                      [class.forca-3]="senhaForca === 3"
+                      [class.forca-4]="senhaForca === 4"
+                      [class.forca-5]="senhaForca === 5"
+                      >{{ senhaForcaLabel }}</span
+                    >
+                  </div>
+                }
+              </div>
+
+              <div class="campo campo-confirmar-senha">
+                <label for="confirmarSenha">Confirmar senha</label>
+                <div class="campo-input">
+                  <i class="fa-solid fa-lock"></i>
+                  <input
+                    type="password"
+                    id="confirmarSenha"
+                    [(ngModel)]="confirmarSenha"
+                    name="confirmarSenha"
+                    placeholder="Repita a senha"
+                    autocomplete="new-password"
+                    required
+                  />
+                </div>
+                @if (confirmarSenha.length > 0 && senha !== confirmarSenha) {
+                  <span class="campo-erro">As senhas não coincidem.</span>
+                }
+              </div>
+            </div>
+
+            <ul class="requisitos-senha" aria-label="Requisitos da senha">
+              <li [class.ok]="senhaRequisitos.minLength">
+                <i
+                  [class]="senhaRequisitos.minLength ? 'fa-solid fa-check' : 'fa-solid fa-minus'"
+                ></i>
+                6+ caracteres
+              </li>
+              <li [class.ok]="senhaRequisitos.uppercase">
+                <i
+                  [class]="senhaRequisitos.uppercase ? 'fa-solid fa-check' : 'fa-solid fa-minus'"
+                ></i>
+                Maiúscula
+              </li>
+              <li [class.ok]="senhaRequisitos.lowercase">
+                <i
+                  [class]="senhaRequisitos.lowercase ? 'fa-solid fa-check' : 'fa-solid fa-minus'"
+                ></i>
+                Minúscula
+              </li>
+              <li [class.ok]="senhaRequisitos.number">
+                <i [class]="senhaRequisitos.number ? 'fa-solid fa-check' : 'fa-solid fa-minus'"></i>
+                Número
+              </li>
+              <li [class.ok]="senhaRequisitos.special">
+                <i
+                  [class]="senhaRequisitos.special ? 'fa-solid fa-check' : 'fa-solid fa-minus'"
+                ></i>
+                Caractere especial
+              </li>
+            </ul>
+          </section>
+
+          <button type="submit" class="botao-registro" [disabled]="!formValido || carregando">
+            @if (carregando) {
+              <i class="fa-solid fa-spinner fa-spin"></i> Criando conta...
+            } @else {
+              Criar minha conta <i class="fa-solid fa-arrow-right"></i>
+            }
+          </button>
+        </form>
+
+        <div class="divisor"><span>ou continue com</span></div>
+
+        <button type="button" class="botao-google" (click)="entrarComGoogle()">
+          <i class="fa-brands fa-google"></i>
+          Cadastrar com Google
+        </button>
+
+        <p class="link-login">Já tem uma conta? <a routerLink="/login">Fazer login</a></p>
       </div>
-
-      <div class="campo">
-        <label for="confirmarSenha">Confirmar senha</label>
-        <div class="campo-input">
-          <i class="fa-solid fa-lock"></i>
-          <input
-            type="password"
-            id="confirmarSenha"
-            [(ngModel)]="confirmarSenha"
-            name="confirmarSenha"
-            placeholder="Repita a senha"
-            required
-          />
-        </div>
-        @if (confirmarSenha.length > 0 && senha !== confirmarSenha) {
-          <span class="campo-erro">As senhas não coincidem.</span>
-        }
-      </div>
-
-      <button type="submit" class="botao-registro" [disabled]="!formValido || carregando">
-        @if (carregando) {
-          <i class="fa-solid fa-spinner fa-spin"></i> Criando conta...
-        } @else {
-          Criar conta
-        }
-      </button>
-    </form>
-
-    <div class="divisor">
-      <span>ou</span>
-    </div>
-
-    <button class="botao-google" (click)="entrarComGoogle()">
-      <i class="fa-brands fa-google"></i>
-      Cadastrar com Google
-    </button>
-
-    <p class="link-login">
-      Já tem conta? <a routerLink="/login">Fazer login</a>
-    </p>
+    </section>
   </div>
-</div>
+</main>
