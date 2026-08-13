@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import { UserType as PrismaUserType } from '@prisma/client';
 import { RegisterDto, LoginDto, VerifyEmailDto, ResendCodeDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
 import { UserType } from './dto/auth.dto';
 import { randomBytes } from 'crypto';
@@ -21,7 +22,7 @@ type PendingRegistrationPayload = {
   nome: string;
   senhaHash: string;
   telefone?: string;
-  tipo: UserType;
+  tipo: PrismaUserType;
   userId?: string;
 };
 
@@ -94,7 +95,7 @@ export class AuthService {
       nome: dto.nome,
       senhaHash,
       telefone: dto.telefone,
-      tipo: dto.tipo || 'CLIENTE',
+      tipo: dto.tipo === UserType.BARBEIRO ? PrismaUserType.BARBEIRO : PrismaUserType.CLIENTE,
       userId: existingUser?.id,
     });
 

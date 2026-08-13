@@ -341,7 +341,9 @@ export class AgendamentoService {
     if (barbearias.length === 0) return [];
 
     const barbeariaIds = barbearias.map((b) => b.id);
-    const barbeariaMap = new Map(barbearias.map((b) => [b.id, b]));
+    const barbeariaMap = new Map<string, { mensagemLembrete: string | null }>(
+      barbearias.map((b) => [b.id, b]),
+    );
 
     // Data e hora atual
     const agora = new Date();
