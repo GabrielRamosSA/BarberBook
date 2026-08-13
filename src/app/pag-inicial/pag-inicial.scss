@@ -1455,6 +1455,7 @@
 
   .pagina-inicial .faixa-cabecalho {
     min-height: 65px;
+    gap: 12px;
   }
 
   .pagina-inicial .marca {
@@ -1479,6 +1480,16 @@
 
   .pagina-inicial .link-entrar {
     font-size: 0.71rem;
+  }
+
+  .pagina-inicial .menu-suspenso {
+    position: fixed;
+    top: 74px;
+    right: 16px;
+    left: 16px;
+    width: auto;
+    max-height: calc(100svh - 90px);
+    overflow-y: auto;
   }
 
   .pagina-inicial .destaque {
