@@ -1,59 +1,57 @@
 <div class="perfil-container">
-  <!-- Header -->
   <header class="perfil-header">
     <div class="header-content">
-      <a routerLink="/" class="logo">
-        <i class="fa-solid fa-scissors"></i>
-        CortaAí
+      <a routerLink="/" class="logo" aria-label="Ir para a página inicial">
+        <span class="logo-mark"><i class="fa-solid fa-scissors"></i></span>
+        <span>CortaAí</span>
       </a>
-      <button class="btn-logout" (click)="logout()">
-        <i class="fa-solid fa-right-from-bracket"></i>
-        Sair
-      </button>
+
+      <div class="header-actions">
+        <a routerLink="/" class="header-link">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span>Início</span>
+        </a>
+        <button type="button" class="btn-logout" (click)="logout()">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Sair</span>
+        </button>
+      </div>
     </div>
   </header>
 
-  <!-- Conteúdo do perfil -->
+  <section class="perfil-hero" aria-labelledby="perfil-title">
+    <div class="perfil-hero-content">
+      <p class="eyebrow">MINHA CONTA</p>
+      <h1 id="perfil-title">Tudo do seu jeito.</h1>
+      <p class="hero-copy">
+        Cuide dos seus dados e mantenha seu perfil pronto para o próximo corte.
+      </p>
+    </div>
+  </section>
+
   <main class="perfil-main">
     @if (user) {
-      <div class="perfil-card">
-        <!-- Avatar e info principal -->
-        <div class="perfil-top">
+      <section class="perfil-card" aria-label="Dados do perfil">
+        <aside class="perfil-identidade">
+          <div class="identidade-topo">
+            <p class="eyebrow">SEU PERFIL</p>
+            <span class="tipo-badge">{{ tipoContaFormatado }}</span>
+          </div>
+
           <div class="avatar-wrapper">
             @if (user.avatar) {
-              <img [src]="user.avatar" alt="Avatar" class="avatar" referrerpolicy="no-referrer" />
+              <img
+                [src]="user.avatar"
+                [alt]="'Foto de perfil de ' + user.nome"
+                class="avatar"
+                referrerpolicy="no-referrer"
+              />
             } @else {
-              <div class="avatar-placeholder">
-                <i class="fa-solid fa-user"></i>
+              <div class="avatar-placeholder" [attr.aria-label]="'Iniciais de ' + user.nome">
+                {{ iniciaisUsuario }}
               </div>
             }
 
-            <!-- Avatar action icons -->
-            <div class="avatar-actions">
-              <button
-                class="avatar-btn avatar-btn-edit"
-                (click)="triggerAvatarUpload()"
-                title="Alterar foto"
-                [disabled]="uploadingAvatar"
-              >
-                @if (uploadingAvatar) {
-                  <i class="fa-solid fa-spinner fa-spin"></i>
-                } @else {
-                  <i class="fa-solid fa-camera"></i>
-                }
-              </button>
-              @if (user.avatar) {
-                <button
-                  class="avatar-btn avatar-btn-delete"
-                  (click)="excluirAvatar()"
-                  title="Remover foto"
-                >
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              }
-            </div>
-
-            <!-- Hidden file input -->
             <input
               type="file"
               #avatarInput
@@ -62,71 +60,107 @@
               style="display: none"
             />
           </div>
-          <h2>{{ user.nome }}</h2>
-          <span class="tipo-badge">{{ user.tipo }}</span>
-        </div>
 
-        <!-- Mensagens -->
-        @if (mensagem) {
-          <div class="sucesso-msg">
-            <i class="fa-solid fa-circle-check"></i>
-            {{ mensagem }}
-          </div>
-        }
-        @if (erro) {
-          <div class="erro-msg">
-            <i class="fa-solid fa-circle-exclamation"></i>
-            {{ erro }}
-          </div>
-        }
-
-        <!-- Dados do perfil -->
-        <div class="perfil-info">
-          @if (!editando) {
-            <div class="info-item">
-              <i class="fa-solid fa-envelope"></i>
-              <div>
-                <span class="info-label">E-mail</span>
-                <span class="info-value">{{ user.email }}</span>
-              </div>
-            </div>
-
-            <div class="info-item">
-              <i class="fa-solid fa-phone"></i>
-              <div>
-                <span class="info-label">Telefone</span>
-                <span class="info-value">{{ user.telefone || 'Não informado' }}</span>
-              </div>
-            </div>
-
-            <div class="info-item">
-              <i class="fa-solid fa-calendar"></i>
-              <div>
-                <span class="info-label">Tipo de conta</span>
-                <span class="info-value">{{ user.tipo }}</span>
-              </div>
-            </div>
-
-            <div class="perfil-actions">
-              <button class="btn-editar" (click)="toggleEditar()">
-                <i class="fa-solid fa-pen"></i>
-                Editar perfil
-              </button>
-              <button class="btn-excluir" (click)="excluirConta()">
+          <div class="avatar-actions">
+            <button
+              type="button"
+              class="avatar-btn avatar-btn-edit"
+              (click)="triggerAvatarUpload()"
+              [disabled]="uploadingAvatar"
+            >
+              @if (uploadingAvatar) {
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Enviando foto
+              } @else {
+                <i class="fa-solid fa-camera"></i>
+                Trocar foto
+              }
+            </button>
+            @if (user.avatar) {
+              <button
+                type="button"
+                class="avatar-btn avatar-btn-delete"
+                (click)="excluirAvatar()"
+                [disabled]="uploadingAvatar"
+              >
                 <i class="fa-solid fa-trash"></i>
-                Excluir conta
+                Remover
               </button>
+            }
+          </div>
+
+          <h2>{{ user.nome }}</h2>
+          <p class="identidade-copy">
+            @if (user.tipo === 'CLIENTE') {
+              Seu perfil para descobrir e agendar com as melhores barbearias.
+            } @else {
+              O centro de controle da sua presença no CortaAí.
+            }
+          </p>
+        </aside>
+
+        <div class="perfil-conteudo">
+          @if (mensagem) {
+            <div class="mensagem mensagem-sucesso" role="status">
+              <i class="fa-solid fa-circle-check"></i>
+              <span>{{ mensagem }}</span>
             </div>
+          }
+          @if (erro) {
+            <div class="mensagem mensagem-erro" role="alert">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              <span>{{ erro }}</span>
+            </div>
+          }
+
+          <div class="dados-cabecalho">
+            <div>
+              <p class="eyebrow">DADOS PESSOAIS</p>
+              <h3>{{ editando ? 'Atualize seus dados' : 'Informações da conta' }}</h3>
+              <p>
+                {{
+                  editando
+                    ? 'Use um nome pelo qual as pessoas reconheçam você.'
+                    : 'Mantenha suas informações atualizadas para uma experiência mais simples.'
+                }}
+              </p>
+            </div>
+
+            @if (!editando) {
+              <button type="button" class="btn-editar" (click)="toggleEditar()">
+                <i class="fa-solid fa-pen"></i>
+                Editar dados
+              </button>
+            }
+          </div>
+
+          @if (!editando) {
+            <dl class="perfil-info">
+              <div class="info-item info-item-wide">
+                <dt><i class="fa-solid fa-envelope"></i><span>E-mail</span></dt>
+                <dd>{{ user.email }}</dd>
+              </div>
+
+              <div class="info-item">
+                <dt><i class="fa-solid fa-phone"></i><span>Telefone</span></dt>
+                <dd>{{ user.telefone || 'Não informado' }}</dd>
+              </div>
+
+              <div class="info-item">
+                <dt><i class="fa-solid fa-id-card"></i><span>Tipo de conta</span></dt>
+                <dd>{{ tipoContaFormatado }}</dd>
+              </div>
+            </dl>
           } @else {
-            <!-- Formulário de edição -->
             <form (ngSubmit)="salvar()" class="edit-form">
               <div class="campo">
-                <label for="nome">Nome</label>
+                <label for="nome">Nome completo</label>
                 <input
                   type="text"
                   id="nome"
                   [(ngModel)]="nome"
                   name="nome"
+                  autocomplete="name"
                   required
                 />
               </div>
@@ -138,6 +172,7 @@
                   id="telefone"
                   [(ngModel)]="telefone"
                   name="telefone"
+                  autocomplete="tel"
                   placeholder="(11) 99999-9999"
                 />
               </div>
@@ -145,7 +180,7 @@
               <div class="edit-actions">
                 <button type="submit" class="btn-salvar">
                   <i class="fa-solid fa-check"></i>
-                  Salvar
+                  Salvar alterações
                 </button>
                 <button type="button" class="btn-cancelar" (click)="toggleEditar()">
                   Cancelar
@@ -153,22 +188,57 @@
               </div>
             </form>
           }
+
+          @if (user.tipo === 'CLIENTE') {
+            <a routerLink="/barbearias" class="proximo-passo">
+              <span class="passo-icone"><i class="fa-solid fa-magnifying-glass"></i></span>
+              <span>
+                <small>PRÓXIMO PASSO</small>
+                <strong>Encontrar uma barbearia</strong>
+              </span>
+              <i class="fa-solid fa-arrow-right passo-seta"></i>
+            </a>
+          } @else {
+            <a routerLink="/dashboard" class="proximo-passo">
+              <span class="passo-icone"><i class="fa-solid fa-table-columns"></i></span>
+              <span>
+                <small>SEU ESPAÇO DE TRABALHO</small>
+                <strong>Abrir painel da barbearia</strong>
+              </span>
+              <i class="fa-solid fa-arrow-right passo-seta"></i>
+            </a>
+          }
+
+          <div class="zona-risco">
+            <div>
+              <p>Zona de risco</p>
+              <span>Esta ação exclui sua conta e não pode ser desfeita.</span>
+            </div>
+            <button type="button" class="btn-excluir" (click)="excluirConta()">
+              <i class="fa-solid fa-trash"></i>
+              Excluir conta
+            </button>
+          </div>
         </div>
-      </div>
+      </section>
     } @else if (erroCarregamento) {
-      <div class="loading">
-        <i class="fa-solid fa-circle-exclamation" style="color: #e74c3c;"></i>
-        <p>Erro ao carregar perfil</p>
-        <button class="btn-retry" (click)="tentarNovamente()">
+      <section class="estado-perfil estado-erro" aria-live="polite">
+        <span class="estado-icone"><i class="fa-solid fa-circle-exclamation"></i></span>
+        <p class="eyebrow">NÃO FOI POSSÍVEL CARREGAR</p>
+        <h2>Seu perfil não apareceu por aqui.</h2>
+        <p>Tente atualizar os dados mais uma vez.</p>
+        <button type="button" class="btn-retry" (click)="tentarNovamente()">
           <i class="fa-solid fa-rotate-right"></i>
           Tentar novamente
         </button>
-      </div>
+      </section>
     } @else {
-      <div class="loading">
-        <i class="fa-solid fa-spinner fa-spin"></i>
-        <p>Carregando perfil...</p>
-      </div>
+      <section class="estado-perfil" aria-live="polite">
+        <span class="estado-icone"><i class="fa-solid fa-spinner fa-spin"></i></span>
+        <p class="eyebrow">PREPARANDO SUA CONTA</p>
+        <h2>Carregando perfil...</h2>
+        <p>Estamos organizando seus dados.</p>
+      </section>
     }
   </main>
 </div>

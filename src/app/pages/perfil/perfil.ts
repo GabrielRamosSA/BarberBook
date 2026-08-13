@@ -34,6 +34,29 @@ export class PerfilComponent implements OnInit {
     private router: Router,
   ) {}
 
+  get iniciaisUsuario(): string {
+    const nome = this.user?.nome.trim() || '';
+    const palavras = nome.split(/\s+/).filter(Boolean);
+
+    return (
+      palavras
+        .slice(0, 2)
+        .map((palavra) => palavra.charAt(0))
+        .join('')
+        .toUpperCase() || 'CA'
+    );
+  }
+
+  get tipoContaFormatado(): string {
+    const tipos: Record<User['tipo'], string> = {
+      CLIENTE: 'Cliente',
+      BARBEIRO: 'Barbeiro',
+      ADMIN: 'Administrador',
+    };
+
+    return this.user ? tipos[this.user.tipo] : '';
+  }
+
   ngOnInit() {
     this.authService.user$.subscribe((user) => {
       this.user = user;
@@ -99,19 +122,17 @@ export class PerfilComponent implements OnInit {
     const formData = new FormData();
     formData.append('avatar', file);
 
-    this.http
-      .post<{ message: string; user: User }>(`${this.apiUrl}/avatar`, formData)
-      .subscribe({
-        next: (res) => {
-          this.uploadingAvatar = false;
-          this.mensagem = res.message;
-          this.authService.loadUser();
-        },
-        error: (err) => {
-          this.uploadingAvatar = false;
-          this.erro = err.error?.message || 'Erro ao enviar imagem.';
-        },
-      });
+    this.http.post<{ message: string; user: User }>(`${this.apiUrl}/avatar`, formData).subscribe({
+      next: (res) => {
+        this.uploadingAvatar = false;
+        this.mensagem = res.message;
+        this.authService.loadUser();
+      },
+      error: (err) => {
+        this.uploadingAvatar = false;
+        this.erro = err.error?.message || 'Erro ao enviar imagem.';
+      },
+    });
 
     // Reset input so same file can be selected again
     input.value = '';
@@ -123,17 +144,15 @@ export class PerfilComponent implements OnInit {
     this.erro = '';
     this.mensagem = '';
 
-    this.http
-      .delete<{ message: string; user: User }>(`${this.apiUrl}/avatar`)
-      .subscribe({
-        next: (res) => {
-          this.mensagem = res.message;
-          this.authService.loadUser();
-        },
-        error: (err) => {
-          this.erro = err.error?.message || 'Erro ao remover foto.';
-        },
-      });
+    this.http.delete<{ message: string; user: User }>(`${this.apiUrl}/avatar`).subscribe({
+      next: (res) => {
+        this.mensagem = res.message;
+        this.authService.loadUser();
+      },
+      error: (err) => {
+        this.erro = err.error?.message || 'Erro ao remover foto.';
+      },
+    });
   }
 
   salvar() {
