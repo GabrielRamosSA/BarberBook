@@ -1,8 +1,14 @@
 <div class="pagamento-page">
   <!-- Toast -->
   @if (toast) {
-    <div class="toast-notificacao" [class.toast-sucesso]="toast.tipo === 'sucesso'" [class.toast-erro]="toast.tipo === 'erro'">
-      <i [class]="toast.tipo === 'sucesso' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'"></i>
+    <div
+      class="toast-notificacao"
+      [class.toast-sucesso]="toast.tipo === 'sucesso'"
+      [class.toast-erro]="toast.tipo === 'erro'"
+    >
+      <i
+        [class]="toast.tipo === 'sucesso' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'"
+      ></i>
       <span>{{ toast.mensagem }}</span>
     </div>
   }
@@ -50,16 +56,16 @@
 
       <!-- Campos do formulário -->
       <div class="card-form">
-                <div class="campo">
-                  <label>Tipo de pagamento</label>
-                  <div class="input-wrapper">
-                    <i class="fa-solid fa-money-check"></i>
-                    <select [(ngModel)]="tipoPagamento">
-                      <option value="credit_card">Crédito</option>
-                      <option value="debit_card">Débito</option>
-                    </select>
-                  </div>
-                </div>
+        <div class="campo">
+          <label>Tipo de pagamento</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-money-check"></i>
+            <select [(ngModel)]="tipoPagamento">
+              <option value="credit_card">Crédito</option>
+              <option value="debit_card">Débito</option>
+            </select>
+          </div>
+        </div>
         <div class="campo">
           <label>Número do cartão</label>
           <div class="input-wrapper">
@@ -154,7 +160,9 @@
           }
         </div>
         <div class="resumo-plano-info">
-          <strong>Plano {{ planoSelecionado === 'PROFISSIONAL' ? 'Profissional' : 'Premium' }}</strong>
+          <strong
+            >Plano {{ planoSelecionado === 'PROFISSIONAL' ? 'Profissional' : 'Premium' }}</strong
+          >
           <span>{{ planoDescricao }}</span>
         </div>
       </div>
@@ -171,10 +179,21 @@
         <span class="total-valor">{{ planoPreco }}<small>/mês</small></span>
       </div>
 
+      @if (carregandoMercadoPago) {
+        <p class="status-pagamento configurando">
+          <i class="fa-solid fa-spinner fa-spin"></i> Preparando pagamento seguro...
+        </p>
+      } @else if (erroMercadoPago) {
+        <p class="status-pagamento erro">
+          <i class="fa-solid fa-circle-exclamation"></i> {{ erroMercadoPago }}
+        </p>
+      }
+
       <button
         class="btn-pagar"
         [disabled]="processando || !formularioValido"
-        (click)="processarPagamento()">
+        (click)="processarPagamento()"
+      >
         @if (processando) {
           <i class="fa-solid fa-spinner fa-spin"></i> Processando...
         } @else {

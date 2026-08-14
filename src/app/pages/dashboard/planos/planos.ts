@@ -17,6 +17,7 @@ export class PlanosComponent implements OnInit {
   user: User | null = null;
   cancelando = false;
   assinaturaAtiva = false;
+  assinaturaPendente = false;
   subscriptionStatus: string | null = null;
   planoExpiraEm: string | null = null;
   private planoExpiraEmDate: Date | null = null;
@@ -34,7 +35,7 @@ export class PlanosComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.authService.user$.subscribe(user => {
+    this.authService.user$.subscribe((user) => {
       this.user = user;
       this.planoAtual = user?.plano || 'BASICO';
     });
@@ -56,6 +57,7 @@ export class PlanosComponent implements OnInit {
       next: (data) => {
         this.assinaturaAtiva = data.assinaturaAtiva;
         this.subscriptionStatus = data.subscriptionStatus;
+        this.assinaturaPendente = data.subscriptionStatus === 'pending';
         this.atualizarPlanoExpiraEm(data.planoExpiraEm);
 
         if (this.subscriptionStatus === 'cancelled' && !this.cancelamentoAindaAtivo) {
@@ -147,6 +149,7 @@ export class PlanosComponent implements OnInit {
       next: (res) => {
         this.cancelando = false;
         this.assinaturaAtiva = false;
+        this.assinaturaPendente = false;
         this.subscriptionStatus = 'cancelled';
         this.atualizarPlanoExpiraEm(res?.planoExpiraEm || null);
         if (res?.planoAtual) {

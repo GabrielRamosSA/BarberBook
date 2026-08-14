@@ -1,9 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { AuthService } from '../../../auth/auth.service';
 
 declare var MercadoPago: any;
 
@@ -15,7 +14,7 @@ declare var MercadoPago: any;
   styleUrls: ['./pagamento.scss'],
 })
 export class PagamentoComponent implements OnInit {
-    tipoPagamento: string = 'credit_card';
+  tipoPagamento: string = 'credit_card';
   planoSelecionado: string = '';
   planoPreco: string = '';
   planoDescricao: string = '';
@@ -30,24 +29,44 @@ export class PagamentoComponent implements OnInit {
 
   // Estado
   processando = false;
+  mercadoPagoPronto = false;
+  carregandoMercadoPago = true;
+  erroMercadoPago: string | null = null;
   toast: { mensagem: string; tipo: 'sucesso' | 'erro' } | null = null;
   private toastTimer: any;
   private mp: any;
 
   private apiUrl = '/api';
 
-  private planos: Record<string, { preco: string; valor: number; descricao: string; recursos: string[] }> = {
+  private planos: Record<
+    string,
+    { preco: string; valor: number; descricao: string; recursos: string[] }
+  > = {
     PROFISSIONAL: {
       preco: 'R$ 29,90',
       valor: 29.9,
       descricao: 'Para barbeiros estabelecidos',
-      recursos: ['3 barbearias', '5 barbeiros', '10 serviços', 'Agendamentos ilimitados', 'Gestão de clientes', 'Lembrete WhatsApp'],
+      recursos: [
+        '3 barbearias',
+        '5 barbeiros',
+        '10 serviços',
+        'Agendamentos ilimitados',
+        'Gestão de clientes',
+        'Lembrete WhatsApp',
+      ],
     },
     PREMIUM: {
       preco: 'R$ 59,90',
       valor: 59.9,
       descricao: 'Tudo ilimitado para seu negócio',
-      recursos: ['Barbearias ilimitadas', 'Barbeiros ilimitados', 'Serviços ilimitados', 'Agendamentos ilimitados', 'Relatórios de receita', 'Lembrete WhatsApp'],
+      recursos: [
+        'Barbearias ilimitadas',
+        'Barbeiros ilimitados',
+        'Serviços ilimitados',
+        'Agendamentos ilimitados',
+        'Relatórios de receita',
+        'Lembrete WhatsApp',
+      ],
     },
   };
 
@@ -64,7 +83,7 @@ export class PagamentoComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private http: HttpClient,
-    private authService: AuthService,
+    @Inject(PLATFORM_ID) private platformId: object,
   ) {}
 
   ngOnInit() {
@@ -80,9 +99,8 @@ export class PagamentoComponent implements OnInit {
       this.planoRecursos = this.planos[plano].recursos;
     });
 
-    // Inicializar MercadoPago.js com Public Key de produção
-    if (typeof MercadoPago !== 'undefined') {
-      this.mp = new MercadoPago('APP_USR-2bf6269e-bea5-447a-a5ff-30f1482ff095');
+    if (isPlatformBrowser(this.platformId)) {
+      this.carregarMercadoPago();
     }
   }
 
@@ -93,10 +111,57 @@ export class PagamentoComponent implements OnInit {
     return (
       numero.length >= 13 &&
       this.nomeCartao.trim().length >= 3 &&
-      mes?.length === 2 && ano?.length === 2 &&
+      mes?.length === 2 &&
+      ano?.length === 2 &&
       this.cvcCartao.length >= 3 &&
-      cpf.length === 11
+      cpf.length === 11 &&
+      this.mercadoPagoPronto
     );
+  }
+
+  private carregarMercadoPago() {
+    this.http.get<{ publicKey: string }>(`${this.apiUrl}/pagamento/config`).subscribe({
+      next: ({ publicKey }) => this.inicializarMercadoPago(publicKey),
+      error: () =>
+        this.definirErroMercadoPago(
+          'Não foi possível preparar o pagamento. Atualize a página ou tente novamente mais tarde.',
+        ),
+    });
+  }
+
+  private inicializarMercadoPago(publicKey: string, tentativasRestantes = 20) {
+    if (!publicKey?.trim()) {
+      this.definirErroMercadoPago('A chave pública do pagamento não foi configurada.');
+      return;
+    }
+
+    if (typeof MercadoPago === 'undefined') {
+      if (tentativasRestantes > 0) {
+        window.setTimeout(
+          () => this.inicializarMercadoPago(publicKey, tentativasRestantes - 1),
+          250,
+        );
+        return;
+      }
+
+      this.definirErroMercadoPago('Não foi possível carregar o checkout seguro do Mercado Pago.');
+      return;
+    }
+
+    try {
+      this.mp = new MercadoPago(publicKey, { locale: 'pt-BR' });
+      this.mercadoPagoPronto = true;
+      this.carregandoMercadoPago = false;
+    } catch {
+      this.definirErroMercadoPago('Não foi possível inicializar o pagamento seguro.');
+    }
+  }
+
+  private definirErroMercadoPago(mensagem: string) {
+    this.carregandoMercadoPago = false;
+    this.mercadoPagoPronto = false;
+    this.erroMercadoPago = mensagem;
+    this.mostrarToast(mensagem, 'erro');
   }
 
   onNumeroInput(event: Event) {
@@ -149,6 +214,15 @@ export class PagamentoComponent implements OnInit {
 
   async processarPagamento() {
     if (this.processando || !this.formularioValido) return;
+
+    if (!this.mp) {
+      this.mostrarToast(
+        'O checkout seguro ainda não está pronto. Tente novamente em instantes.',
+        'erro',
+      );
+      return;
+    }
+
     this.processando = true;
 
     try {
@@ -180,35 +254,36 @@ export class PagamentoComponent implements OnInit {
         return;
       }
 
-      const user = this.authService.currentUser;
-
       // Enviar token para o backend criar a assinatura
-      this.http.post<any>(`${this.apiUrl}/pagamento/assinar`, {
-        plano: this.planoSelecionado,
-        email: user?.email || '',
-        card_token_id: tokenResponse.id,
-        tipo_pagamento: this.tipoPagamento,
-      }).subscribe({
-        next: (res) => {
-          if (res.status === 'authorized' || res.status === 'pending') {
-            this.mostrarToast('Assinatura realizada com sucesso!', 'sucesso');
-            setTimeout(() => {
-              this.router.navigate(['/dashboard/planos']);
-            }, 2000);
-          } else {
+      this.http
+        .post<any>(`${this.apiUrl}/pagamento/assinar`, {
+          plano: this.planoSelecionado,
+          card_token_id: tokenResponse.id,
+        })
+        .subscribe({
+          next: (res) => {
+            if (res.status === 'authorized' || res.status === 'pending') {
+              this.mostrarToast(res.message || 'Assinatura criada com sucesso!', 'sucesso');
+              setTimeout(() => {
+                this.router.navigate(['/dashboard/planos']);
+              }, 2000);
+            } else {
+              this.processando = false;
+              this.mostrarToast(res.message || 'Erro ao criar assinatura.', 'erro');
+            }
+          },
+          error: (err) => {
             this.processando = false;
-            this.mostrarToast(res.message || 'Erro ao criar assinatura.', 'erro');
-          }
-        },
-        error: (err) => {
-          this.processando = false;
-          this.mostrarToast(err.error?.message || 'Erro ao criar assinatura.', 'erro');
-        },
-      });
+            this.mostrarToast(err.error?.message || 'Erro ao criar assinatura.', 'erro');
+          },
+        });
     } catch (error: any) {
       console.error('Erro createCardToken:', error);
       this.processando = false;
-      const msg = error?.message || error?.cause?.[0]?.description || 'Erro ao processar cartão. Verifique os dados.';
+      const msg =
+        error?.message ||
+        error?.cause?.[0]?.description ||
+        'Erro ao processar cartão. Verifique os dados.';
       this.mostrarToast(msg, 'erro');
     }
   }

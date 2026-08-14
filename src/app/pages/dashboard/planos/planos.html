@@ -1,8 +1,14 @@
 <div class="planos-page">
   <!-- Toast -->
   @if (toast) {
-    <div class="toast-notificacao" [class.toast-sucesso]="toast.tipo === 'sucesso'" [class.toast-erro]="toast.tipo === 'erro'">
-      <i [class]="toast.tipo === 'sucesso' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'"></i>
+    <div
+      class="toast-notificacao"
+      [class.toast-sucesso]="toast.tipo === 'sucesso'"
+      [class.toast-erro]="toast.tipo === 'erro'"
+    >
+      <i
+        [class]="toast.tipo === 'sucesso' ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'"
+      ></i>
       <span>{{ toast.mensagem }}</span>
     </div>
   }
@@ -18,11 +24,17 @@
       <div class="plano-atual-info">
         <span class="plano-atual-label">Seu plano atual</span>
         <span class="plano-atual-nome">{{ planoAtual }}</span>
-        @if (assinaturaAtiva) {
+        @if (assinaturaPendente) {
+          <span class="assinatura-badge pendente"
+            ><i class="fa-solid fa-clock"></i> Aguardando confirmação</span
+          >
+        } @else if (assinaturaAtiva) {
           <span class="assinatura-badge ativa"><i class="fa-solid fa-rotate"></i> Recorrente</span>
         }
         @if (cancelamentoAindaAtivo && planoExpiraEm) {
-          <span class="assinatura-badge cancelada"><i class="fa-solid fa-clock"></i> Ativo até {{ planoExpiraEm }}</span>
+          <span class="assinatura-badge cancelada"
+            ><i class="fa-solid fa-clock"></i> Ativo até {{ planoExpiraEm }}</span
+          >
         }
       </div>
       <div class="plano-atual-acoes">
@@ -30,7 +42,11 @@
           <span class="plano-upgrade-hint">Faça upgrade para desbloquear mais recursos!</span>
         }
         @if (assinaturaAtiva) {
-          <button class="btn-cancelar-assinatura" (click)="cancelarAssinatura()" [disabled]="cancelando">
+          <button
+            class="btn-cancelar-assinatura"
+            (click)="cancelarAssinatura()"
+            [disabled]="cancelando"
+          >
             @if (cancelando) {
               <i class="fa-solid fa-spinner fa-spin"></i> Cancelando...
             } @else {
@@ -74,7 +90,11 @@
         @if (planoAtual === 'BASICO') {
           <button class="btn-plano atual" disabled>Plano Atual</button>
         } @else {
-          <button class="btn-plano basico" (click)="selecionarPlano('BASICO')" [disabled]="atualizando">
+          <button
+            class="btn-plano basico"
+            (click)="selecionarPlano('BASICO')"
+            [disabled]="atualizando"
+          >
             {{ atualizando ? 'Atualizando...' : 'Selecionar' }}
           </button>
         }
@@ -101,7 +121,9 @@
         <li class="included"><i class="fa-solid fa-check"></i> 3 barbearias</li>
         <li class="included"><i class="fa-solid fa-check"></i> 5 barbeiros por barbearia</li>
         <li class="included"><i class="fa-solid fa-check"></i> 10 serviços por barbeiro</li>
-        <li class="included highlight"><i class="fa-solid fa-check"></i> Agendamentos ilimitados</li>
+        <li class="included highlight">
+          <i class="fa-solid fa-check"></i> Agendamentos ilimitados
+        </li>
         <li class="included"><i class="fa-solid fa-check"></i> Página da barbearia</li>
         <li class="included"><i class="fa-solid fa-check"></i> Agenda do dia</li>
         <li class="included highlight"><i class="fa-solid fa-check"></i> Gestão de clientes</li>
@@ -114,8 +136,18 @@
         @if (planoAtual === 'PROFISSIONAL') {
           <button class="btn-plano atual" disabled>Plano Atual</button>
         } @else {
-          <button class="btn-plano profissional" (click)="selecionarPlano('PROFISSIONAL')" [disabled]="atualizando">
-            {{ atualizando ? 'Atualizando...' : (isUpgrade('PROFISSIONAL') ? 'Fazer Upgrade' : 'Selecionar') }}
+          <button
+            class="btn-plano profissional"
+            (click)="selecionarPlano('PROFISSIONAL')"
+            [disabled]="atualizando"
+          >
+            {{
+              atualizando
+                ? 'Atualizando...'
+                : isUpgrade('PROFISSIONAL')
+                  ? 'Fazer Upgrade'
+                  : 'Selecionar'
+            }}
           </button>
         }
       </div>
@@ -140,7 +172,9 @@
         <li class="included highlight"><i class="fa-solid fa-check"></i> Barbearias ilimitadas</li>
         <li class="included highlight"><i class="fa-solid fa-check"></i> Barbeiros ilimitados</li>
         <li class="included highlight"><i class="fa-solid fa-check"></i> Serviços ilimitados</li>
-        <li class="included highlight"><i class="fa-solid fa-check"></i> Agendamentos ilimitados</li>
+        <li class="included highlight">
+          <i class="fa-solid fa-check"></i> Agendamentos ilimitados
+        </li>
         <li class="included"><i class="fa-solid fa-check"></i> Página da barbearia</li>
         <li class="included"><i class="fa-solid fa-check"></i> Agenda do dia</li>
         <li class="included"><i class="fa-solid fa-check"></i> Gestão de clientes</li>
@@ -153,8 +187,14 @@
         @if (planoAtual === 'PREMIUM') {
           <button class="btn-plano atual" disabled>Plano Atual</button>
         } @else {
-          <button class="btn-plano premium" (click)="selecionarPlano('PREMIUM')" [disabled]="atualizando">
-            {{ atualizando ? 'Atualizando...' : (isUpgrade('PREMIUM') ? 'Fazer Upgrade' : 'Selecionar') }}
+          <button
+            class="btn-plano premium"
+            (click)="selecionarPlano('PREMIUM')"
+            [disabled]="atualizando"
+          >
+            {{
+              atualizando ? 'Atualizando...' : isUpgrade('PREMIUM') ? 'Fazer Upgrade' : 'Selecionar'
+            }}
           </button>
         }
       </div>
@@ -167,11 +207,17 @@
     <div class="faq-grid">
       <div class="faq-item">
         <h3>Posso trocar de plano a qualquer momento?</h3>
-        <p>Sim! Você pode fazer upgrade ou downgrade quando quiser. As mudanças são aplicadas imediatamente.</p>
+        <p>
+          Sim! Você pode fazer upgrade ou downgrade quando quiser. As mudanças são aplicadas
+          imediatamente.
+        </p>
       </div>
       <div class="faq-item">
         <h3>O que acontece se eu atingir o limite?</h3>
-        <p>Você receberá um aviso e precisará fazer upgrade para continuar adicionando novos recursos.</p>
+        <p>
+          Você receberá um aviso e precisará fazer upgrade para continuar adicionando novos
+          recursos.
+        </p>
       </div>
       <div class="faq-item">
         <h3>Preciso de cartão para o plano Básico?</h3>
@@ -179,7 +225,10 @@
       </div>
       <div class="faq-item">
         <h3>Como funciona o lembrete por WhatsApp?</h3>
-        <p>Enviamos uma mensagem automática para o cliente antes do horário agendado, reduzindo faltas.</p>
+        <p>
+          Enviamos uma mensagem automática para o cliente antes do horário agendado, reduzindo
+          faltas.
+        </p>
       </div>
     </div>
   </div>
