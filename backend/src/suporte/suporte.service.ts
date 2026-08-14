@@ -1,9 +1,12 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EmailService } from '../auth/email.service';
 import { PrismaService } from '../prisma/prisma.service';
-import * as nodemailer from 'nodemailer';
-
-type Plano = 'BASICO' | 'PROFISSIONAL' | 'PREMIUM';
 
 @Injectable()
 export class SuporteService {
@@ -12,6 +15,7 @@ export class SuporteService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly emailService: EmailService,
   ) {}
 
   private async getDadosUsuario(userId: string) {
@@ -25,7 +29,9 @@ export class SuporteService {
     }
 
     if (user.tipo !== 'BARBEIRO') {
-      throw new BadRequestException('Suporte humano disponivel apenas para usuarios barbeiros.');
+      throw new BadRequestException(
+        'Suporte humano disponivel apenas para usuarios barbeiros.',
+      );
     }
 
     return user;
@@ -38,7 +44,7 @@ export class SuporteService {
       plano: user.plano,
       suporteIaDisponivel: false,
       canal: 'HUMANO_EMAIL',
-      fallbackEmail: this.configService.get<string>('SUPORTE_EMAIL') || this.configService.get<string>('SMTP_USER') || '',
+      fallbackEmail: this.getSupportEmail(),
     };
   }
 
@@ -47,42 +53,42 @@ export class SuporteService {
     const content = mensagem.trim();
 
     if (!subject || !content) {
-      throw new BadRequestException('Assunto e mensagem sao obrigatorios para o fallback por e-mail.');
+      throw new BadRequestException(
+        'Assunto e mensagem sao obrigatorios para o fallback por e-mail.',
+      );
     }
 
     const user = await this.getDadosUsuario(userId);
-    const destino =
-      this.configService.get<string>('SUPORTE_EMAIL') ||
-      this.configService.get<string>('SMTP_USER') ||
-      '';
+    const destino = this.getSupportEmail();
 
     if (!destino) {
-      throw new BadRequestException('Configure SUPORTE_EMAIL (ou SMTP_USER) para usar fallback humano por e-mail.');
+      throw new ServiceUnavailableException(
+        'O canal de suporte por e-mail não está configurado.',
+      );
     }
 
-    const transporter = nodemailer.createTransport({
-      host: this.configService.get<string>('SMTP_HOST') || 'smtp.gmail.com',
-      port: Number(this.configService.get<string>('SMTP_PORT') || 465),
-      secure: true,
-      auth: {
-        user: this.configService.get<string>('SMTP_USER'),
-        pass: this.configService.get<string>('SMTP_PASS'),
-      },
-    });
-
-    await transporter.sendMail({
-      from: `"CortaAi Suporte" <${this.configService.get<string>('SMTP_USER') || destino}>`,
+    const enviado = await this.emailService.sendEmail({
       to: destino,
       replyTo: user.email,
       subject: `[Suporte Humano] ${subject}`,
       text: `Canal: Suporte Humano por e-mail\nUsuario: ${user.nome} (${user.email})\nPlano: ${user.plano}\n\nMensagem:\n${content}`,
     });
 
-    this.logger.log(`Chamado de suporte humano enviado por ${user.email}.`);
+    if (!enviado) {
+      throw new ServiceUnavailableException(
+        'Não foi possível enviar sua mensagem de suporte agora. Tente novamente em alguns instantes.',
+      );
+    }
+
+    this.logger.log('Chamado de suporte humano enviado.');
 
     return {
       ok: true,
       message: 'Mensagem enviada para o suporte humano por e-mail.',
     };
+  }
+
+  private getSupportEmail(): string {
+    return this.configService.get<string>('SUPORTE_EMAIL')?.trim() || '';
   }
 }

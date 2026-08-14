@@ -1,20 +1,24 @@
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { EmailService } from './email.service';
 
-jest.mock('nodemailer', () => ({
-  createTransport: jest.fn(),
+jest.mock('resend', () => ({
+  Resend: jest.fn(),
 }));
 
-const mockCreateTransport = jest.mocked(nodemailer.createTransport);
-type SmtpTransporter = ReturnType<typeof nodemailer.createTransport>;
+const mockResend = Resend as unknown as jest.Mock;
+const mockSendEmail = jest.fn();
 
 describe('EmailService', () => {
   let loggerErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    mockCreateTransport.mockReset();
+    mockSendEmail.mockReset();
+    mockResend.mockClear();
+    mockResend.mockImplementation(() => ({
+      emails: { send: mockSendEmail },
+    }));
     loggerErrorSpy = jest
       .spyOn(Logger.prototype, 'error')
       .mockImplementation(() => undefined);
@@ -24,56 +28,62 @@ describe('EmailService', () => {
     jest.restoreAllMocks();
   });
 
-  it('fails immediately when SMTP credentials are absent', async () => {
-    const sendMail = jest.fn();
-    mockCreateTransport.mockReturnValue({
-      sendMail,
-    } as unknown as SmtpTransporter);
-    const config = makeConfig({});
-    const service = new EmailService(config);
+  it('fails immediately when Resend is not configured', async () => {
+    const service = new EmailService(makeConfig({}));
 
     await expect(
       service.sendVerificationCode('cliente@example.com', '123456', 'Cliente'),
     ).resolves.toBe(false);
-    expect(sendMail).not.toHaveBeenCalled();
-    expect(mockCreateTransport).toHaveBeenCalledWith(
-      expect.objectContaining({
-        connectionTimeout: 8_000,
-        greetingTimeout: 8_000,
-        socketTimeout: 15_000,
-        dnsTimeout: 5_000,
-      }),
-    );
+
+    expect(mockResend).not.toHaveBeenCalled();
+    expect(mockSendEmail).not.toHaveBeenCalled();
     expect(loggerErrorSpy).toHaveBeenCalled();
   });
 
-  it('uses STARTTLS settings for SMTP port 587 and sends through the configured transport', async () => {
-    const sendMail = jest.fn().mockResolvedValue({ messageId: 'message-id' });
-    mockCreateTransport.mockReturnValue({
-      sendMail,
-    } as unknown as SmtpTransporter);
-    const config = makeConfig({
-      SMTP_USER: 'mailer@example.com',
-      SMTP_PASS: 'app-password',
-      SMTP_PORT: '587',
+  it('sends the verification email through Resend', async () => {
+    mockSendEmail.mockResolvedValue({
+      data: { id: 'email-id' },
+      error: null,
     });
-    const service = new EmailService(config);
+    const service = new EmailService(
+      makeConfig({
+        RESEND_API_KEY: 're_test_key',
+        RESEND_FROM: 'CortaAí <contato@example.com>',
+      }),
+    );
 
     await expect(
       service.sendVerificationCode('cliente@example.com', '123456', 'Cliente'),
     ).resolves.toBe(true);
-    expect(mockCreateTransport).toHaveBeenCalledWith(
+
+    expect(mockResend).toHaveBeenCalledWith('re_test_key');
+    expect(mockSendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        port: 587,
-        secure: false,
-        auth: { user: 'mailer@example.com', pass: 'app-password' },
+        from: 'CortaAí <contato@example.com>',
+        to: 'cliente@example.com',
+        subject: 'Código de verificação - CortaAí',
       }),
     );
-    expect(sendMail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: 'cliente@example.com',
-        from: '"CortaAí" <mailer@example.com>',
+  });
+
+  it('returns false when Resend rejects the e-mail', async () => {
+    mockSendEmail.mockResolvedValue({
+      data: null,
+      error: { message: 'Domínio não verificado' },
+    });
+    const service = new EmailService(
+      makeConfig({
+        RESEND_API_KEY: 're_test_key',
+        RESEND_FROM: 'CortaAí <contato@example.com>',
       }),
+    );
+
+    await expect(
+      service.sendVerificationCode('cliente@example.com', '123456', 'Cliente'),
+    ).resolves.toBe(false);
+
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Domínio não verificado'),
     );
   });
 });
