@@ -1,6 +1,6 @@
 <section id="topo">
   <div id="logo">
-    <h2><i class="fa-solid fa-scissors" style="margin-right: 6px;"></i>CortaAi</h2>
+    <h2><i class="fa-solid fa-scissors" style="margin-right: 6px;"></i>CortaAí</h2>
   </div>
 
   @if (usuario) {
@@ -58,7 +58,7 @@
 
 <div id="texto">
   <h1>Encontre a Barbearia Perfeita</h1>
-  <p style="font-size: 21px;">Agende seu corte de cabelo com os melhores profissionais da sua cidade</p>
+  <p class="texto-subtitulo">Agende seu corte de cabelo com os melhores profissionais da sua cidade</p>
   @if (usuario && usuario.tipo !== 'BARBEIRO') {
     <a routerLink="/meus-agendamentos" class="botao-meus-agendamentos">
       <i class="fa-solid fa-calendar-check"></i> Meus Agendamentos

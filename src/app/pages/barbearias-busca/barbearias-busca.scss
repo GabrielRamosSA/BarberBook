@@ -1,24 +1,37 @@
 body {
   margin: 0;
   padding: 0;
+  min-width: 0;
+  overflow-x: clip;
 }
-#topo{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    height: 70px;
+#topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  min-height: 70px;
+  padding: 14px clamp(24px, 8vw, 120px);
+  position: relative;
+  z-index: 110;
 }
 #logo {
   display: flex;
-  margin-left: 120px;
-}
-#acesso{
-    display: flex;
-    align-items: center;
+  min-width: 0;
 
-    padding: 10px;
-    margin-right: 100px;
+  h2 {
+    margin: 0;
+    color: #071522;
+    font-size: 1.3rem;
+    line-height: 1;
+    white-space: nowrap;
+  }
+}
+#acesso {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  flex-shrink: 0;
 }
 
 // ========================
@@ -26,7 +39,7 @@ body {
 // ========================
 .menu-usuario {
   position: relative;
-  margin-right: 120px;
+  flex-shrink: 0;
 }
 
 .botao-avatar {
@@ -70,6 +83,7 @@ body {
   top: calc(100% + 10px);
   right: 0;
   width: 240px;
+  max-width: calc(100vw - 32px);
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
@@ -156,15 +170,17 @@ body {
     background: #fdf0f0;
   }
 }
-#acesso button{
-    margin-left: 15px;
-    font-size: 14px;
-    font-weight: bold;
-    width: 90px;
-    height: 35px;
-    border-radius: 5px;
-    border: 1px solid rgb(222, 222, 222);
-    cursor: pointer;    
+#acesso button {
+  margin: 0;
+  min-width: 90px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 7px;
+  border: 1px solid rgb(222, 222, 222);
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 .botao-entrar{
     background-color: white;
@@ -184,29 +200,36 @@ body {
 .botao-registrar:hover{
     background-color: #434343;
 }
-#texto{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    color: white;
-    font-size: 23px;
-    height: 280px;
-    background: linear-gradient(to right, #071522, #2c3e50);
-    padding-bottom: 20px;
-    h1 {
-    margin-bottom: 4px;
+#texto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  padding: 42px 24px 76px;
+  color: white;
+  text-align: center;
+  background: linear-gradient(to right, #071522, #2c3e50);
+
+  h1 {
+    max-width: 760px;
+    margin: 0 0 8px;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.08;
   }
-  p {
-    font-weight: normal;
-    margin-top: 0;
+
+  .texto-subtitulo {
+    max-width: 680px;
+    margin: 0;
+    font-size: clamp(1rem, 2.25vw, 1.3rem);
+    line-height: 1.4;
+    font-weight: 400;
   }
 }
 #busca {
   margin-top: -40px;
-  width: 60rem;
-  max-width: 90%;
+  width: min(60rem, calc(100% - 48px));
+  max-width: none;
   position: relative;
   z-index: 2;
   margin-left: auto;
@@ -758,6 +781,7 @@ body {
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
+  justify-content: center;
   transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
   backdrop-filter: blur(4px);
 
@@ -784,7 +808,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 1100;
   animation: aparecer 0.2s;
 }
 
@@ -797,8 +821,10 @@ body {
   background: #fff;
   border-radius: 18px;
   padding: 36px 32px 28px;
-  width: 90%;
+  width: min(400px, calc(100% - 32px));
   max-width: 400px;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
   text-align: center;
   position: relative;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
@@ -917,8 +943,196 @@ body {
   }
 }
 
+// ========================
+// RESPONSIVIDADE
+// ========================
+@media (max-width: 900px) {
+  #topo {
+    padding-inline: clamp(16px, 5vw, 40px);
+  }
+
+  #texto {
+    min-height: 320px;
+    padding-bottom: 92px;
+  }
+
+  #busca {
+    width: min(60rem, calc(100% - 32px));
+  }
+}
+
+@media (max-width: 600px) {
+  #topo {
+    min-height: 64px;
+    gap: 10px;
+    padding: 10px 16px;
+  }
+
+  #logo h2 {
+    font-size: 1.08rem;
+  }
+
+  #acesso {
+    gap: 7px;
+  }
+
+  #acesso button {
+    min-width: 0;
+    height: 34px;
+    padding-inline: 10px;
+    font-size: 0.78rem;
+  }
+
+  .botao-entrar i {
+    margin-right: 3px !important;
+  }
+
+  .menu-suspenso {
+    position: fixed;
+    top: 74px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-height: calc(100dvh - 90px);
+    overflow-y: auto;
+  }
+
+  #texto {
+    min-height: 0;
+    padding: 34px 20px 38px;
+  }
+
+  #texto h1 {
+    font-size: clamp(2rem, 10vw, 2.65rem);
+  }
+
+  #texto .texto-subtitulo {
+    font-size: 1rem;
+  }
+
+  .botao-meus-agendamentos {
+    width: min(100%, 320px);
+    margin-top: 20px;
+    padding: 13px 18px;
+  }
+
+  #busca {
+    width: auto;
+    margin: 0 16px;
+  }
+
+  #busca .cartao-busca {
+    padding: 24px 20px;
+  }
+
+  #busca .titulo-busca {
+    margin-bottom: 18px;
+    font-size: 1.05rem;
+  }
+
+  #busca #cartoes {
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  #busca .campo {
+    width: 100%;
+  }
+
+  #barbearias {
+    padding: 0 16px 48px;
+  }
+
+  .cabecalho-barbearias {
+    margin-top: 38px;
+    margin-bottom: 22px;
+  }
+
+  .cabecalho-barbearias h2 {
+    font-size: 1.3rem;
+  }
+
+  .grade-barbearias {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .cartao-barbearia-corpo,
+  .cartao-barbearia-rodape {
+    padding-inline: 16px;
+  }
+
+  .barbearia-infos span,
+  .barbearia-referencia,
+  #resultado p {
+    overflow-wrap: anywhere;
+  }
+
+  #resultado {
+    padding: 46px 8px;
+    text-align: center;
+
+    > i {
+      font-size: 3rem;
+    }
+
+    .resultado-mensagem {
+      font-size: 1rem;
+    }
+
+    .resultado-dica {
+      font-size: 0.9rem;
+    }
+  }
+}
+
+@media (max-width: 375px) {
+  #topo {
+    padding-inline: 12px;
+  }
+
+  #logo h2 {
+    font-size: 1rem;
+  }
+
+  #acesso {
+    gap: 5px;
+  }
+
+  #acesso button {
+    padding-inline: 8px;
+    font-size: 0.74rem;
+  }
+
+  #texto {
+    padding-inline: 16px;
+  }
+
+  #busca {
+    margin-inline: 12px;
+  }
+
+  #busca .cartao-busca {
+    padding-inline: 18px;
+  }
+
+  #barbearias {
+    padding-inline: 12px;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .carrossel-botao {
+    opacity: 1;
+  }
+}
+
 :host-context(.theme-dark) #topo,
 :host-context(.theme-dark) #barbearias {
+  color: var(--app-text);
+}
+
+:host-context(.theme-dark) #logo h2 {
   color: var(--app-text);
 }
 
