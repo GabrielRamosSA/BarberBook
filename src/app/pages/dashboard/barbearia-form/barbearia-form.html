@@ -53,16 +53,50 @@
           <div class="dropzone-content">
             <i class="fa-solid fa-cloud-arrow-up"></i>
             <p>Arraste fotos aqui ou <span class="link">clique para selecionar</span></p>
-            <span class="dropzone-hint">{{ fotos.length }}/10 fotos</span>
+            <span class="dropzone-hint">{{ totalFotos }}/10 fotos</span>
           </div>
         </div>
 
-        @if (fotosExistentes.length > 0) {
+        @if (fotoPrincipalExistente || fotosExistentes.length > 0) {
           <div class="fotos-preview">
+            @if (fotoPrincipalExistente) {
+              <div class="foto-thumb">
+                <img [src]="fotoPrincipalExistente" alt="Foto principal da barbearia" />
+                <button
+                  type="button"
+                  class="foto-remove"
+                  [disabled]="fotoSendoRemovida === fotoPrincipalExistente || carregando"
+                  (click)="removerFotoExistente(fotoPrincipalExistente)"
+                  aria-label="Excluir foto principal"
+                  title="Excluir foto principal"
+                >
+                  @if (fotoSendoRemovida === fotoPrincipalExistente) {
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                  } @else {
+                    <i class="fa-solid fa-trash"></i>
+                  }
+                </button>
+                <span class="foto-badge">Principal</span>
+              </div>
+            }
             @for (fotoUrl of fotosExistentes; track fotoUrl; let i = $index) {
               <div class="foto-thumb">
                 <img [src]="fotoUrl" alt="Foto {{ i + 1 }}" />
-                @if (i === 0) {
+                <button
+                  type="button"
+                  class="foto-remove"
+                  [disabled]="fotoSendoRemovida === fotoUrl || carregando"
+                  (click)="removerFotoExistente(fotoUrl)"
+                  [attr.aria-label]="(fotoPrincipalExistente ? 'Excluir foto ' : 'Excluir foto principal ') + (i + 1)"
+                  [title]="fotoPrincipalExistente || i > 0 ? 'Excluir foto' : 'Excluir foto principal'"
+                >
+                  @if (fotoSendoRemovida === fotoUrl) {
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                  } @else {
+                    <i class="fa-solid fa-trash"></i>
+                  }
+                </button>
+                @if (!fotoPrincipalExistente && i === 0) {
                   <span class="foto-badge">Principal</span>
                 }
               </div>
@@ -75,10 +109,16 @@
             @for (foto of fotos; track foto.url; let i = $index) {
               <div class="foto-thumb">
                 <img [src]="foto.url" alt="Foto {{ i + 1 }}" />
-                <button type="button" class="foto-remove" (click)="removeFoto(i)" title="Remover foto">
-                  <i class="fa-solid fa-xmark"></i>
+                <button
+                  type="button"
+                  class="foto-remove"
+                  (click)="removeFoto(i)"
+                  [attr.aria-label]="'Remover nova foto ' + (i + 1)"
+                  title="Remover foto selecionada"
+                >
+                  <i class="fa-solid fa-trash"></i>
                 </button>
-                @if (i === 0) {
+                @if (!fotoPrincipalExistente && fotosExistentes.length === 0 && i === 0) {
                   <span class="foto-badge">Principal</span>
                 }
               </div>

@@ -285,23 +285,42 @@ export class BarbeariaService {
       throw new ForbiddenException('Sem permissão.');
     }
 
-    // Remove o arquivo local
-    if (fotoUrl.includes('/uploads/')) {
-      const filename = fotoUrl.split('/').pop();
-      if (filename) {
-        const filepath = path.join(process.cwd(), 'uploads', 'barbearias', filename);
-        if (fs.existsSync(filepath)) {
-          fs.unlinkSync(filepath);
-        }
-      }
+    const fotosAtuais = barbearia.fotos ?? [];
+    const ehFotoPrincipal = barbearia.foto === fotoUrl;
+    const estaNaGaleria = fotosAtuais.includes(fotoUrl);
+
+    if (!ehFotoPrincipal && !estaNaGaleria) {
+      throw new BadRequestException('A foto informada não pertence a esta barbearia.');
     }
+
+    const fotosDaGaleria = fotosAtuais.filter((foto) => foto !== barbearia.foto);
+    const proximaFotoPrincipal = ehFotoPrincipal ? fotosDaGaleria[0] || null : barbearia.foto;
+    const proximasFotos = ehFotoPrincipal
+      ? fotosDaGaleria.slice(1)
+      : fotosDaGaleria.filter((foto) => foto !== fotoUrl);
 
     const updated = await this.prisma.barbearia.update({
       where: { id },
       data: {
-        fotos: barbearia.fotos.filter((f) => f !== fotoUrl),
+        foto: proximaFotoPrincipal,
+        fotos: proximasFotos,
       },
     });
+
+    // Só apaga o arquivo depois de confirmar a atualização do banco e a associação à barbearia.
+    if (fotoUrl.includes('/uploads/')) {
+      const filename = fotoUrl.split('/').pop();
+      if (filename) {
+        const filepath = path.join(process.cwd(), 'uploads', 'barbearias', filename);
+        try {
+          if (fs.existsSync(filepath)) {
+            fs.unlinkSync(filepath);
+          }
+        } catch {
+          // O registro já foi removido; a limpeza local pode ser tentada posteriormente.
+        }
+      }
+    }
 
     return {
       message: 'Foto removida com sucesso!',

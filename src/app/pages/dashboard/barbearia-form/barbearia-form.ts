@@ -97,7 +97,9 @@ export class BarbeariaFormComponent implements OnInit, AfterViewInit, OnDestroy 
 
   // Fotos da barbearia
   fotos: FotoPreview[] = [];
+  fotoPrincipalExistente: string | null = null;
   fotosExistentes: string[] = [];
+  fotoSendoRemovida: string | null = null;
   dragging = false;
 
   // Barbeiros (contém serviços dentro)
@@ -129,6 +131,10 @@ export class BarbeariaFormComponent implements OnInit, AfterViewInit, OnDestroy 
 
   get fotosBarbeirosPermitido(): boolean {
     return this.planoUsuario === 'PROFISSIONAL' || this.planoUsuario === 'PREMIUM';
+  }
+
+  get totalFotos(): number {
+    return (this.fotoPrincipalExistente ? 1 : 0) + this.fotosExistentes.length + this.fotos.length;
   }
 
   get maxBarbeiros(): number {
@@ -204,6 +210,8 @@ export class BarbeariaFormComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   ngOnDestroy() {
+    this.fotos.forEach((foto) => URL.revokeObjectURL(foto.url));
+
     if (this.mapa) {
       this.mapa.remove();
       this.mapa = null;
@@ -478,7 +486,10 @@ export class BarbeariaFormComponent implements OnInit, AfterViewInit, OnDestroy 
         this.lembreteAtivo = b.lembreteAtivo || false;
         this.latitude = b.latitude || null;
         this.longitude = b.longitude || null;
-        this.fotosExistentes = b.fotos || [];
+        this.fotoPrincipalExistente = b.foto || null;
+        this.fotosExistentes = (b.fotos || []).filter(
+          (fotoUrl: string) => fotoUrl && fotoUrl !== this.fotoPrincipalExistente,
+        );
 
         // Inicializar mapa com coordenadas carregadas
         if (this.latitude && this.longitude && this.mapa) {
@@ -599,14 +610,45 @@ export class BarbeariaFormComponent implements OnInit, AfterViewInit, OnDestroy 
       const file = fileList[i];
       if (!allowed.includes(file.type)) continue;
       if (file.size > 5 * 1024 * 1024) continue;
-      if (this.fotos.length >= 10) break;
+      if (this.totalFotos >= 10) break;
       this.fotos.push({ file, url: URL.createObjectURL(file) });
     }
   }
 
   removeFoto(index: number) {
-    URL.revokeObjectURL(this.fotos[index].url);
+    const foto = this.fotos[index];
+    if (!foto) return;
+
+    URL.revokeObjectURL(foto.url);
     this.fotos.splice(index, 1);
+  }
+
+  removerFotoExistente(fotoUrl: string | null) {
+    if (!fotoUrl || !this.editando || !this.barbeariaId || this.fotoSendoRemovida) return;
+
+    if (!confirm('Excluir esta foto da barbearia? Esta ação não pode ser desfeita.')) return;
+
+    this.erro = '';
+    this.fotoSendoRemovida = fotoUrl;
+
+    this.http
+      .delete<any>(`${this.apiUrl}/barbearias/${this.barbeariaId}/fotos`, {
+        body: { fotoUrl },
+      })
+      .subscribe({
+        next: (resposta) => {
+          const barbearia = resposta?.barbearia;
+          this.fotoPrincipalExistente = barbearia?.foto || null;
+          this.fotosExistentes = (barbearia?.fotos || []).filter(
+            (url: string) => url && url !== this.fotoPrincipalExistente,
+          );
+          this.fotoSendoRemovida = null;
+        },
+        error: (err) => {
+          this.fotoSendoRemovida = null;
+          this.erro = err.error?.message || 'Não foi possível excluir a foto. Tente novamente.';
+        },
+      });
   }
 
   // ==============================
