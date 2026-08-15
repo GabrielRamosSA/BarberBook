@@ -16,8 +16,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
 import { BarbeariaService } from './barbearia.service';
 import { CreateBarbeariaDto, UpdateBarbeariaDto } from './dto/barbearia.dto';
 import type { Request } from 'express';
@@ -74,13 +73,7 @@ export class BarbeariaController {
   @Post(':id/foto')
   @UseInterceptors(
     FileInterceptor('foto', {
-      storage: diskStorage({
-        destination: './uploads/barbearias',
-        filename: (_req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, uniqueSuffix + extname(file.originalname));
-        },
-      }),
+      storage: memoryStorage(),
       fileFilter: (_req, file, cb) => {
         if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
           cb(new BadRequestException('Apenas imagens são permitidas'), false);
@@ -100,21 +93,14 @@ export class BarbeariaController {
       throw new BadRequestException('Nenhum arquivo enviado');
     }
     const user = req.user as any;
-    const fotoUrl = `https://barberbook-awgp.onrender.com/uploads/barbearias/${file.filename}`;
-    return this.barbeariaService.updateFoto(id, user.id, fotoUrl);
+    return this.barbeariaService.uploadFoto(id, user.id, file);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Post(':id/fotos')
   @UseInterceptors(
     FilesInterceptor('fotos', 10, {
-      storage: diskStorage({
-        destination: './uploads/barbearias',
-        filename: (_req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, uniqueSuffix + extname(file.originalname));
-        },
-      }),
+      storage: memoryStorage(),
       fileFilter: (_req, file, cb) => {
         if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
           cb(new BadRequestException('Apenas imagens são permitidas'), false);
@@ -134,10 +120,7 @@ export class BarbeariaController {
       throw new BadRequestException('Nenhum arquivo enviado');
     }
     const user = req.user as any;
-    const fotosUrls = files.map(
-      (file) => `https://barberbook-awgp.onrender.com/uploads/barbearias/${file.filename}`,
-    );
-    return this.barbeariaService.addFotos(id, user.id, fotosUrls);
+    return this.barbeariaService.addFotos(id, user.id, files);
   }
 
   @UseGuards(AuthGuard('jwt'))

@@ -853,6 +853,8 @@ export class BarbeariaFormComponent implements OnInit, AfterViewInit, OnDestroy 
       this.http.post<any>(`${this.apiUrl}/barbearias`, dados).subscribe({
         next: (res) => {
           const barbeariaId = res.barbearia.id;
+          this.editando = true;
+          this.barbeariaId = barbeariaId;
           this.salvarRecursosAdicionais(barbeariaId);
         },
         error: (err) => {
@@ -872,7 +874,23 @@ export class BarbeariaFormComponent implements OnInit, AfterViewInit, OnDestroy 
         this.etapaTexto = 'Enviando fotos...';
         const formData = new FormData();
         this.fotos.forEach((f) => formData.append('fotos', f.file));
-        await this.http.post(`${this.apiUrl}/barbearias/${barbeariaId}/fotos`, formData).toPromise().catch(() => {});
+        try {
+          const resposta: any = await this.http
+            .post(`${this.apiUrl}/barbearias/${barbeariaId}/fotos`, formData)
+            .toPromise();
+          const barbearia = resposta?.barbearia;
+          if (barbearia) {
+            this.fotos.forEach((foto) => URL.revokeObjectURL(foto.url));
+            this.fotos = [];
+            this.fotoPrincipalExistente = barbearia.foto || null;
+            this.fotosExistentes = (barbearia.fotos || []).filter(
+              (fotoUrl: string) => fotoUrl && fotoUrl !== this.fotoPrincipalExistente,
+            );
+          }
+        } catch (err: any) {
+          const msg = err?.error?.message || 'Erro ao enviar as fotos da barbearia.';
+          if (!errosPlano.includes(msg)) errosPlano.push(msg);
+        }
       }
 
       // ====== Modo EDIÇÃO: limpar recursos antigos que foram removidos ======

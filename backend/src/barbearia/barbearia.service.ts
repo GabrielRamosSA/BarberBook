@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MediaStorageService } from '../media-storage/media-storage.service';
 import { CreateBarbeariaDto, UpdateBarbeariaDto } from './dto/barbearia.dto';
 import { PLANO_LIMITES, PlanoType } from '../plano/plano.config';
 import * as fs from 'fs';
@@ -7,7 +8,10 @@ import * as path from 'path';
 
 @Injectable()
 export class BarbeariaService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mediaStorage: MediaStorageService,
+  ) {}
 
   private normalizarTexto(valor?: string): string | undefined {
     if (!valor) return undefined;
@@ -209,7 +213,7 @@ export class BarbeariaService {
     };
   }
 
-  async updateFoto(id: string, ownerId: string, fotoUrl: string) {
+  async uploadFoto(id: string, ownerId: string, file: Express.Multer.File) {
     const barbearia = await this.prisma.barbearia.findUnique({
       where: { id },
     });
@@ -222,29 +226,27 @@ export class BarbeariaService {
       throw new ForbiddenException('Sem permissão.');
     }
 
-    // Remove foto anterior local se existir
-    if (barbearia.foto && barbearia.foto.includes('/uploads/')) {
-      const filename = barbearia.foto.split('/').pop();
-      if (filename) {
-        const filepath = path.join(process.cwd(), 'uploads', 'barbearias', filename);
-        if (fs.existsSync(filepath)) {
-          fs.unlinkSync(filepath);
-        }
-      }
+    const fotoUrl = await this.mediaStorage.uploadImage(file, `barbearias/${id}`);
+
+    try {
+      const updated = await this.prisma.barbearia.update({
+        where: { id },
+        data: { foto: fotoUrl },
+      });
+
+      await this.removeFotoArmazenada(barbearia.foto, id);
+
+      return {
+        message: 'Foto atualizada com sucesso!',
+        barbearia: updated,
+      };
+    } catch (error) {
+      await this.mediaStorage.deleteImage(fotoUrl, `barbearias/${id}`);
+      throw error;
     }
-
-    const updated = await this.prisma.barbearia.update({
-      where: { id },
-      data: { foto: fotoUrl },
-    });
-
-    return {
-      message: 'Foto atualizada com sucesso!',
-      barbearia: updated,
-    };
   }
 
-  async addFotos(id: string, ownerId: string, fotosUrls: string[]) {
+  async addFotos(id: string, ownerId: string, files: Express.Multer.File[]) {
     const barbearia = await this.prisma.barbearia.findUnique({
       where: { id },
     });
@@ -257,19 +259,39 @@ export class BarbeariaService {
       throw new ForbiddenException('Sem permissão.');
     }
 
-    const updated = await this.prisma.barbearia.update({
-      where: { id },
-      data: {
-        fotos: {
-          push: fotosUrls,
-        },
-      },
-    });
+    const fotosAtuais = barbearia.fotos ?? [];
+    const totalFotosAtuais = new Set(
+      [barbearia.foto, ...fotosAtuais].filter(
+        (foto): foto is string => Boolean(foto),
+      ),
+    ).size;
+    if (totalFotosAtuais + files.length > 10) {
+      throw new BadRequestException('A barbearia pode ter no máximo 10 fotos.');
+    }
 
-    return {
-      message: 'Fotos adicionadas com sucesso!',
-      barbearia: updated,
-    };
+    const fotosUrls: string[] = [];
+    try {
+      for (const file of files) {
+        fotosUrls.push(await this.mediaStorage.uploadImage(file, `barbearias/${id}`));
+      }
+
+      const updated = await this.prisma.barbearia.update({
+        where: { id },
+        data: {
+          fotos: {
+            push: fotosUrls,
+          },
+        },
+      });
+
+      return {
+        message: 'Fotos adicionadas com sucesso!',
+        barbearia: updated,
+      };
+    } catch (error) {
+      await this.mediaStorage.deleteImages(fotosUrls, `barbearias/${id}`);
+      throw error;
+    }
   }
 
   async removeFoto(id: string, ownerId: string, fotoUrl: string) {
@@ -308,19 +330,7 @@ export class BarbeariaService {
     });
 
     // Só apaga o arquivo depois de confirmar a atualização do banco e a associação à barbearia.
-    if (fotoUrl.includes('/uploads/')) {
-      const filename = fotoUrl.split('/').pop();
-      if (filename) {
-        const filepath = path.join(process.cwd(), 'uploads', 'barbearias', filename);
-        try {
-          if (fs.existsSync(filepath)) {
-            fs.unlinkSync(filepath);
-          }
-        } catch {
-          // O registro já foi removido; a limpeza local pode ser tentada posteriormente.
-        }
-      }
-    }
+    await this.removeFotoArmazenada(fotoUrl, id);
 
     return {
       message: 'Foto removida com sucesso!',
@@ -331,6 +341,14 @@ export class BarbeariaService {
   async delete(id: string, ownerId: string) {
     const barbearia = await this.prisma.barbearia.findUnique({
       where: { id },
+      include: {
+        barbeiros: {
+          select: {
+            id: true,
+            foto: true,
+          },
+        },
+      },
     });
 
     if (!barbearia) {
@@ -341,24 +359,59 @@ export class BarbeariaService {
       throw new ForbiddenException('Sem permissão.');
     }
 
-    // Remove fotos locais
     const todasFotos = [...(barbearia.fotos || [])];
     if (barbearia.foto) todasFotos.push(barbearia.foto);
-    for (const fotoUrl of todasFotos) {
-      if (fotoUrl.includes('/uploads/')) {
-        const filename = fotoUrl.split('/').pop();
-        if (filename) {
-          const filepath = path.join(process.cwd(), 'uploads', 'barbearias', filename);
-          if (fs.existsSync(filepath)) {
-            fs.unlinkSync(filepath);
-          }
-        }
-      }
-    }
 
     await this.prisma.barbearia.delete({ where: { id } });
+    await Promise.all([
+      ...todasFotos.map((fotoUrl) => this.removeFotoArmazenada(fotoUrl, id)),
+      ...barbearia.barbeiros.map((barbeiro) =>
+        this.removeFotoBarbeiroArmazenada(
+          barbeiro.foto,
+          id,
+          barbeiro.id,
+        ),
+      ),
+    ]);
 
     return { message: 'Barbearia excluída com sucesso.' };
+  }
+
+  private async removeFotoArmazenada(fotoUrl: string | null, barbeariaId: string) {
+    this.removeFotoLocalLegada(fotoUrl, 'barbearias');
+
+    await this.mediaStorage.deleteImage(fotoUrl, `barbearias/${barbeariaId}`);
+  }
+
+  private async removeFotoBarbeiroArmazenada(
+    fotoUrl: string | null,
+    barbeariaId: string,
+    barbeiroId: string,
+  ) {
+    this.removeFotoLocalLegada(fotoUrl, 'barbeiros');
+    await this.mediaStorage.deleteImage(
+      fotoUrl,
+      `barbeiros/${barbeariaId}/${barbeiroId}`,
+    );
+  }
+
+  private removeFotoLocalLegada(
+    fotoUrl: string | null,
+    pasta: 'barbearias' | 'barbeiros',
+  ) {
+    if (!fotoUrl?.includes(`/uploads/${pasta}/`)) return;
+
+    const filename = path.basename(fotoUrl.split('/').pop() || '');
+    if (!filename) return;
+
+    const filepath = path.join(process.cwd(), 'uploads', pasta, filename);
+    try {
+      if (fs.existsSync(filepath)) {
+        fs.unlinkSync(filepath);
+      }
+    } catch {
+      // Arquivos legados no disco do Render podem já ter sido removidos.
+    }
   }
 
   // Busca pública por cidade/estado

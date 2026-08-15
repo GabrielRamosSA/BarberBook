@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MediaStorageService } from '../media-storage/media-storage.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PLANO_LIMITES, PlanoType } from '../plano/plano.config';
 import * as fs from 'fs';
@@ -7,7 +8,10 @@ import * as path from 'path';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mediaStorage: MediaStorageService,
+  ) {}
 
   async findById(id: string) {
     const user = await this.prisma.user.findUnique({
@@ -40,9 +44,10 @@ export class UserService {
       throw new NotFoundException('Usuário não encontrado');
     }
 
+    const { nome, telefone, tipo } = dto;
     const updatedUser = await this.prisma.user.update({
       where: { id },
-      data: dto,
+      data: { nome, telefone, tipo },
       select: {
         id: true,
         nome: true,
@@ -60,34 +65,40 @@ export class UserService {
     };
   }
 
-  async updateAvatar(id: string, avatarUrl: string) {
+  async uploadAvatar(id: string, file: Express.Multer.File) {
     const user = await this.prisma.user.findUnique({ where: { id } });
 
     if (!user) {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    // Remove old avatar file if it's a local upload
-    this.removeLocalAvatar(user.avatar);
+    const avatarUrl = await this.mediaStorage.uploadImage(file, `avatars/${id}`);
 
-    const updatedUser = await this.prisma.user.update({
-      where: { id },
-      data: { avatar: avatarUrl },
-      select: {
-        id: true,
-        nome: true,
-        email: true,
-        telefone: true,
-        tipo: true,
-        plano: true,
-        avatar: true,
-      },
-    });
+    try {
+      const updatedUser = await this.prisma.user.update({
+        where: { id },
+        data: { avatar: avatarUrl },
+        select: {
+          id: true,
+          nome: true,
+          email: true,
+          telefone: true,
+          tipo: true,
+          plano: true,
+          avatar: true,
+        },
+      });
 
-    return {
-      message: 'Avatar atualizado com sucesso',
-      user: updatedUser,
-    };
+      await this.removeAvatar(user.avatar, id);
+
+      return {
+        message: 'Avatar atualizado com sucesso',
+        user: updatedUser,
+      };
+    } catch (error) {
+      await this.mediaStorage.deleteImage(avatarUrl, `avatars/${id}`);
+      throw error;
+    }
   }
 
   async deleteAvatar(id: string) {
@@ -96,9 +107,6 @@ export class UserService {
     if (!user) {
       throw new NotFoundException('Usuário não encontrado');
     }
-
-    // Remove local avatar file if exists
-    this.removeLocalAvatar(user.avatar);
 
     const updatedUser = await this.prisma.user.update({
       where: { id },
@@ -114,25 +122,52 @@ export class UserService {
       },
     });
 
+    await this.removeAvatar(user.avatar, id);
+
     return {
       message: 'Avatar removido com sucesso',
       user: updatedUser,
     };
   }
 
-  private removeLocalAvatar(avatarUrl: string | null) {
-    if (!avatarUrl || !avatarUrl.includes('/uploads/avatars/')) return;
+  private async removeAvatar(avatarUrl: string | null, userId: string) {
+    this.removeLocalUpload(avatarUrl, 'avatars');
+    await this.mediaStorage.deleteImage(avatarUrl, `avatars/${userId}`);
+  }
 
+  private async removeBarbeariaFoto(fotoUrl: string | null, barbeariaId: string) {
+    this.removeLocalUpload(fotoUrl, 'barbearias');
+    await this.mediaStorage.deleteImage(fotoUrl, `barbearias/${barbeariaId}`);
+  }
+
+  private async removeBarbeiroFoto(
+    fotoUrl: string | null,
+    barbeariaId: string,
+    barbeiroId: string,
+  ) {
+    this.removeLocalUpload(fotoUrl, 'barbeiros');
+    await this.mediaStorage.deleteImage(
+      fotoUrl,
+      `barbeiros/${barbeariaId}/${barbeiroId}`,
+    );
+  }
+
+  private removeLocalUpload(
+    mediaUrl: string | null,
+    pasta: 'avatars' | 'barbearias' | 'barbeiros',
+  ) {
+    if (!mediaUrl?.includes(`/uploads/${pasta}/`)) return;
+
+    const filename = path.basename(mediaUrl.split('/').pop() || '');
+    if (!filename) return;
+
+    const filePath = path.join(process.cwd(), 'uploads', pasta, filename);
     try {
-      const filename = avatarUrl.split('/uploads/avatars/').pop();
-      if (filename) {
-        const filePath = path.join(process.cwd(), 'uploads', 'avatars', filename);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
       }
     } catch {
-      // Silently ignore file removal errors
+      // Arquivos legados podem já ter desaparecido do filesystem efêmero.
     }
   }
 
@@ -145,12 +180,40 @@ export class UserService {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    // Remove avatar file before deleting user
-    this.removeLocalAvatar(user.avatar);
+    const barbearias = await this.prisma.barbearia.findMany({
+      where: { ownerId: id },
+      select: {
+        id: true,
+        foto: true,
+        fotos: true,
+        barbeiros: {
+          select: {
+            id: true,
+            foto: true,
+          },
+        },
+      },
+    });
 
     await this.prisma.user.delete({
       where: { id },
     });
+
+    await this.removeAvatar(user.avatar, id);
+    await Promise.all(
+      barbearias.flatMap((barbearia) => [
+        ...[barbearia.foto, ...(barbearia.fotos ?? [])].map((fotoUrl) =>
+          this.removeBarbeariaFoto(fotoUrl, barbearia.id),
+        ),
+        ...barbearia.barbeiros.map((barbeiro) =>
+          this.removeBarbeiroFoto(
+            barbeiro.foto,
+            barbearia.id,
+            barbeiro.id,
+          ),
+        ),
+      ]),
+    );
 
     return { message: 'Usuário deletado com sucesso' };
   }

@@ -11,6 +11,9 @@
 npm-debug.log
 yarn-error.log
 
+# Uploads são dados de runtime: use o Supabase Storage, não o Git.
+/backend/uploads/
+
 # IDEs and editors
 .idea/
 .project

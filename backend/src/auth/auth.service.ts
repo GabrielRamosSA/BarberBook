@@ -507,7 +507,9 @@ export class AuthService {
           where: { id: user.id },
           data: {
             googleId: googleUser.googleId,
-            avatar: googleUser.avatar || user.avatar,
+            // Mantém a foto que o usuário escolheu no CortaAí; a troca deve acontecer
+            // somente pelo endpoint de upload, que também limpa o objeto anterior.
+            avatar: user.avatar || googleUser.avatar,
           },
         });
       } else {
@@ -530,7 +532,7 @@ export class AuthService {
         data: {
           emailVerified: true,
           googleId: googleUser.googleId,
-          avatar: googleUser.avatar || user.avatar,
+          avatar: user.avatar || googleUser.avatar,
         },
       });
     }

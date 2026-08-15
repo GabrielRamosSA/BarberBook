@@ -10,14 +10,13 @@ import {
   Req,
   UseInterceptors,
   UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
 import { BarbeiroService } from './barbeiro.service';
 import type { Request } from 'express';
-import * as fs from 'fs';
 
 @Controller('barbearias/:barbeariaId/barbeiros')
 export class BarbeiroController {
@@ -54,17 +53,7 @@ export class BarbeiroController {
   @Post(':id/foto')
   @UseInterceptors(
     FileInterceptor('foto', {
-      storage: diskStorage({
-        destination: (req, file, cb) => {
-          const dir = './uploads/barbeiros';
-          if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-          cb(null, dir);
-        },
-        filename: (req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, `barbeiro-${uniqueSuffix}${extname(file.originalname)}`);
-        },
-      }),
+      storage: memoryStorage(),
       limits: { fileSize: 5 * 1024 * 1024 },
       fileFilter: (req, file, cb) => {
         if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
@@ -80,9 +69,11 @@ export class BarbeiroController {
     @UploadedFile() file: Express.Multer.File,
     @Req() req: Request,
   ) {
+    if (!file) {
+      throw new BadRequestException('Nenhum arquivo enviado');
+    }
     const user = req.user as any;
-    const fotoUrl = `/uploads/barbeiros/${file.filename}`;
-    return this.barbeiroService.updateFoto(id, user.id, fotoUrl);
+    return this.barbeiroService.uploadFoto(id, user.id, file);
   }
 
   @UseGuards(AuthGuard('jwt'))

@@ -14,8 +14,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import type { Request } from 'express';
@@ -40,13 +39,7 @@ export class UserController {
   @Post('avatar')
   @UseInterceptors(
     FileInterceptor('avatar', {
-      storage: diskStorage({
-        destination: './uploads/avatars',
-        filename: (_req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, uniqueSuffix + extname(file.originalname));
-        },
-      }),
+      storage: memoryStorage(),
       fileFilter: (_req, file, cb) => {
         if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
           cb(new BadRequestException('Apenas imagens são permitidas'), false);
@@ -65,8 +58,7 @@ export class UserController {
       throw new BadRequestException('Nenhum arquivo enviado');
     }
     const user = req.user as any;
-    const avatarUrl = `https://barberbook-awgp.onrender.com/uploads/avatars/${file.filename}`;
-    return this.userService.updateAvatar(user.id, avatarUrl);
+    return this.userService.uploadAvatar(user.id, file);
   }
 
   @Delete('avatar')

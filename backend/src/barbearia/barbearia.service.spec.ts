@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { MediaStorageService } from '../media-storage/media-storage.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { BarbeariaService } from './barbearia.service';
 
@@ -24,6 +25,11 @@ describe('BarbeariaService.removeFoto', () => {
       update: jest.Mock;
     };
   };
+  let mediaStorage: {
+    deleteImage: jest.Mock;
+    uploadImage: jest.Mock;
+    deleteImages: jest.Mock;
+  };
   let service: BarbeariaService;
 
   beforeEach(() => {
@@ -38,8 +44,16 @@ describe('BarbeariaService.removeFoto', () => {
           })),
       },
     };
+    mediaStorage = {
+      deleteImage: jest.fn().mockResolvedValue(undefined),
+      uploadImage: jest.fn(),
+      deleteImages: jest.fn().mockResolvedValue(undefined),
+    };
 
-    service = new BarbeariaService(prisma as unknown as PrismaService);
+    service = new BarbeariaService(
+      prisma as unknown as PrismaService,
+      mediaStorage as unknown as MediaStorageService,
+    );
   });
 
   it('remove uma foto da galeria sem alterar a principal', async () => {
@@ -56,6 +70,10 @@ describe('BarbeariaService.removeFoto', () => {
         fotos: ['https://cdn.example/foto-galeria-2.jpg'],
       },
     });
+    expect(mediaStorage.deleteImage).toHaveBeenCalledWith(
+      'https://cdn.example/foto-galeria-1.jpg',
+      'barbearias/barbearia-1',
+    );
     expect(resposta.barbearia.foto).toBe(barbearia.foto);
   });
 
@@ -100,5 +118,26 @@ describe('BarbeariaService.removeFoto', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
 
     expect(prisma.barbearia.update).not.toHaveBeenCalled();
+  });
+
+  it('conta a foto principal no limite total da galeria', async () => {
+    prisma.barbearia.findUnique.mockResolvedValue({
+      ...barbearia,
+      fotos: Array.from(
+        { length: 9 },
+        (_, index) => `https://cdn.example/foto-${index}.jpg`,
+      ),
+    });
+
+    await expect(
+      service.addFotos(barbearia.id, barbearia.ownerId, [
+        {
+          buffer: Buffer.from('imagem'),
+          mimetype: 'image/jpeg',
+        } as Express.Multer.File,
+      ]),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(mediaStorage.uploadImage).not.toHaveBeenCalled();
   });
 });

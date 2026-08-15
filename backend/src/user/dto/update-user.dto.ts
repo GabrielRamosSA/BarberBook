@@ -17,8 +17,4 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEnum(UserType)
   tipo?: UserType;
-
-  @IsOptional()
-  @IsString()
-  avatar?: string;
 }
